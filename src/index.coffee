@@ -12,8 +12,9 @@ class Server
 
         @app = express()
         path = require("path");
-        @app.use("/app/", express.static("#{__dirname}/../../public"))
-        @app.use("/app/_project", express.static("#{path.resolve('.')}/public"))
+        # @app.use("/app/", express.static("#{__dirname}/../../public"))
+        console.log("#{path.resolve('.')}/public")
+        @app.use("/app", express.static("#{path.resolve('.')}/public"))
         @app.use(express.urlencoded())
         @app.use(express.json())
         @app.use (req, res, next) =>
