@@ -36,13 +36,13 @@ validateType = (db, type) ->
 parseQuery = (query) ->
     results = {query: {}, options: {}}
     for key, value of query
-        if _.str.startsWith(key, '_') and key not in ['_id', '_type']
+        if _.str.startsWith(key, '_') and key not in ['_id', '_type', '_ref']
             value = value2js(query[key])
             if value?
                 results.options[key[1..]] = value
         else
             if _.isArray(value)
-                if key isnt '_id'
+                if key isnt '_ref'
                     value = {'$all': (value2js(i) for i in value)}
             else
                 for $op in ['$in', '$nin', '$all', '$nall']
@@ -104,12 +104,16 @@ exports.count = (req, res) ->
 # returns all documents that match the query
 # options attributes are prefixed by undescore.
 #
-#   get /api/<version>/<type>?[<query>]&[<option>]
+# if an id is passed, fetch only the document which match the id
+#
+#   get /api/<version>/<type>/[<id>]?[<query>]&[<option>]
 #
 # examples:
 #   /api/1/organism_classification?title@la=bandicota%20indica
 #   /api/1/publication&_limit=30
 #   /api/1/organism_classification?_populate=true&internetDisplay=true
+#   /api/1/individual/C0012
+#   /api/1/individual/C0012?_populate=true
 exports.find = (req, res) ->
     error = validateType(req.db, req.params.type)
     if error
@@ -131,24 +135,31 @@ exports.find = (req, res) ->
     if _.isString(options.populate) and options.populate.indexOf(',') > -1
         options.populate = options.populate.split(',')
 
+    if req.params.id?
+        query = req.db.reference(type, req.params.id)
+    else if query._id?
+        query = req.db.reference(type, query._id)
+
     req.db[type].find query, options, (err, results) ->
         if err
             err = err.message if err.message?
             return res.json(500, {error: err})
         return res.json {
-            results: (o.toJSONObject({populate: options.populate}) for o in results)
+            results: (o.toJSONObject({
+                populate: options.populate, dereference: true
+            }) for o in results)
         }
 
-# ## findIds
+# ## findReference
 # returns all documents that match the query
 # options attributes are prefixed by undescore.
 #
-#   get /api/<version>?_id=<documentId>&[_id=<documentId2>]
+#   get /api/<version>?_ref=<documentReference>&[_ref=<documentReference2>]
 #
 # examples:
-#   /api/1/_id?_id=http://ceropath.org/instances/individual/c0030
-#   /api/1/_id?_id=http://ceropath.org/instances/individual/c0030&_id=http://ceropath.org/instances/individual/c0006
-exports.findIds = (req, res) ->
+#   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030
+#   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030&_ref=http://ceropath.org/instances/individual/c0006
+exports.findReference = (req, res) ->
 
     {query, options} = parseQuery(req.query)
 
@@ -166,7 +177,7 @@ exports.findIds = (req, res) ->
             err = err.message if err.message?
             return res.json(500, {error: err})
         return res.json {
-            results: (o.toJSONObject({populate: options.populate}) for o in results)
+            results: (o.toJSONObject({populate: options.populate, dereference: true}) for o in results)
         }
 
 

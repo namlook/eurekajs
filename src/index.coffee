@@ -6,6 +6,9 @@ class Server
 
     constructor: (@config) ->
 
+        if not config.name
+            throw 'EurekaServer: name is required'
+        @apiVersion = config.version or 1
         @baseURI = @config.baseURI or "/api/#{config.version}"
         @applicationName = @config.name or 'Oreka project'
         @db = @getDatabase()
@@ -13,7 +16,6 @@ class Server
         @app = express()
         path = require("path");
         # @app.use("/app/", express.static("#{__dirname}/../../public"))
-        console.log("#{path.resolve('.')}/public")
         @app.use("/app", express.static("#{path.resolve('.')}/public"))
         @app.use(express.urlencoded())
         @app.use(express.json())
@@ -26,22 +28,23 @@ class Server
         @app.get     "#{@baseURI}/:type/count",            engine.count
         @app.get     "#{@baseURI}/:type/facets/:field",    engine.facets
         @app.get     "#{@baseURI}/:type/describe",         engine.describe
+        @app.get     "#{@baseURI}/:type/:id",              engine.find
         @app.get     "#{@baseURI}/:type",                  engine.find
         @app.post    "#{@baseURI}/:type",                  engine.sync
         @app.put     "#{@baseURI}/:type",                  engine.sync
-        @app.get     "#{@baseURI}/_id",                    engine.findIds
+        @app.get     "#{@baseURI}/_ref",                   engine.findReference
         @app.delete  "#{@baseURI}",                        engine.clear
         @app.get     "#{@baseURI}",                        engine.gettingStarted
 
 
     getDatabase: () ->
         unless @config.database?
-            return 'EurekaServer: database is required'
+            throw 'EurekaServer: database is required'
         if @config.database.dbtype?
             return @config.database
 
         unless @config.database.adapter?
-            return 'EurekaServer: database adapter is required'
+            throw 'EurekaServer: database adapter is required'
 
         Model = require "archimedes/lib/#{@config.database.adapter}/model"
 
