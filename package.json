@@ -5,6 +5,7 @@
   "main": "js/index.js",
   "scripts": {
     "preinstall": "coffee -co js src/",
+    "build": "coffee -co js src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Namlook",
