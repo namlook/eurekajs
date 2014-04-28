@@ -250,14 +250,29 @@ exports.describe = (req, res) ->
     return res.json({modelName: type, schema: req.db[type]::schema})
 
 # ## sync
-# Sync a document
+# Sync a document. If not `_id` field is present, it will create a new
+# document. Otherwise, the matching document will be updated.
 #
-#   post /api/<version>/<type> --> create a new document (no id)
-#   post /api/<version>/<type> --> update an existed document
+#   post /api/<version>/<type>
+#       data: payload=<jsonString>
 #
+#
+# Batch sync can be done by passing to the payload an array of objects
+#
+#   post /api/<version>/<type> --> create a batch of documents
+#       data: payload=[<jsonString1>, <jsonString2>, ...]
 exports.sync = (req, res) ->
     type = _.str.classify(req.params.type)
-    if _.isArray(req.body)
+    console.log(req.body)
+    try
+        payload = JSON.parse(req.body.payload)
+    catch e
+        e = e.message if e.message?
+        console.log('err: cannot parse payload. Reason: ', e)
+        return res.json(500, {error: 'cannot parse payload. Reason: '+e})
+
+    # Handle batchsync if needed
+    if _.isArray(payload)
         pojos = []
         for pojo in req.body
             delete pojo._type
@@ -268,17 +283,19 @@ exports.sync = (req, res) ->
                 return res.json(500, {error: err})
             for result in data
                 result.result._type = type
-                result.result = new req.db[type](result.result).toJSONObject()
+                result.result = new req.db[type](result.result).toJSONObject({dereference: true})
             return res.json({result: o.result, options: o.options} for o in data)
     else
-        delete req.body._type
+        delete payload._type
         try
-            obj = new req.db[type](req.body)
+            obj = new req.db[type](payload)
         catch e
             e = e.message if e.message?
+            console.log('xxx', e)
             return res.json(500, {error: e})
         obj.save (err, obj, infos) ->
             if err
                 err = err.message if err.message?
+                console.log('yyy', e)
                 return res.json(500, {error: err})
-            return res.json({object: obj.toJSONObject(), infos: infos})
+            return res.json({object: obj.toJSONObject({dereference: true}), infos: infos})

@@ -31,7 +31,7 @@ class Server
         @app.get     "#{@baseURI}/:type/:id",              engine.find
         @app.get     "#{@baseURI}/:type",                  engine.find
         @app.post    "#{@baseURI}/:type",                  engine.sync
-        @app.put     "#{@baseURI}/:type",                  engine.sync
+        # @app.put     "#{@baseURI}/:type/:id",              engine.sync
         @app.get     "#{@baseURI}/_ref",                   engine.findReference
         @app.delete  "#{@baseURI}",                        engine.clear
         @app.get     "#{@baseURI}",                        engine.gettingStarted
