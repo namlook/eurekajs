@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "bower install namlook/eurekapp && npm run build",
+    "postinstall": "bower install namlook/eurekapp && npm run build && (cd public; if ! [ -d bower_components ]; then ln -s ../bower_components .; fi)",
     "build-templates": "if [ -d js/client/templates ]; then ember-precompile js/client/templates/*.hbs > public/templates.js; fi ",
     "build-app": "browserify js/client -o public/app.js",
     "build": "npm run build-app && npm run build-templates",
