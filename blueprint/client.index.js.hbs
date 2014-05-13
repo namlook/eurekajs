@@ -1,0 +1,57 @@
+
+
+// var Eurekapp = require('eurekapp'); // bower's korelations
+
+{{projectName}} = Eurekapp({
+    name: '{{projectName}}',
+    apiURI: '/api/1',
+    schemas: require('../schemas')
+});
+
+/*
+
+// Custom router
+// add some routes whatever you like
+{{projectName}}.Router.map(function() {
+   this.route('test');
+   this.route('foo');
+});
+
+
+// overide the IndexRoute
+{{projectName}}.IndexRoute = {{projectName}}.IndexRoute.extend({
+   model: function() {
+     return this._super().pushObjects([3, 4, 5, '!!!']);
+   }
+});
+
+
+// Implement custom routes
+{{projectName}}.TestRoute = Ember.Route.extend({
+  model: function() {
+    console.log('i[oo]uu->', this.get('config'));
+    return [1, 2, 3];
+  }
+});
+
+// Implement custom controllers
+{{projectName}}.TestController = Ember.Controller.extend({
+    test: "coucou!"
+});
+
+
+// Overload generic controller (here TypeNewController)
+{{projectName}}.CustomController = {{projectName}}.TypeNewController.extend({
+    test: "coucou!"
+});
+
+
+// Overload a Model
+// (here: we compute the title property)
+{{projectName}}.TweetModel = {{projectName}}.Model.extend({
+    title: function() {
+        return this.get('status');
+    }.property('status')
+});
+*/
+

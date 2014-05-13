@@ -8,6 +8,9 @@
     "build": "coffee -co js src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "eureka": "bin/eureka"
+  },
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {

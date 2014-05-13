@@ -1,0 +1,30 @@
+{
+  "name": "{{projectName}}",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "bower install namlook/eurekapp && npm run build",
+    "build-templates": "if [ -d js/client/templates ]; then ember-precompile js/client/templates/*.hbs > public/templates.js; fi ",
+    "build-app": "browserify js/client -o public/app.js",
+    "build": "npm run build-app && npm run build-templates",
+    "drop-data": "isql exec=\"SPARQL CLEAR GRAPH 'http://testest.org'\"",
+    "data-import": "(cd ./data && coffee data-import.coffee > /tmp/data.ttl) && isql exec=\"DB.DBA.TTLP (file_to_string_output ('/tmp/data.ttl'), '', 'http://ceropath.org');\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node js/server"
+  },
+  "author": "",
+  "dependencies": {
+    "eurekapi": "namlook/eurekapi"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "^3.5.6",
+    "gulp-ember-handlebars": "namlook/gulp-ember-handlebars",
+    "gulp-concat": "^2.2.0",
+    "gulp-browserify": "^0.5.0",
+    "gulp-rename": "^1.2.0",
+    "bower": "~1.2.7",
+    "browserify": "^3.33.0"
+  }
+}

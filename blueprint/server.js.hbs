@@ -1,0 +1,18 @@
+
+var Eurekapi = require('eurekapi');
+
+var server = new Eurekapi({
+    name: '{{projectName}}',
+    version: 1,
+    port: {{port}},
+    database: {
+        adapter: 'rdf',
+        config: {
+            store: 'virtuoso',
+            graphURI: '{{projectURI}}'
+        }
+    },
+    schemas: require('./schemas')
+});
+server.start();
+
