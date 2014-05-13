@@ -24,6 +24,12 @@ var init = function(projectName, options) {
         }
     });
 
+
+    // create empty file for /public/css/style.css and /public/templates.js
+    fs.writeFileSync('public/css/style.css', '', {encoding: 'utf8'});
+    fs.writeFileSync('public/templates.js', '', {encoding: 'utf8'});
+
+
     // generate blueprint templates
     var blueprintPath = path.resolve(__dirname, '..', 'blueprint');
 
@@ -49,7 +55,7 @@ var init = function(projectName, options) {
         var isFileExists = fs.existsSync(blueprint.targetPath);
         if (!isFileExists || isFileExists && options.force) {
             console.log('writing', blueprint.targetPath);
-            fs.writeFile(blueprint.targetPath, content, {encoding: 'utf8'});
+            fs.writeFileSync(blueprint.targetPath, content, {encoding: 'utf8'});
         } else {
             console.log(blueprint.targetPath, 'already exits, skipping...');
         }
