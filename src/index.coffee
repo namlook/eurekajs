@@ -55,7 +55,6 @@ class Server
         @app.post    "#{@baseURI}/:type",                  engine.sync
         # @app.put     "#{@baseURI}/:type/:id",              engine.sync
         @app.get     "#{@baseURI}/_ref",                   engine.findReference
-        @app.delete  "#{@baseURI}",                        engine.clear
         @app.get     "#{@baseURI}",                        engine.gettingStarted
 
 

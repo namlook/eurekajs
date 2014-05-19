@@ -225,17 +225,17 @@ exports.facets = (req, res) ->
 
 
 
-# ## clear
-# Clear all data of the db
-#
-#   delete /api/<version>
-#
-exports.clear = (req, res) ->
-    req.db.clear (err) ->
-        if err
-            err = err.message if err.message?
-            return res.json(500, {error: err, status: 'failed'})
-        return res.json({status: 'ok'})
+# # ## clear
+# # Clear all data of the db
+# #
+# #   delete /api/<version>
+# #
+# exports.clear = (req, res) ->
+#     req.db.clear (err) ->
+#         if err
+#             err = err.message if err.message?
+#             return res.json(500, {error: err, status: 'failed'})
+#         return res.json({status: 'ok'})
 
 
 exports.delete = (req, res) ->
