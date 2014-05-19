@@ -125,7 +125,7 @@ exports.find = (req, res) ->
     unless options.limit?
         options.limit = 30
     unless options.populate?
-        options.populate = false
+        options.populate = 0
 
     options = params2pojo(options)
     query = params2pojo(query)
@@ -238,6 +238,13 @@ exports.clear = (req, res) ->
         return res.json({status: 'ok'})
 
 
+exports.delete = (req, res) ->
+    req.db.delete {_id: req.params.id, _type: req.params.type}, (err) ->
+        if err
+            err = err.message if err.message?
+            return res.json(500, {error: err, status: 'failed'})
+        return res.json({status: 'ok', _id: req.params.id, _type: req.params.type})
+
 # ## describe
 # Returns the model's schema
 #
@@ -263,7 +270,7 @@ exports.describe = (req, res) ->
 #       data: payload=[<jsonString1>, <jsonString2>, ...]
 exports.sync = (req, res) ->
     type = _.str.classify(req.params.type)
-    console.log(req.body)
+
     try
         payload = JSON.parse(req.body.payload)
     catch e
@@ -274,9 +281,14 @@ exports.sync = (req, res) ->
     # Handle batchsync if needed
     if _.isArray(payload)
         pojos = []
-        for pojo in req.body
+        for pojo in payload
             delete pojo._type
-            pojos.push(new req.db[type](pojo).toSerializableObject())
+            try
+                pojos.push(new req.db[type](pojo).toSerializableObject())
+            catch e
+                e = e.message if e.message?
+                console.log('xxx', e)
+                return res.json(500, {error: e})
         req.db.batchSync pojos, (err, data) ->
             if err
                 err = err.message if err.message?

@@ -20,5 +20,10 @@
     "express": "^3.5.0",
     "commander": "^2.2.0",
     "handlebars": "^2.0.0-alpha.2"
+  },
+  "devDependencies": {
+    "mocha": "^1.19.0",
+    "supertest": "^0.12.1",
+    "chai": "^1.9.1"
   }
 }

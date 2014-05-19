@@ -2,6 +2,27 @@
 express = require 'express'
 engine = require './engine'
 
+###
+Exemple:
+
+var Eurekapi = require('eurekapi');
+
+var server = new Eurekapi({
+    name: 'projectName',
+    version: 1,
+    port: 4000,
+    database: {
+        adapter: 'rdf',
+        config: {
+            store: 'virtuoso',
+            graphURI: 'http://projectName.com'
+        }
+    },
+    schemas: require('./schemas')
+});
+server.start();
+###
+
 class Server
 
     constructor: (@config) ->
@@ -29,6 +50,7 @@ class Server
         @app.get     "#{@baseURI}/:type/facets/:field",    engine.facets
         @app.get     "#{@baseURI}/:type/describe",         engine.describe
         @app.get     "#{@baseURI}/:type/:id",              engine.find
+        @app.delete  "#{@baseURI}/:type/:id",              engine.delete
         @app.get     "#{@baseURI}/:type",                  engine.find
         @app.post    "#{@baseURI}/:type",                  engine.sync
         # @app.put     "#{@baseURI}/:type/:id",              engine.sync
