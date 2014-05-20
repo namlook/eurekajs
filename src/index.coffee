@@ -1,6 +1,9 @@
 
 express = require 'express'
-engine = require './engine'
+genericRoutes = require './engine'
+_ = require('underscore')
+
+cors = require('cors')
 
 ###
 Exemple:
@@ -11,6 +14,7 @@ var server = new Eurekapi({
     name: 'projectName',
     version: 1,
     port: 4000,
+    enableCORS: false,
     database: {
         adapter: 'rdf',
         config: {
@@ -18,7 +22,10 @@ var server = new Eurekapi({
             graphURI: 'http://projectName.com'
         }
     },
-    schemas: require('./schemas')
+    schemas: require('./schemas'),
+    customRoutes: [
+        {method: 'delete', url: '/nugget', func: deleteNugget}
+    ]
 });
 server.start();
 ###
@@ -31,13 +38,20 @@ class Server
             throw 'EurekaServer: name is required'
         @apiVersion = config.version or 1
         @baseURI = @config.baseURI or "/api/#{config.version}"
-        @applicationName = @config.name or 'Oreka project'
+        @applicationName = @config.name
         @db = @getDatabase()
 
         @app = express()
-        path = require("path");
+
+        # enable CORS if needed
+        if config.enableCORS
+            console.log("CORS is enabled");
+            @app.use(cors());
+
         # @app.use("/app/", express.static("#{__dirname}/../../public"))
+        path = require("path");
         @app.use("/app", express.static("#{path.resolve('.')}/public"))
+
         @app.use(express.urlencoded())
         @app.use(express.json())
         @app.use (req, res, next) =>
@@ -46,16 +60,28 @@ class Server
             req.config = @config
             next()
 
-        @app.get     "#{@baseURI}/:type/count",            engine.count
-        @app.get     "#{@baseURI}/:type/facets/:field",    engine.facets
-        @app.get     "#{@baseURI}/:type/describe",         engine.describe
-        @app.get     "#{@baseURI}/:type/:id",              engine.find
-        @app.delete  "#{@baseURI}/:type/:id",              engine.delete
-        @app.get     "#{@baseURI}/:type",                  engine.find
-        @app.post    "#{@baseURI}/:type",                  engine.sync
-        # @app.put     "#{@baseURI}/:type/:id",              engine.sync
-        @app.get     "#{@baseURI}/_ref",                   engine.findReference
-        @app.get     "#{@baseURI}",                        engine.gettingStarted
+        routesAdded = []
+        routes = []
+
+        # add the custom routes
+        if config.customRoutes
+            customRoutes = _.sortBy(config.customRoutes, 'url').reverse()
+            for route in customRoutes
+                routes.push(route)
+                routesAdded.push(route.url)
+
+
+        # add the generic routes only if the url hasn't already been added
+        # useful to overwrite generic routes
+        for route in genericRoutes
+            if routesAdded.indexOf(route.url) is -1
+                routes.push(route)
+
+
+        # actually attach the routes to the app
+        routes = _.sortBy(routes, 'url').reverse()
+        for route in routes
+            @app[route.method]("#{@baseURI}#{route.url}", route.func)
 
 
     getDatabase: () ->
@@ -97,20 +123,5 @@ class Server
             throw "Server not started"
         @server.close callback
 
-
-# app.get     '/api/facets/:facet',       api.facets
-# app.get     '/api/facets',              api.facets
-# app.get     '/api/describes',           api.describes
-# app.get     '/api/documents',           api.find
-# app.get     '/api/query',               api.describeQuery
-# app.get     '/api/count',               api.count
-# app.get     '/api/:type/describes',     api.describes
-# app.get     '/api/:type/facets/:facet', api.facets
-# app.get     '/api/:type/facets',        api.facets
-# app.get     '/api/:type/documents/:id', api.findOne
-# app.get     '/api/:type/documents',     api.find
-# app.get     '/api/:type/query',         api.describeQuery
-# app.get     '/api/:type/count',         api.count
-# app.get     '/api/:type',               api.all
 
 module.exports = Server

@@ -11,7 +11,7 @@ var server = require('./server');
 
 describe('List literal', function(){
 
-    before(function(done){
+    beforeEach(function(done){
         server.db.clear(function(err) {
             if (err) {
                 throw err;

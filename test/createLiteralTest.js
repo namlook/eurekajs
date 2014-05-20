@@ -10,7 +10,7 @@ var server = require('./server');
 
 describe('Create literal', function(){
 
-    before(function(done){
+    beforeEach(function(done){
         server.db.clear(function(err) {
             if (err) {
                 throw err;

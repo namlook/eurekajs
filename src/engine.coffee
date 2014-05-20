@@ -58,12 +58,14 @@ parseQuery = (query) ->
     return results
 
 
+engine = {}
+
 # ## gettingStarted
 # display a getting started
 #
 # examples:
 #   /api/1
-exports.gettingStarted = (req, res) ->
+engine.gettingStarted = (req, res) ->
     models = req.db.modelsList or []
     text = """
     <h1>#{req.applicationName}</h1>
@@ -82,7 +84,7 @@ exports.gettingStarted = (req, res) ->
 # examples:
 #   /api/1/organism_classification/count?
 #   /api/1/organism_classification/count?internetDisplay=true
-exports.count = (req, res) ->
+engine.count = (req, res) ->
     error = validateType(req.db, req.params.type)
     if error
         return res.json(500, {error: error})
@@ -114,7 +116,7 @@ exports.count = (req, res) ->
 #   /api/1/organism_classification?_populate=true&internetDisplay=true
 #   /api/1/individual/C0012
 #   /api/1/individual/C0012?_populate=true
-exports.find = (req, res) ->
+engine.find = (req, res) ->
     error = validateType(req.db, req.params.type)
     if error
         return res.json(500, {error: error})
@@ -159,7 +161,7 @@ exports.find = (req, res) ->
 # examples:
 #   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030
 #   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030&_ref=http://ceropath.org/instances/individual/c0006
-exports.findReference = (req, res) ->
+engine.findReference = (req, res) ->
 
     {query, options} = parseQuery(req.query)
 
@@ -189,7 +191,7 @@ exports.findReference = (req, res) ->
 # examples:
 #   /api/1/organism_classification/facets/internetDisplay&_limit=15
 #   /api/1/organism_classification/facets/identificationDate?_aggregation=$year-$month&_limit=15
-exports.facets = (req, res) ->
+engine.facets = (req, res) ->
     error = validateType(req.db, req.params.type)
     if error
         return res.json(500, {error: error})
@@ -238,7 +240,7 @@ exports.facets = (req, res) ->
 #         return res.json({status: 'ok'})
 
 
-exports.delete = (req, res) ->
+engine.delete = (req, res) ->
     req.db.delete {_id: req.params.id, _type: req.params.type}, (err) ->
         if err
             err = err.message if err.message?
@@ -250,7 +252,7 @@ exports.delete = (req, res) ->
 #
 #   delete /api/<version>/<type>/describe
 #
-exports.describe = (req, res) ->
+engine.describe = (req, res) ->
     type = _.str.classify(req.params.type)
     unless req.db[type]?
         return res.json(500, {error: "unknown model: #{type}"})
@@ -268,7 +270,7 @@ exports.describe = (req, res) ->
 #
 #   post /api/<version>/<type> --> create a batch of documents
 #       data: payload=[<jsonString1>, <jsonString2>, ...]
-exports.sync = (req, res) ->
+engine.sync = (req, res) ->
     type = _.str.classify(req.params.type)
 
     try
@@ -311,3 +313,16 @@ exports.sync = (req, res) ->
                 console.log('yyy', e)
                 return res.json(500, {error: err})
             return res.json({object: obj.toJSONObject({dereference: true}), infos: infos})
+
+
+module.exports = [
+    {method: 'get',    url: "/:type/count",          func: engine.count},
+    {method: 'get',    url: "/:type/facets/:field",  func: engine.facets},
+    {method: 'get',    url: "/:type/describe",       func: engine.describe},
+    {method: 'get',    url: "/:type/:id",            func: engine.find},
+    {method: 'delete', url: "/:type/:id",            func: engine.delete},
+    {method: 'get',    url: "/:type",                func: engine.find},
+    {method: 'post',   url: "/:type",                func: engine.sync},
+    {method: 'get',    url: "/_ref",                 func: engine.findReference},
+    {method: 'get',    url: "/",                      func: engine.gettingStarted}
+]

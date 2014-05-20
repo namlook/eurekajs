@@ -11,7 +11,7 @@ var server = require('./server');
 
 describe('Count literal', function(){
 
-    before(function(done){
+    beforeEach(function(done){
         server.db.clear(function(err) {
             if (err) {
                 throw err;
@@ -68,7 +68,7 @@ describe('Count literal', function(){
                                     .end(function(err, res){
                                         expect(err).to.be.null;
                                         expect(res.body.total).to.be.equal(11);
-                                        done()
+                                        done();
                                     });
                             });
 
