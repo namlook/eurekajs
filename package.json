@@ -7,7 +7,7 @@
     "preinstall": "coffee -co js src/",
     "build": "coffee -co js src/",
     "test": "mocha test/*Test.js",
-    "coverage": "mocha -r blanket -R html-cov test/*Test.js > coverage.html"
+    "coverage": "npm run build && mocha -r blanket -R html-cov test/*Test.js > coverage.html && open coverage.html"
   },
   "bin": {
     "eureka": "bin/eureka.js"
