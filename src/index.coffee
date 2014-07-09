@@ -97,6 +97,8 @@ class Server
 
         models = {}
         for modelName, modelInfos of @config.schemas
+            if (modelName is 'Basic')
+                throw "EurekaServer: 'Basic' is a reserved word and can not be used as model name"
             models[modelName] = Model.extend(modelInfos)
 
         Database = require "archimedes/lib/#{@config.database.adapter}/database"
