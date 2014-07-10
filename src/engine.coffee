@@ -2,7 +2,6 @@
 _ = require 'underscore'
 _.str = require 'underscore.string'
 
-
 #
 # Private methods
 #
@@ -120,6 +119,7 @@ engine.find = (req, res) ->
     error = validateType(req.db, req.params.type)
     if error
         return res.json(500, {error: error})
+
     type = _.str.classify req.params.type
 
     {query, options} = parseQuery(req.query)
@@ -309,8 +309,7 @@ engine.sync = (req, res) ->
             return res.json(500, {error: e})
         obj.save (err, obj, infos) ->
             if err
-                err = err.message if err.message?
-                console.log('yyy', e)
+                console.log('yyy', err)
                 return res.json(500, {error: err})
             return res.json({object: obj.toJSONObject({dereference: true}), infos: infos})
 
