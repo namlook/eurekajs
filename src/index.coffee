@@ -3,7 +3,6 @@ express = require 'express'
 genericRoutes = require './engine'
 _ = require('underscore')
 
-cors = require('cors')
 
 ###
 Exemple:
@@ -34,38 +33,23 @@ class Server
 
     constructor: (@config) ->
 
-        if not config.name
+        if not @config.name
             throw 'EurekaServer: name is required'
-        @apiVersion = config.version or 1
+        @apiVersion = @config.version or 1
         @baseURI = @config.baseURI or "/api/#{config.version}"
         @applicationName = @config.name
         @db = @getDatabase()
 
         @app = express()
+        @registerMiddlewares()
 
-        # enable CORS if needed
-        if config.enableCORS
-            console.log("CORS is enabled");
-            @app.use(cors());
-
-        # @app.use("/app/", express.static("#{__dirname}/../../public"))
-        path = require("path");
-        @app.use("/app", express.static("#{path.resolve('.')}/public"))
-
-        @app.use(express.urlencoded())
-        @app.use(express.json())
-        @app.use (req, res, next) =>
-            req.db = @db
-            req.applicationName = @applicationName
-            req.config = @config
-            next()
 
         routesAdded = []
         routes = []
 
         # add the custom routes
-        if config.customRoutes
-            customRoutes = _.sortBy(config.customRoutes, 'url').reverse()
+        if @config.customRoutes
+            customRoutes = _.sortBy(@config.customRoutes, 'url').reverse()
             for route in customRoutes
                 routes.push(route)
                 routesAdded.push(route.url)
@@ -84,6 +68,45 @@ class Server
             @app[route.method]("#{@baseURI}#{route.url}", route.func)
 
 
+    # overload to add your owns middlewares
+    registerMiddlewares: () ->
+        # @app.use("/app/", express.static("#{__dirname}/../../public"))
+        path = require("path");
+        @app.use("/app", express.static("#{path.resolve('.')}/public"))
+
+        @app.use(express.urlencoded())
+        @app.use(express.json())
+        @app.use (req, res, next) =>
+            req.db = @db
+            req.applicationName = @applicationName
+            req.config = @config
+            next()
+
+
+        # enable CORS if needed
+        if @config.enableCORS
+            cors = require('cors')
+            console.log("CORS is enabled");
+            @app.use(cors());
+
+        # error handler
+        @app.use (req, res, next) ->
+            request = require('domain').create();
+            request.add(req);
+            request.add(res);
+            request.on 'error', (er) ->
+                console.error('XXX Error', req.url, ':', er.message);
+                try
+                    res.json(500, {error: er.message})
+                catch er
+                    res.writeHead(500);
+                    res.end('Error occurred, sorry.');
+                return next(er)
+            request.run ->
+                return next()
+
+
+    # return the database instance
     getDatabase: () ->
         unless @config.database?
             throw 'EurekaServer: database is required'
