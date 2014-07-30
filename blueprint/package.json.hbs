@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "bower install namlook/eurekapp && npm run build && (cd public; if ! [ -d bower_components ]; then ln -s ../bower_components .; fi)",
-    "build-templates": "if [ -d js/client/templates ]; then ember-precompile js/client/templates/*.hbs > public/templates.js; fi ",
+    "build-templates": "rm public/templates.js ; touch public/templates.js ; if [ -d js/client/templates ]; then ember-precompile js/client/templates/*.hbs > public/templates.js; fi ",
     "build-app": "browserify js/client -o public/app.js",
     "build": "npm run build-app && npm run build-templates",
     "drop-data": "isql exec=\"SPARQL CLEAR GRAPH '{{projectURI}}'\"",
@@ -16,7 +16,7 @@
   "author": "",
   "dependencies": {
     "eurekapi": "namlook/eurekapi",
-    "bower": "~1.2.7",
+    "bower": "~1.3.0",
     "browserify": "^3.33.0"
   },
   "license": "MIT",

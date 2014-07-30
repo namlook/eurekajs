@@ -19,7 +19,7 @@
 
 
 // overide the IndexRoute
-{{projectName}}.IndexRoute = {{projectName}}.IndexRoute.extend({
+{{projectName}}.GenericModelIndexRoute = {{projectName}}.GenericModelIndexRoute.extend({
    model: function() {
      return this._super().pushObjects([3, 4, 5, '!!!']);
    }
@@ -27,7 +27,7 @@
 
 
 // Implement custom routes
-{{projectName}}.TestRoute = Ember.Route.extend({
+{{projectName}}.TestRoute = Ember.GenericModelIndexRoute.extend({
   model: function() {
     console.log('i[oo]uu->', this.get('config'));
     return [1, 2, 3];
@@ -35,13 +35,13 @@
 });
 
 // Implement custom controllers
-{{projectName}}.TestController = Ember.Controller.extend({
+{{projectName}}.TestController = Ember.GenericModelIndexController.extend({
     test: "coucou!"
 });
 
 
 // Overload generic controller (here TypeNewController)
-{{projectName}}.CustomController = {{projectName}}.TypeNewController.extend({
+{{projectName}}.GenericModelNewController = {{projectName}}.GenericModelNewController.extend({
     test: "coucou!"
 });
 
