@@ -1,0 +1,9 @@
+FROM dockerfile/nodejs
+MAINTAINER {{author}}
+RUN adduser --disabled-password --home=/home/user --gecos "" user
+ADD . /home/user/app
+RUN chown -R user:user /home/user
+WORKDIR /home/user/app
+EXPOSE 4080
+USER user
+CMD npm start

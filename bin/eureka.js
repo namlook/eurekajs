@@ -4,6 +4,9 @@ var program = require('commander');
 var path = require('path');
 var fs = require('fs');
 var Handlebars = require('handlebars');
+var _ = require('underscore');
+_.str = require('underscore.string');
+var spawn = require('child_process').spawn;
 
 program
   .version('0.0.1')
@@ -37,6 +40,7 @@ var init = function(projectName, options) {
         {targetPath: 'js/client/index.js', fileName: 'client.index.js.hbs'},
         {targetPath: 'package.json', fileName: 'package.json.hbs'},
         {targetPath: 'bower.json', fileName: 'bower.json.hbs'},
+        {targetPath: 'Dockerfile', fileName: 'Dockerfile.hbs'},
         {targetPath: 'public/index.html', fileName: 'public.index.html.hbs'},
         {targetPath: 'js/schemas.js', fileName: 'schemas.js.hbs'},
         {targetPath: 'js/server.js', fileName: 'server.js.hbs'}
@@ -65,11 +69,11 @@ var init = function(projectName, options) {
     });
 
     if (options.build) {
-        build(projectName, options);
+        build(options);
     }
 };
 
-var build = function(projectName, options) {
+var build = function(options, callback) {
     // installing project with NPM
     console.log('Installing project...');
 
@@ -85,14 +89,54 @@ var build = function(projectName, options) {
         }
         npm.commands.install([], function(err, data) {
             if (err) {
-                return console.log(err);
+                console.log(err);
+                if (callback) {
+                    return callback(err);
+                }
+                return;
             }
             console.log('\n');
             console.log('Done...');
             console.log('"npm start" to launch the server');
             console.log('Have fun !');
+            if (callback) {
+                return callback(null, options);
+            }
         });
     });
+};
+
+var _dockerize = function(callback) {
+    var projectPackage = require(path.resolve('./package.json'));
+    var projectName = projectPackage.name;
+    var version = projectPackage.version;
+    var dasherizedName = _.str.dasherize(projectName).slice(1);
+    console.log("docker build --force-rm=true -t "+dasherizedName+":"+version+" .");
+    var child = spawn('docker', ['build', '--force-rm=true', '-t', dasherizedName+':'+version, '.']);
+
+    child.stdout.on('data', function(chunk) {
+        process.stdout.write(chunk.toString('utf-8'));
+    });
+
+    child.on('error', function(err) {
+        if (callback) {
+            return callback(err);
+        }
+    });
+
+    child.on('close', function() {
+        if (callback) {
+            return callback(null);
+        }
+    });
+};
+
+var dockerize = function(options) {
+    if (options.build) {
+        build(options, _dockerize);
+    } else {
+        _dockerize();
+    }
 };
 
 program
@@ -112,6 +156,10 @@ program
   .description('build the application')
   .action(build);
 
+program
+  .command('dockerize')
+  .option('--no-build', "don't build the project after init")
+  .action(dockerize);
 
 program.parse(process.argv);
 
