@@ -23,18 +23,19 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
+    "coffee-script": "~1.7.1",
     "archimedes": "namlook/archimedes",
-    "underscore": "^1.6.0",
-    "underscore.string": "^2.3.3",
-    "express": "^3.5.0",
-    "commander": "^2.2.0",
-    "handlebars": "^2.0.0-alpha.2",
-    "cors": "^2.3.1"
+    "underscore": "~1.6.0",
+    "underscore.string": "~2.3.3",
+    "express": "~3.5.0",
+    "commander": "~2.2.0",
+    "handlebars": "~2.0.0-alpha.2",
+    "cors": "~2.3.1"
   },
   "devDependencies": {
-    "mocha": "^1.19.0",
-    "supertest": "^0.12.1",
-    "chai": "^1.9.1",
-    "blanket": "^1.1.6"
+    "mocha": "~1.19.0",
+    "supertest": "~0.12.1",
+    "chai": "~1.9.1",
+    "blanket": "1.1.6"
   }
 }
