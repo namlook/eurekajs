@@ -36,6 +36,7 @@ var init = function(projectName, options) {
     var blueprints = [
         {targetPath: 'js/client/index.js', fileName: 'client.index.js.hbs'},
         {targetPath: 'package.json', fileName: 'package.json.hbs'},
+        {targetPath: 'bower.json', fileName: 'bower.json.hbs'},
         {targetPath: 'public/index.html', fileName: 'public.index.html.hbs'},
         {targetPath: 'js/schemas.js', fileName: 'schemas.js.hbs'},
         {targetPath: 'js/server.js', fileName: 'server.js.hbs'}
@@ -47,6 +48,8 @@ var init = function(projectName, options) {
         var template = Handlebars.compile(templateFile);
         var content = template({
             projectName: projectName,
+            author: options.author,
+            license: options.license,
             port: options.port,
             projectURI: options.uri
          });
@@ -61,7 +64,12 @@ var init = function(projectName, options) {
         }
     });
 
+    if (options.build) {
+        build(projectName, options);
+    }
+};
 
+var build = function(projectName, options) {
     // installing project with NPM
     console.log('Installing project...');
 
@@ -93,8 +101,16 @@ program
   .usage('<projectName> [options]')
   .option('-u, --uri <projectURI>', 'the uri of the project (ex: http://<projectName>.com)')
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
+  .option('-a, --author <author>', 'the author of the project', '')
+  .option('-l, --license <license>', 'the license of the project (default to "MIT")', 'MIT')
   .option('-f, --force', 'force overwriting files')
+  .option('--no-build', "don't build the project after init")
   .action(init);
+
+program
+  .command('build')
+  .description('build the application')
+  .action(build);
 
 
 program.parse(process.argv);
