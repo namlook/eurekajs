@@ -23,7 +23,6 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
-    "coffee-script": "~1.7.1",
     "archimedes": "namlook/archimedes",
     "underscore": "~1.6.0",
     "underscore.string": "~2.3.3",
