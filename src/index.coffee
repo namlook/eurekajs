@@ -12,6 +12,7 @@ var Eurekapi = require('eurekapi');
 var server = new Eurekapi({
     name: 'projectName',
     version: 1,
+    host: '0.0.0.0'
     port: 4000,
     enableCORS: false,
     database: {
@@ -136,8 +137,9 @@ class Server
             port = @config.port
         unless port
             port = @config.port
-        console.log "starting http://localhost:#{port}..."
-        console.log "api accessible at http://localhost:#{port}#{@baseURI}"
+        host = @config.host or "0.0.0.0"
+        console.log "starting http://#{host}:#{port}..."
+        console.log "api accessible at http://#{host}:#{port}#{@baseURI}"
 
         @server = require('http').createServer(@app)
         @server.listen port, callback
