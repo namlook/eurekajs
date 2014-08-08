@@ -1,0 +1,8 @@
+
+var serverConfig = require('../server/config');
+
+module.exports = {
+    name: serverConfig.name,
+    apiURI: '/api/'+serverConfig.version,
+    schemas: require('../schemas')
+};

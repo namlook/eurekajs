@@ -13,13 +13,41 @@ program
   .usage("[command] [options]\n\n  Command-Specific Help\n\n    eureka [command] --help");
 
 
-var init = function(projectName, options) {
+var generateBlueprint = function(targetPath, fileName, options) {
+    var blueprintPath = path.resolve(__dirname, '..', 'blueprint');
+
+    var templateFilePath = path.resolve(blueprintPath, fileName);
+    var templateFile = fs.readFileSync(templateFilePath, {encoding: 'utf8'});
+    var template = Handlebars.compile(templateFile);
+    var content = template(options);
+     //    projectName: options.projectName,
+     //    author: options.author,
+     //    license: options.license,
+     //    port: options.port,
+     //    projectURI: options.uri,
+     //    dasherizedProjectName: options.dasherizedProjectName
+     // });
+
+    // writing templates
+    var isFileExists = fs.existsSync(targetPath);
+    if (!isFileExists || isFileExists && options.force) {
+        console.log('writing', targetPath);
+        fs.writeFileSync(targetPath, content, {encoding: 'utf8'});
+    } else {
+        console.log(targetPath, 'already exits, skipping...');
+    }
+};
+
+
+var init = function(projectName, author, options) {
     if (options.uri === undefined) {
         options.uri = 'http://'+projectName.toLowerCase()+'.com';
     }
+    options.projectName = projectName;
+    options.author = author;
 
     // building skeleton directories
-    dirPaths = ['js', 'js/client', 'public', 'public/css'];
+    dirPaths = ['app', 'app/server', 'app/frontend', 'public', 'public/css'];
 
     dirPaths.forEach(function(dirpath){
         if (!fs.existsSync(dirpath)) {
@@ -27,45 +55,25 @@ var init = function(projectName, options) {
         }
     });
 
-
     // create empty file for /public/css/style.css and /public/templates.js
     fs.writeFileSync('public/css/style.css', '', {encoding: 'utf8'});
     fs.writeFileSync('public/templates.js', '', {encoding: 'utf8'});
 
 
     // generate blueprint templates
-    var blueprintPath = path.resolve(__dirname, '..', 'blueprint');
-
     var blueprints = [
-        {targetPath: 'js/client/index.js', fileName: 'client.index.js.hbs'},
+        {targetPath: 'app/frontend/index.js', fileName: 'frontend.index.js.hbs'},
+        {targetPath: 'app/frontend/config.js', fileName: 'frontend.config.js.hbs'},
+        {targetPath: 'app/server/index.js', fileName: 'server.index.js.hbs'},
+        {targetPath: 'app/server/config.js', fileName: 'server.config.js.hbs'},
         {targetPath: 'package.json', fileName: 'package.json.hbs'},
         {targetPath: 'bower.json', fileName: 'bower.json.hbs'},
-        {targetPath: 'Dockerfile', fileName: 'Dockerfile.hbs'},
         {targetPath: 'public/index.html', fileName: 'public.index.html.hbs'},
-        {targetPath: 'js/schemas.js', fileName: 'schemas.js.hbs'},
-        {targetPath: 'js/server.js', fileName: 'server.js.hbs'}
+        {targetPath: 'app/schemas.js', fileName: 'schemas.js.hbs'}
     ];
 
     blueprints.forEach(function(blueprint) {
-        var templateFilePath = path.resolve(blueprintPath, blueprint.fileName);
-        var templateFile = fs.readFileSync(templateFilePath, {encoding: 'utf8'});
-        var template = Handlebars.compile(templateFile);
-        var content = template({
-            projectName: projectName,
-            author: options.author,
-            license: options.license,
-            port: options.port,
-            projectURI: options.uri
-         });
-
-        // writing templates
-        var isFileExists = fs.existsSync(blueprint.targetPath);
-        if (!isFileExists || isFileExists && options.force) {
-            console.log('writing', blueprint.targetPath);
-            fs.writeFileSync(blueprint.targetPath, content, {encoding: 'utf8'});
-        } else {
-            console.log(blueprint.targetPath, 'already exits, skipping...');
-        }
+        generateBlueprint(blueprint.targetPath, blueprint.fileName, options);
     });
 
     if (options.build) {
@@ -106,17 +114,29 @@ var build = function(options, callback) {
     });
 };
 
-var _dockerize = function(callback) {
+var _dockerize = function(options, callback) {
     var projectPackage = require(path.resolve('./package.json'));
     var projectName = projectPackage.name;
-    var version = projectPackage.version;
-    var dasherizedName = _.str.dasherize(projectName).slice(1);
-    console.log("docker build --force-rm=true -t "+dasherizedName+":"+version+" .");
-    var child = spawn('docker', ['build', '--force-rm=true', '-t', dasherizedName+':'+version, '.']);
+    options.version = projectPackage.version;
+    options.author = projectPackage.author;
+    options.port = 4000; // TODO
+    options.dasherizedProjectName = _.str.dasherize(projectName).slice(1);
+    console.log(options, options.version);
+
+    // generate Dockerfile from blueprints
+    generateBlueprint('Dockerfile', 'Dockerfile.hbs', options);
+
+    console.log("docker build --force-rm=true -t "+options.dasherizedProjectName+":"+options.version+" .");
+    var child = spawn('docker', ['build', '--force-rm=true', '-t', options.dasherizedProjectName+':'+options.version, '.']);
 
     child.stdout.on('data', function(chunk) {
         process.stdout.write(chunk.toString('utf-8'));
     });
+
+    child.stderr.on('data', function(chunk) {
+        process.stdout.write(chunk.toString('utf-8'));
+    });
+
 
     child.on('error', function(err) {
         if (callback) {
@@ -132,17 +152,27 @@ var _dockerize = function(callback) {
 };
 
 var dockerize = function(options) {
+
+    var callback = function(err) {
+        if (err) {
+            console.log(err);
+        }
+    };
+
     if (options.build) {
-        build(options, _dockerize);
+        build(options, function(err) {
+            _dockerize(options, callback);
+        });
     } else {
-        _dockerize();
+        _dockerize(options, callback);
     }
 };
 
 program
-  .command('init <projectName>')
+  .command('init <projectName> <author>')
   .description('generate the base structure of the application')
-  .usage('<projectName> [options]')
+  .usage('<projectName> <author> [options]')
+  .option('-d, --description <description>', 'the description of the project', '')
   .option('-u, --uri <projectURI>', 'the uri of the project (ex: http://<projectName>.com)')
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
   .option('-a, --author <author>', 'the author of the project', '')
@@ -158,7 +188,8 @@ program
 
 program
   .command('dockerize')
-  .option('--no-build', "don't build the project after init")
+  .option('--build', "don't build the project after init", false)
+  .option('-f, --force', 'force overwriting files')
   .action(dockerize);
 
 program.parse(process.argv);
