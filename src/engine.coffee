@@ -146,41 +146,42 @@ engine.find = (req, res) ->
         if err
             err = err.message if err.message?
             return res.json(500, {error: err})
+        console.log results
         return res.json {
             results: (o.toJSONObject({
                 populate: options.populate, dereference: true
             }) for o in results)
         }
 
-# ## findReference
-# returns all documents that match the query
-# options attributes are prefixed by undescore.
-#
-#   get /api/<version>?_ref=<documentReference>&[_ref=<documentReference2>]
-#
-# examples:
-#   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030
-#   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030&_ref=http://ceropath.org/instances/individual/c0006
-engine.findReference = (req, res) ->
+# # ## findReference
+# # returns all documents that match the query
+# # options attributes are prefixed by undescore.
+# #
+# #   get /api/<version>?_ref=<documentReference>&[_ref=<documentReference2>]
+# #
+# # examples:
+# #   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030
+# #   /api/1/_ref?_id=http://ceropath.org/instances/individual/c0030&_ref=http://ceropath.org/instances/individual/c0006
+# engine.findReference = (req, res) ->
 
-    {query, options} = parseQuery(req.query)
+#     {query, options} = parseQuery(req.query)
 
-    unless options.populate?
-        options.populate = false
+#     unless options.populate?
+#         options.populate = false
 
-    options = params2pojo(options)
-    query = params2pojo(query)
+#     options = params2pojo(options)
+#     query = params2pojo(query)
 
-    if _.isString(options.populate) and options.populate.indexOf(',') > -1
-        options.populate = options.populate.split(',')
+#     if _.isString(options.populate) and options.populate.indexOf(',') > -1
+#         options.populate = options.populate.split(',')
 
-    req.db[type].find query, options, (err, results) ->
-        if err
-            err = err.message if err.message?
-            return res.json(500, {error: err})
-        return res.json {
-            results: (o.toJSONObject({populate: options.populate, dereference: true}) for o in results)
-        }
+#     req.db[type].find query, options, (err, results) ->
+#         if err
+#             err = err.message if err.message?
+#             return res.json(500, {error: err})
+#         return res.json {
+#             results: (o.toJSONObject({populate: options.populate, dereference: true}) for o in results)
+#         }
 
 
 # ## facets
@@ -302,10 +303,11 @@ engine.sync = (req, res) ->
     else
         delete payload._type
         try
+            console.log payload
             obj = new req.db[type](payload)
         catch e
             e = e.message if e.message?
-            console.log('xxx', e)
+            console.log('xxxx', e)
             return res.json(500, {error: e})
         obj.save (err, obj, infos) ->
             if err
@@ -322,6 +324,6 @@ module.exports = [
     {method: 'delete', url: "/:type/:id",            func: engine.delete},
     {method: 'get',    url: "/:type",                func: engine.find},
     {method: 'post',   url: "/:type",                func: engine.sync},
-    {method: 'get',    url: "/_ref",                 func: engine.findReference},
+    # {method: 'get',    url: "/_ref",                 func: engine.findReference},
     {method: 'get',    url: "/",                      func: engine.gettingStarted}
 ]

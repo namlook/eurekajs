@@ -114,20 +114,22 @@ var build = function(options, callback) {
     });
 };
 
-var _dockerize = function(options, callback) {
+var _dockerize = function(organization, options, callback) {
     var projectPackage = require(path.resolve('./package.json'));
     var projectName = projectPackage.name;
     options.version = projectPackage.version;
     options.author = projectPackage.author;
-    options.port = 4000; // TODO
+    options.port = require(path.resolve('./app/server/config')).port;
     options.dasherizedProjectName = _.str.dasherize(projectName).slice(1);
-    console.log(options, options.version);
+    options.organization = organization;
+    console.log(options);
 
     // generate Dockerfile from blueprints
     generateBlueprint('Dockerfile', 'Dockerfile.hbs', options);
 
-    console.log("docker build --force-rm=true -t "+options.dasherizedProjectName+":"+options.version+" .");
-    var child = spawn('docker', ['build', '--force-rm=true', '-t', options.dasherizedProjectName+':'+options.version, '.']);
+    var imageName = options.organization+'/'+options.dasherizedProjectName+':'+options.version;
+    console.log("docker build --force-rm=true -t "+imageName+" .");
+    var child = spawn('docker', ['build', '--force-rm=true', '-t', imageName, '.']);
 
     child.stdout.on('data', function(chunk) {
         process.stdout.write(chunk.toString('utf-8'));
@@ -172,7 +174,7 @@ program
   .command('init <projectName> <author>')
   .description('generate the base structure of the application')
   .usage('<projectName> <author> [options]')
-  .option('-d, --description <description>', 'the description of the project', '')
+  .option('-d, --desc <description>', 'the description of the project', '')
   .option('-u, --uri <projectURI>', 'the uri of the project (ex: http://<projectName>.com)')
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
   .option('-a, --author <author>', 'the author of the project', '')
@@ -187,7 +189,8 @@ program
   .action(build);
 
 program
-  .command('dockerize')
+  .command('dockerize <organization>')
+  .description('put the application into a docker image called <organization>/<project-name>:<project-version>')
   .option('--build', "don't build the project after init", false)
   .option('-f, --force', 'force overwriting files')
   .action(dockerize);
