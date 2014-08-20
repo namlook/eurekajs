@@ -3,12 +3,11 @@
   "version": "0.0.0",
   "description": "{{description}}",
   "scripts": {
-    "postinstall": "./node_modules/eurekapi/node_modules/bower/bin/bower install && npm run build && (cd public; if ! [ -d vendors ]; then ln -s ../bower_components vendors; fi)",
-    "build-templates": "rm public/templates.js ; touch public/templates.js ; if [ -d app/frontend/templates ]; then ./node_modules/eurekapi/node_modules/ember-precompile/bin/ember-precompile app/frontend/templates/*.hbs > public/templates.js; fi ",
-    "build-app": "./node_modules/eurekapi/node_modules/browserify/bin/cmd.js app/frontend -o public/app.js",
-    "build": "npm run build-app && npm run build-templates",
+    "postinstall": "./node_modules/eurekapi/node_modules/.bin/eureka postinstall",
+    "build": "./node_modules/eurekapi/node_modules/.bin/eureka build",
+    "build-templates": "./node_modules/eurekapi/node_modules/.bin/eureka build-templates",
     "drop-data": "isql exec=\"SPARQL CLEAR GRAPH '{{projectURI}}'\"",
-    "data-import": "(cd ./data && coffee data-import.coffee > /tmp/data.ttl) && isql exec=\"DB.DBA.TTLP (file_to_string_output ('/tmp/data.ttl'), '', '{{projectURI}}');\"",
+    "data-import": "isql exec=\"DB.DBA.TTLP (file_to_string_output ('/tmp/data.ttl'), '', '{{projectURI}}');\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app/server"
   },

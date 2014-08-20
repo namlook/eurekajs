@@ -1,5 +1,7 @@
 
 var Eurekapi = require('eurekapi');
 
-var server = new Eurekapi(require('./config'));
+var config = require('./config.json');
+config.schemas = require('../schemas');
+var server = new Eurekapi(config);
 server.start();
