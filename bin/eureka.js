@@ -231,59 +231,59 @@ var postInstallCommand = function(options, callback) {
  * generate the app/frontend/config.json and app/server/config.json
  * for a specific environment: development, test and production
  */
-var generateConfig = function(environment, options, callback) {
-    console.log('configuring the project for the '.blue+environment.bold.blue+' environment...'.blue);
+// var generateConfig = function(environment, options, callback) {
+//     console.log('configuring the project for the '.blue+environment.bold.blue+' environment...'.blue);
 
-    var _generateConfigFor = function(name, cb) {
+//     var _generateConfigFor = function(name, cb) {
 
-        var configFile = require(path.resolve('./config/'+name+'.config'));
-        var envConf;
-        for (var key in configFile) {
-            if (_.str.startsWith(key, environment)) {
-                envConf = configFile[key];
-            }
-        }
+//         var configFile = require(path.resolve('./config/'+name+'.config'));
+//         var envConf;
+//         for (var key in configFile) {
+//             if (_.str.startsWith(key, environment)) {
+//                 envConf = configFile[key];
+//             }
+//         }
 
-        var config;
-        if (envConf) {
-            config = merge(configFile, envConf);
-        } else {
-            config = configFile;
-        }
+//         var config;
+//         if (envConf) {
+//             config = merge(configFile, envConf);
+//         } else {
+//             config = configFile;
+//         }
 
-        ['test', 'production', 'development'].forEach(function(env) {
-            delete config[env];
-        });
+//         ['test', 'production', 'development'].forEach(function(env) {
+//             delete config[env];
+//         });
 
-        var flattenedConfig = flat.flatten(config);
-        for (var flatkey in flattenedConfig) {
-            if (flattenedConfig[flatkey] === undefined) {
-                delete flattenedConfig[flatkey];
-            }
-        }
-        config = flat.unflatten(flattenedConfig);
+//         var flattenedConfig = flat.flatten(config);
+//         for (var flatkey in flattenedConfig) {
+//             if (flattenedConfig[flatkey] === undefined) {
+//                 delete flattenedConfig[flatkey];
+//             }
+//         }
+//         config = flat.unflatten(flattenedConfig);
 
-        config.environment = environment;
-        fs.writeFile('./app/'+name+'/config.json', JSON.stringify(config, null, 4), function(err) {
-            if (cb) {
-                if(err) {
-                    console.log(err);
-                    return cb(err);
-                } else {
-                    console.log(name+" config file saved in app/"+name+"/config.json");
-                    return cb(null);
-                }
-            }
-        });
-    };
+//         config.environment = environment;
+//         fs.writeFile('./app/'+name+'/config.json', JSON.stringify(config, null, 4), function(err) {
+//             if (cb) {
+//                 if(err) {
+//                     console.log(err);
+//                     return cb(err);
+//                 } else {
+//                     console.log(name+" config file saved in app/"+name+"/config.json");
+//                     return cb(null);
+//                 }
+//             }
+//         });
+//     };
 
-    async.every(['server', 'frontend'], _generateConfigFor, function(err, results) {
-        if (callback) {
-            if (err) {return callback(err);}
-            return callback(null, results);
-        }
-    });
-};
+//     async.every(['server', 'frontend'], _generateConfigFor, function(err, results) {
+//         if (callback) {
+//             if (err) {return callback(err);}
+//             return callback(null, results);
+//         }
+//     });
+// };
 
 
 var buildApp = function(options, callback) {

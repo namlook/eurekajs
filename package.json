@@ -10,7 +10,8 @@
     "coverage": "npm run build && mocha -r blanket -R html-cov test/*Test.js > coverage.html && open coverage.html"
   },
   "bin": {
-    "eureka": "bin/eureka.js"
+    "eureka": "bin/eureka.js",
+    "eureka-config": "bin/eureka-config.js"
   },
   "config": {
     "blanket": {
