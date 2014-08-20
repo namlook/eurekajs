@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "description": "{{description}}",
   "scripts": {
-    "postinstall": "./node_modules/eurekapi/node_modules/.bin/eureka postinstall",
-    "build": "./node_modules/eurekapi/node_modules/.bin/eureka build",
-    "build-templates": "./node_modules/eurekapi/node_modules/.bin/eureka build-templates",
+    "postinstall": "./node_modules/.bin/eureka postinstall",
+    "build": "./node_modules/.bin/eureka build",
+    "build-templates": "./node_modules/.bin/eureka build-templates",
     "drop-data": "isql exec=\"SPARQL CLEAR GRAPH '{{projectURI}}'\"",
     "data-import": "isql exec=\"DB.DBA.TTLP (file_to_string_output ('/tmp/data.ttl'), '', '{{projectURI}}');\"",
     "test": "echo \"Error: no test specified\" && exit 1",
