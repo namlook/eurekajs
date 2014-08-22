@@ -14,7 +14,7 @@ _.str = require('underscore.string');
  * generate the app/frontend/config.json and app/server/config.json
  * for a specific environment: development, test and production
  */
-var generateConfig = function(_environment, options, callback) {
+var generateConfig = module.exports =function(_environment, options, callback) {
 
     var environmentAvailable = ['test', 'production', 'development'];
     var environment = null;
@@ -37,7 +37,7 @@ var generateConfig = function(_environment, options, callback) {
         var envConf;
         for (var env in configFile) {
             if (env === environment) {
-                envConf = configFile[key];
+                envConf = configFile[env];
             }
         }
 

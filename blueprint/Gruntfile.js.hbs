@@ -1,0 +1,15 @@
+module.exports = function(grunt) {
+
+    // loading eureka tasks
+    require('eurekapi/grunt-tasks')(grunt, require('./config/vendors-list'));
+
+    grunt.extendConfig({
+        /** insert your configs here **/
+    });
+
+    /** insert your tasks below **/
+    grunt.registerTask('build', ['eureka:setenv-development', 'eureka:clean', 'eureka:configure', 'eureka:build']);
+    grunt.registerTask('build-template', ['eureka:build-template']);
+    grunt.registerTask('dist', ['eureka:setenv-production', 'eureka:clean', 'eureka:configure', 'eureka:dist']);
+    grunt.registerTask('live', ['eureka:live']); // TODO ['build', 'eureka:live']
+};

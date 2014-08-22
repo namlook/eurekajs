@@ -12,7 +12,14 @@ var flat = require('flat');
 var async = require('async');
 var colors = require('colors');
 var rmdir = require('rimraf');
+var _generateConfig = require('./eureka-config');
 
+var generateConfig = function(environment, options, callback) {
+    if (!environment) {
+        environment = process.env.NODE_ENV||'development';
+    }
+    _generateConfig(environment, options, callback);
+};
 
 var execCmd = function(cmd, callback) {
 
@@ -140,14 +147,16 @@ var initCommand = function(projectName, author, options, callback) {
 
     // generate blueprint templates
     var blueprints = [
-        {targetPath: 'config/server.config.js', fileName: 'server.config.js.hbs'},
-        {targetPath: 'app/server/index.js', fileName: 'server.index.js.hbs'},
-        {targetPath: 'config/frontend.config.js', fileName: 'frontend.config.js.hbs'},
-        {targetPath: 'app/frontend/index.js', fileName: 'frontend.index.js.hbs'},
         {targetPath: 'package.json', fileName: 'package.json.hbs'},
         {targetPath: 'bower.json', fileName: 'bower.json.hbs'},
-        {targetPath: 'public/index.html', fileName: 'public.index.html.hbs'},
-        {targetPath: 'app/schemas.js', fileName: 'schemas.js.hbs'}
+        {targetPath: 'Gruntfile.js', fileName: 'Gruntfile.js.hbs'},
+        {targetPath: 'config/vendors-list.js', fileName: 'config.vendors-list.js.hbs'},
+        {targetPath: 'config/server.config.js', fileName: 'server.config.js.hbs'},
+        {targetPath: 'config/frontend.config.js', fileName: 'frontend.config.js.hbs'},
+        {targetPath: 'app/server/index.js', fileName: 'server.index.js.hbs'},
+        {targetPath: 'app/frontend/index.js', fileName: 'frontend.index.js.hbs'},
+        {targetPath: 'app/schemas.js', fileName: 'schemas.js.hbs'},
+        {targetPath: 'app/index.html', fileName: 'index.html.hbs'}
     ];
 
     blueprints.forEach(function(blueprint) {
@@ -225,66 +234,6 @@ var postInstallCommand = function(options, callback) {
         });
     });
 };
-
-
-/*
- * generate the app/frontend/config.json and app/server/config.json
- * for a specific environment: development, test and production
- */
-// var generateConfig = function(environment, options, callback) {
-//     console.log('configuring the project for the '.blue+environment.bold.blue+' environment...'.blue);
-
-//     var _generateConfigFor = function(name, cb) {
-
-//         var configFile = require(path.resolve('./config/'+name+'.config'));
-//         var envConf;
-//         for (var key in configFile) {
-//             if (_.str.startsWith(key, environment)) {
-//                 envConf = configFile[key];
-//             }
-//         }
-
-//         var config;
-//         if (envConf) {
-//             config = merge(configFile, envConf);
-//         } else {
-//             config = configFile;
-//         }
-
-//         ['test', 'production', 'development'].forEach(function(env) {
-//             delete config[env];
-//         });
-
-//         var flattenedConfig = flat.flatten(config);
-//         for (var flatkey in flattenedConfig) {
-//             if (flattenedConfig[flatkey] === undefined) {
-//                 delete flattenedConfig[flatkey];
-//             }
-//         }
-//         config = flat.unflatten(flattenedConfig);
-
-//         config.environment = environment;
-//         fs.writeFile('./app/'+name+'/config.json', JSON.stringify(config, null, 4), function(err) {
-//             if (cb) {
-//                 if(err) {
-//                     console.log(err);
-//                     return cb(err);
-//                 } else {
-//                     console.log(name+" config file saved in app/"+name+"/config.json");
-//                     return cb(null);
-//                 }
-//             }
-//         });
-//     };
-
-//     async.every(['server', 'frontend'], _generateConfigFor, function(err, results) {
-//         if (callback) {
-//             if (err) {return callback(err);}
-//             return callback(null, results);
-//         }
-//     });
-// };
-
 
 var buildApp = function(options, callback) {
     var browserifyBin = path.resolve('./node_modules/eurekapi/node_modules/.bin/browserify');
@@ -445,22 +394,22 @@ program
   .option('--no-install', "don't install the project after init")
   .action(initCommand);
 
-program
-  .command('install')
-  .description('install the project and its dependencies')
-  .option('--env <environment>', 'build the project for a specific environment (will generate a config for the environment)', process.env.NODE_ENV||'development')
-  .action(installCommand);
+// program
+//   .command('install')
+//   .description('install the project and its dependencies')
+//   .option('--env <environment>', 'build the project for a specific environment (will generate a config for the environment)', process.env.NODE_ENV||'development')
+//   .action(installCommand);
 
-program
-  .command('build')
-  .description('build the project')
-  .option('--env <environment>', 'build the project for a specific environment (will generate a config for the environment)', process.env.NODE_ENV||'development')
-  .action(buildCommand);
+// program
+//   .command('build')
+//   .description('build the project')
+//   .option('--env <environment>', 'build the project for a specific environment (will generate a config for the environment)', process.env.NODE_ENV||'development')
+//   .action(buildCommand);
 
-program
-  .command('build-template')
-  .description('pre-compile the templates')
-  .action(buildTemplatesCommand);
+// program
+//   .command('build-template')
+//   .description('pre-compile the templates')
+//   .action(buildTemplatesCommand);
 
 program
   .command('dockerize <organization>')
@@ -470,10 +419,16 @@ program
   .action(dockerizeCommand);
 
 program
-  .command('postinstall')
-  .description('install bower dependencies and build the project')
-  .option('--env <environment>', 'build the project for a specific environment (will generate a config for the environment)', process.env.NODE_ENV||'development')
-  .action(postInstallCommand);
+  .command('config [environment]')
+  .description('generate configuration files for a specific environment')
+  .action(generateConfig);
+
+
+// program
+//   .command('postinstall')
+//   .description('install bower dependencies and build the project')
+//   .option('--env <environment>', 'build the project for a specific environment (will generate a config for the environment)', process.env.NODE_ENV||'development')
+//   .action(postInstallCommand);
 
 program.parse(process.argv);
 

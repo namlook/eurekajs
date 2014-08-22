@@ -10,8 +10,7 @@
     "coverage": "npm run build && mocha -r blanket -R html-cov test/*Test.js > coverage.html && open coverage.html"
   },
   "bin": {
-    "eureka": "bin/eureka.js",
-    "eureka-config": "bin/eureka-config.js"
+    "eureka": "bin/eureka.js"
   },
   "config": {
     "blanket": {
@@ -31,14 +30,12 @@
     "commander": "~2.2.0",
     "handlebars": "~2.0.0-alpha.2",
     "cors": "~2.3.1",
-    "bower": "1.3.x",
-    "ember-precompile": "~0.2.4",
-    "browserify": "~3.33.0",
     "flat": "^1.2.1",
     "deepmerge": "^0.2.7",
     "async": "^0.9.0",
     "colors": "^0.6.2",
-    "rimraf": "^2.2.8"
+    "rimraf": "^2.2.8",
+    "jit-grunt": "^0.8.0"
   },
   "devDependencies": {
     "mocha": "~1.19.0",
