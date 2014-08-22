@@ -161,5 +161,6 @@ module.exports = function(grunt, vendorFiles){
     grunt.registerTask('eureka:dist', ['eureka:build', 'uglify']);
     grunt.registerTask('eureka:live', ['concurrent']);
     grunt.registerTask('eureka:install', ['bower-install-simple', 'eureka:configure', 'eureka:build']);
+    grunt.registerTask('build', ['eureka:build']);
 };
 
