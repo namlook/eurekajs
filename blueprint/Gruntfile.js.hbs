@@ -5,10 +5,22 @@ module.exports = function(grunt) {
 
     grunt.extendConfig({
         /** insert your configs here **/
+
+        // the following example will notify when the project is built
+        // you can safely remove this task if you don't want it
+        pkg: grunt.file.readJSON('package.json'),
+        notify: {
+            build: {
+                options: {
+                    title: '<%= pkg.name %>',
+                    message: 'project build with success',
+                }
+            }
+        }
     });
 
     /** insert your tasks below **/
-    grunt.registerTask('build', ['eureka:setenv-development', 'eureka:clean', 'eureka:configure', 'eureka:build']);
+    grunt.registerTask('build', ['eureka:setenv-development', 'eureka:clean', 'eureka:configure', 'eureka:build', 'notify:build']);
     grunt.registerTask('build-template', ['eureka:build-template']);
     grunt.registerTask('dist', ['eureka:setenv-production', 'eureka:clean', 'eureka:configure', 'eureka:dist']);
     grunt.registerTask('live', ['eureka:live']); // TODO ['build', 'eureka:live']
