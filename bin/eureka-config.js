@@ -33,7 +33,7 @@ var generateConfig = module.exports =function(_environment, options, callback) {
 
     var _generateConfigFor = function(name, cb) {
 
-        var configFile = require(path.resolve('./config/'+name+'.config'));
+        var configFile = require(path.resolve('./config/'+name));
         var envConf;
         for (var env in configFile) {
             if (env === environment) {
