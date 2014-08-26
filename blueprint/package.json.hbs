@@ -10,6 +10,7 @@
     "drop-data": "isql exec=\"SPARQL CLEAR GRAPH '{{projectURI}}'\"",
     "data-import": "isql exec=\"DB.DBA.TTLP (file_to_string_output ('/tmp/data.ttl'), '', '{{projectURI}}');\"",
     "live": "npm run build && ./node_modules/.bin/grunt live",
+    "test-server": "(NODE_ENV=test && npm run live)",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app/server"
   },
