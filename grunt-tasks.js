@@ -75,15 +75,13 @@ module.exports = function(grunt, vendorFiles){
             }
         },
 
-        // // generate configuration files for a specific environement (see NODE_ENV)
-        // copy: {
-        //     "config": {
-        //         files: [
-        //             {nonull: true, src: 'config/frontend/'+environment+'.js', dest: 'config/frontend.config.js', filter:'isFile'},
-        //             {nonull: true, src: 'config/server/'+environment+'.js', dest: 'config/server.config.js'},
-        //         ]
-        //     }
-        // },
+        copy: {
+            "assets": {
+                files: [
+                    {nonull: true, cwd: 'app', src: 'assets/**/*', dest: 'public', expand: true},
+                ]
+            }
+        },
 
         // build templates into public/templates
         emberTemplates: {
@@ -138,7 +136,7 @@ module.exports = function(grunt, vendorFiles){
         // watch assets and server
         watch: {
             'default': {
-                files: ['app/**/*', 'config/**/*'],
+                files: ['app/**/*', 'config/**/*'].concat(vendorFiles.js).concat(vendorFiles.css),
                 tasks: ['build'],
             }
         },
@@ -196,7 +194,7 @@ module.exports = function(grunt, vendorFiles){
     grunt.registerTask('eureka:clean', ['clean']);
     grunt.registerTask('eureka:configure', ['attention:environment', 'symlink:config']);
     grunt.registerTask('eureka:build-templates', ['emberTemplates']);
-    grunt.registerTask('eureka:_build', ['eureka:clean', 'eureka:configure' , 'preprocess', 'symlink:bower_components', 'concat', 'cssmin', 'browserify', 'eureka:build-templates']);
+    grunt.registerTask('eureka:_build', ['eureka:clean', 'eureka:configure' , 'preprocess', 'symlink:bower_components', 'concat', 'cssmin', 'browserify', 'copy:assets', 'eureka:build-templates']);
     grunt.registerTask('eureka:build-test', ['eureka:_build']);
     grunt.registerTask('eureka:build', ['eureka:_build', 'attention:build-success']);
     grunt.registerTask('eureka:dist', ['eureka:_build', 'uglify', 'attention:build-success']);
