@@ -13,6 +13,7 @@ var async = require('async');
 var colors = require('colors');
 var rmdir = require('rimraf');
 var _generateConfig = require('./eureka-config');
+var readlineSync = require('readline-sync');
 
 var generateConfig = function(environment, options, callback) {
     if (!environment) {
@@ -83,9 +84,21 @@ var generateBlueprint = function(targetPath, fileName, options) {
 
     // writing templates
     var isFileExists = fs.existsSync(targetPath);
-    if (!isFileExists || isFileExists && options.force) {
-        console.log('writing', targetPath);
-        fs.writeFileSync(targetPath, content, {encoding: 'utf8'});
+    if (!isFileExists || isFileExists) {
+        overwrite = false;
+        if (options.force) {
+            overwrite = true;
+        }
+        if (!options.force) {
+            var answer = readlineSync.question('Overwrite '+targetPath+'? (N/y): ');
+            if (answer.toLowerCase() === 'y') {
+                overwrite = true;
+            }
+        }
+        if (overwrite) {
+            console.log('writing', targetPath);
+            fs.writeFileSync(targetPath, content, {encoding: 'utf8'});
+        }
     } else {
         console.log(targetPath, 'already exits, skipping...'.yellow);
     }
@@ -113,6 +126,7 @@ var newCommand = function(projectName, author, options) {
     fs.mkdirSync(projectDirectoryPath);
     process.chdir(projectDirectoryPath);
 
+    options.force = true;
     initCommand(projectName, author, options, function(err) {
         if (err) {return console.log(err);}
         var message = '\nNow "cd '+dasherize(projectName)+'" and "npm start" to launch the server';
@@ -132,7 +146,7 @@ var initCommand = function(projectName, author, options, callback) {
     options.author = author;
 
     // building skeleton directories
-    dirPaths = ['app', 'app/server', 'app/frontend', 'public', 'public/css', 'config'];
+    dirPaths = ['app', 'app/server', 'app/frontend', 'config'];
 
     dirPaths.forEach(function(dirpath){
         if (!fs.existsSync(dirpath)) {
@@ -141,8 +155,8 @@ var initCommand = function(projectName, author, options, callback) {
     });
 
     // create empty file for /public/css/style.css and /public/templates.js
-    fs.writeFileSync('public/css/style.css', '', {encoding: 'utf8'});
-    fs.writeFileSync('public/templates.js', '', {encoding: 'utf8'});
+    // fs.writeFileSync('public/css/style.css', '', {encoding: 'utf8'});
+    // fs.writeFileSync('public/templates.js', '', {encoding: 'utf8'});
 
 
     // generate blueprint templates
@@ -156,6 +170,7 @@ var initCommand = function(projectName, author, options, callback) {
         {targetPath: 'app/server/index.js', fileName: 'server.index.js.hbs'},
         {targetPath: 'app/frontend/index.js', fileName: 'frontend.index.js.hbs'},
         {targetPath: 'app/schemas.js', fileName: 'schemas.js.hbs'},
+        {targetPath: 'app/app.css', fileName: 'app.css.hbs'},
         {targetPath: 'app/index.html', fileName: 'index.html.hbs'}
     ];
 
@@ -164,7 +179,6 @@ var initCommand = function(projectName, author, options, callback) {
     });
 
     var finishMessage = '\nNow "npm start" to launch the server\nHave fun !'.green.bold;
-
     if (options.install) {
         installCommand(options, function(err) {
             if (callback) {
@@ -391,7 +405,7 @@ program
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
   .option('-l, --license <license>', 'the license of the project (default to "MIT")', 'MIT')
   .option('-f, --force', 'force overwriting files')
-  .option('--no-install', "don't install the project after init")
+  .option('--install', "install the project after init")
   .action(initCommand);
 
 // program

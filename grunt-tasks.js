@@ -1,5 +1,8 @@
 
 module.exports = function(grunt, vendorFiles){
+    var environment = process.env.NODE_ENV || 'development';
+    environment = environment.toLowerCase();
+
     var config = {
 
         env : {
@@ -9,6 +12,9 @@ module.exports = function(grunt, vendorFiles){
 
             prod : {
                 NODE_ENV : 'production'
+            },
+            test: {
+                NODE_ENV: 'test'
             }
         },
 
@@ -21,10 +27,7 @@ module.exports = function(grunt, vendorFiles){
 
         clean: {
             'default': [
-                'app/frontend/config.json',
-                'app/server/config.json',
-                'public',
-                '.reboot-server'
+                'public'
             ]
         },
 
@@ -36,13 +39,16 @@ module.exports = function(grunt, vendorFiles){
             },
             "default": {
                 options: {
-                    production: process.env.NODE_ENV === 'production'
+                    production: environment === 'production'
                 }
             }
         },
 
         // build the application with browserify
         browserify: {
+            options: {
+                transform: ['envify']
+            },
             'default': {
                 src: ['app/frontend/index.js'],
                 dest: 'public/app.js'
@@ -55,20 +61,29 @@ module.exports = function(grunt, vendorFiles){
         // link bower_components in public
         symlink: {
             options: {
-                overwrite: false
+                overwrite: true
             },
-            'default': {
+            'bower_components': {
                 src: 'bower_components',
                 dest: 'public/bower_components'
+            },
+            "config": {
+                files: [
+                    {src: 'config/frontend/'+environment+'.js', dest: 'config/frontend/index.js'},
+                    {src: 'config/server/'+environment+'.js', dest: 'config/server/index.js'}
+                ]
             }
         },
 
-        // generate configuration files for a specific environement (see NODE_ENV)
-        shell: {
-            "eureka-config": {
-                command: './node_modules/.bin/eureka config'
-            }
-        },
+        // // generate configuration files for a specific environement (see NODE_ENV)
+        // copy: {
+        //     "config": {
+        //         files: [
+        //             {nonull: true, src: 'config/frontend/'+environment+'.js', dest: 'config/frontend.config.js', filter:'isFile'},
+        //             {nonull: true, src: 'config/server/'+environment+'.js', dest: 'config/server.config.js'},
+        //         ]
+        //     }
+        // },
 
         // build templates into public/templates
         emberTemplates: {
@@ -100,8 +115,8 @@ module.exports = function(grunt, vendorFiles){
                     mangle: false
                 },
                 files: {
-                    'public/app.min.js': ['public/app.js'],
                     'public/vendors.min.js': ['public/vendors.js'],
+                    'public/app.min.js': ['public/app.js'],
                     'public/templates.min.js': ['public/templates.js']
                 }
             }
@@ -114,8 +129,8 @@ module.exports = function(grunt, vendorFiles){
                     target: './public'
                 },
                 files: {
-                    'public/app.min.css': 'app/styles/app.css',
-                    'public/vendors.min.css': vendorFiles.css
+                    'public/vendors.min.css': vendorFiles.css,
+                    'public/app.min.css': 'app/app.css'
                 }
             }
         },
@@ -145,6 +160,23 @@ module.exports = function(grunt, vendorFiles){
                 },
                 tasks: ['nodemon', 'watch']
             }
+        },
+
+        attention: {
+            'environment': {
+                options: {
+                    message: 'Building for the *'+environment+'* environment\n',
+                    border: 'comment',
+                    borderColor: 'gray'
+                }
+            },
+            'build-success': {
+                options: {
+                    message: 'Built with success!\n\nTo start the server, type\n *$ npm start*',
+                    border: 'comment',
+                    borderColor: 'gray'
+                }
+            }
         }
     };
 
@@ -154,13 +186,16 @@ module.exports = function(grunt, vendorFiles){
 
     grunt.registerTask('eureka:setenv-development', ['env:dev']);
     grunt.registerTask('eureka:setenv-production', ['env:prod']);
+    grunt.registerTask('eureka:setenv-test', ['env:test']);
     grunt.registerTask('eureka:clean', ['clean']);
-    grunt.registerTask('eureka:configure', ['shell:eureka-config']);
-    grunt.registerTask('eureka:build', ['preprocess', 'symlink', 'concat', 'cssmin', 'browserify', 'eureka:build-templates']);
+    grunt.registerTask('eureka:configure', ['attention:environment', 'symlink:config']);
     grunt.registerTask('eureka:build-templates', ['emberTemplates']);
-    grunt.registerTask('eureka:dist', ['eureka:build', 'uglify']);
+    grunt.registerTask('eureka:_build', ['eureka:clean', 'eureka:configure' , 'preprocess', 'symlink:bower_components', 'concat', 'cssmin', 'browserify', 'eureka:build-templates']);
+    grunt.registerTask('eureka:build', ['eureka:_build', 'attention:build-success']);
+    grunt.registerTask('eureka:dist', ['eureka:_build', 'uglify', 'attention:build-success']);
     grunt.registerTask('eureka:live', ['concurrent']);
     grunt.registerTask('eureka:install', ['bower-install-simple', 'eureka:configure', 'eureka:build']);
     grunt.registerTask('build', ['eureka:build']);
 };
+
 
