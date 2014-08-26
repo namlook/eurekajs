@@ -146,7 +146,7 @@ var initCommand = function(projectName, author, options, callback) {
     options.author = author;
 
     // building skeleton directories
-    dirPaths = ['app', 'app/server', 'app/frontend', 'config'];
+    dirPaths = ['app', 'app/server', 'app/frontend', 'config', 'config/server', 'config/frontend'];
 
     dirPaths.forEach(function(dirpath){
         if (!fs.existsSync(dirpath)) {
@@ -165,13 +165,19 @@ var initCommand = function(projectName, author, options, callback) {
         {targetPath: 'bower.json', fileName: 'bower.json.hbs'},
         {targetPath: 'Gruntfile.js', fileName: 'Gruntfile.js.hbs'},
         {targetPath: 'config/vendors-list.js', fileName: 'config.vendors-list.js.hbs'},
-        {targetPath: 'config/server.js', fileName: 'config.server.js.hbs'},
-        {targetPath: 'config/frontend.js', fileName: 'config.frontend.js.hbs'},
-        {targetPath: 'app/server/index.js', fileName: 'server.index.js.hbs'},
-        {targetPath: 'app/frontend/index.js', fileName: 'frontend.index.js.hbs'},
+        {targetPath: 'config/server/server.js', fileName: 'config.server.server.js.hbs'},
+        {targetPath: 'config/server/development.js', fileName: 'config.server.development.js.hbs'},
+        {targetPath: 'config/server/test.js', fileName: 'config.server.test.js.hbs'},
+        {targetPath: 'config/server/production.js', fileName: 'config.server.production.js.hbs'},
+        {targetPath: 'config/frontend/frontend.js', fileName: 'config.frontend.frontend.js.hbs'},
+        {targetPath: 'config/frontend/development.js', fileName: 'config.frontend.development.js.hbs'},
+        {targetPath: 'config/frontend/test.js', fileName: 'config.frontend.test.js.hbs'},
+        {targetPath: 'config/frontend/production.js', fileName: 'config.frontend.production.js.hbs'},
+        {targetPath: 'app/server/index.js', fileName: 'app.server.index.js.hbs'},
+        {targetPath: 'app/frontend/index.js', fileName: 'app.frontend.index.js.hbs'},
         {targetPath: 'app/schemas.js', fileName: 'schemas.js.hbs'},
         {targetPath: 'app/app.css', fileName: 'app.css.hbs'},
-        {targetPath: 'app/index.html', fileName: 'index.html.hbs'}
+        {targetPath: 'app/index.html', fileName: 'app.index.html.hbs'}
     ];
 
     blueprints.forEach(function(blueprint) {
