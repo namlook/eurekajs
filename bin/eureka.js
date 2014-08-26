@@ -161,6 +161,7 @@ var initCommand = function(projectName, author, options, callback) {
 
     // generate blueprint templates
     var blueprints = [
+        {targetPath: '.gitignore', fileName: 'gitignore.hbs'},
         {targetPath: 'package.json', fileName: 'package.json.hbs'},
         {targetPath: 'bower.json', fileName: 'bower.json.hbs'},
         {targetPath: 'Gruntfile.js', fileName: 'Gruntfile.js.hbs'},
