@@ -138,7 +138,7 @@ module.exports = function(grunt, vendorFiles){
         // watch assets and server
         watch: {
             'default': {
-                files: ['app/**/*', '!app/*/config.json'],
+                files: ['app/**/*', 'config/**/*'],
                 tasks: ['build'],
             }
         },
@@ -191,6 +191,7 @@ module.exports = function(grunt, vendorFiles){
     grunt.registerTask('eureka:configure', ['attention:environment', 'symlink:config']);
     grunt.registerTask('eureka:build-templates', ['emberTemplates']);
     grunt.registerTask('eureka:_build', ['eureka:clean', 'eureka:configure' , 'preprocess', 'symlink:bower_components', 'concat', 'cssmin', 'browserify', 'eureka:build-templates']);
+    grunt.registerTask('eureka:build-test', ['eureka:_build']);
     grunt.registerTask('eureka:build', ['eureka:_build', 'attention:build-success']);
     grunt.registerTask('eureka:dist', ['eureka:_build', 'uglify', 'attention:build-success']);
     grunt.registerTask('eureka:live', ['concurrent']);
