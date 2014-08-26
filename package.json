@@ -36,7 +36,8 @@
     "colors": "^0.6.2",
     "rimraf": "^2.2.8",
     "jit-grunt": "^0.8.0",
-    "readline-sync": "^0.4.7"
+    "readline-sync": "^0.4.7",
+    "git-config": "0.0.6"
   },
   "devDependencies": {
     "mocha": "~1.19.0",

@@ -14,6 +14,7 @@ var colors = require('colors');
 var rmdir = require('rimraf');
 var _generateConfig = require('./eureka-config');
 var readlineSync = require('readline-sync');
+var gitConfig = require('git-config');
 
 var generateConfig = function(environment, options, callback) {
     if (!environment) {
@@ -84,8 +85,8 @@ var generateBlueprint = function(targetPath, fileName, options) {
 
     // writing templates
     var isFileExists = fs.existsSync(targetPath);
-    if (!isFileExists || isFileExists) {
-        overwrite = false;
+    overwrite = false;
+    if (isFileExists) {
         if (options.force) {
             overwrite = true;
         }
@@ -95,12 +96,10 @@ var generateBlueprint = function(targetPath, fileName, options) {
                 overwrite = true;
             }
         }
-        if (overwrite) {
-            console.log('writing', targetPath);
-            fs.writeFileSync(targetPath, content, {encoding: 'utf8'});
-        }
-    } else {
-        console.log(targetPath, 'already exits, skipping...'.yellow);
+    }
+    if (!isFileExists || overwrite) {
+        console.log('writing', targetPath);
+        fs.writeFileSync(targetPath, content, {encoding: 'utf8'});
     }
 };
 
@@ -137,13 +136,23 @@ var newCommand = function(projectName, author, options) {
 };
 
 
-var initCommand = function(projectName, author, options, callback) {
+var initCommand = function(projectName, options, callback) {
     if (options.uri === undefined) {
         options.uri = 'http://'+projectName.toLowerCase()+'.com';
     }
     options.testUri = 'http://'+options.uri.slice(7);
     options.projectName = projectName;
-    options.author = author;
+    if (!options.author) {
+        var config = gitConfig.sync();
+        var author = '';
+        if (config.user.name) {
+            author = config.user.name;
+        }
+        if (config.user.email) {
+            author += ' <'+config.user.email+'>';
+        }
+        options.author = author;
+    }
 
     // building skeleton directories
     dirPaths = ['app', 'app/server', 'app/frontend', 'config', 'config/server', 'config/frontend'];
@@ -154,17 +163,13 @@ var initCommand = function(projectName, author, options, callback) {
         }
     });
 
-    // create empty file for /public/css/style.css and /public/templates.js
-    // fs.writeFileSync('public/css/style.css', '', {encoding: 'utf8'});
-    // fs.writeFileSync('public/templates.js', '', {encoding: 'utf8'});
-
-
     // generate blueprint templates
     var blueprints = [
         {targetPath: '.gitignore', fileName: 'gitignore.hbs'},
         {targetPath: 'package.json', fileName: 'package.json.hbs'},
         {targetPath: 'bower.json', fileName: 'bower.json.hbs'},
         {targetPath: 'Gruntfile.js', fileName: 'Gruntfile.js.hbs'},
+        {targetPath: 'karma.conf.js', fileName: 'karma.conf.js.hbs'},
         {targetPath: 'config/vendors-list.js', fileName: 'config.vendors-list.js.hbs'},
         {targetPath: 'config/server/server.js', fileName: 'config.server.server.js.hbs'},
         {targetPath: 'config/server/development.js', fileName: 'config.server.development.js.hbs'},
@@ -392,10 +397,11 @@ program
   .usage("[command] [options]\n\n  Command-Specific Help\n\n    eureka [command] --help");
 
 program
-  .command('new <projectName> <author>')
+  .command('new <projectName>')
   .description('init the project in a new directory and install it')
-  .usage('<projectName> <author> [options]')
-  .option('-d, --desc <description>', 'the description of the project', '')
+  .usage('<projectName> [options]')
+  .option('-a, --author <author>', 'the author of the project')
+  .option('-d, --description <description>', 'the description of the project', '')
   .option('-u, --uri <projectURI>', 'the uri of the project (ex: http://<projectName>.com)')
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
   .option('-l, --license <license>', 'the license of the project (default to "MIT")', 'MIT')
@@ -404,10 +410,11 @@ program
   .action(newCommand);
 
 program
-  .command('init <projectName> <author>')
+  .command('init <projectName>')
   .description('generate the base structure of the application in the current directory and install it')
-  .usage('<projectName> <author> [options]')
-  .option('-d, --desc <description>', 'the description of the project', '')
+  .usage('<projectName> [options]')
+  .option('-a, --author <author>', 'the author of the project')
+  .option('-d, --description <description>', 'the description of the project', '')
   .option('-u, --uri <projectURI>', 'the uri of the project (ex: http://<projectName>.com)')
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
   .option('-l, --license <license>', 'the license of the project (default to "MIT")', 'MIT')
