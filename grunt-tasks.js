@@ -162,6 +162,12 @@ module.exports = function(grunt, vendorFiles){
             }
         },
 
+        karma: {
+            unit: {
+                configFile: 'karma.conf.js'
+            }
+        },
+
         attention: {
             'environment': {
                 options: {
@@ -195,6 +201,7 @@ module.exports = function(grunt, vendorFiles){
     grunt.registerTask('eureka:build', ['eureka:_build', 'attention:build-success']);
     grunt.registerTask('eureka:dist', ['eureka:_build', 'uglify', 'attention:build-success']);
     grunt.registerTask('eureka:live', ['concurrent']);
+    grunt.registerTask('eureka:test', ['karma']);
     grunt.registerTask('eureka:install', ['bower-install-simple', 'eureka:configure', 'eureka:build']);
     grunt.registerTask('build', ['eureka:build']);
 };
