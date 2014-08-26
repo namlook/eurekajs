@@ -12,6 +12,7 @@ module.exports = function(grunt) {
     grunt.registerTask('build-test', ['eureka:build']);
     grunt.registerTask('build-production', ['eureka:setenv-production', 'eureka:clean', 'eureka:configure', 'eureka:dist']);
     grunt.registerTask('live', ['eureka:live']); // TODO ['build', 'eureka:live']
+    grunt.registerTask('test', ['eureka:test']);
     grunt.registerTask('build', function(target) {
         var environment = process.env.NODE_ENV || 'development';
         environment = environment.toLowerCase();
