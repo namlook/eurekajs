@@ -7,7 +7,7 @@ var expect = chai.expect;
 
 
 var server = require('./server');
-var Eureka = require('../js');
+var Eureka = require('../lib');
 
 var newServer;
 

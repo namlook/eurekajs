@@ -1,5 +1,5 @@
 
-var Eurekapi = require('../js');
+var Eurekapi = require('../lib');
 
 module.exports = new Eurekapi({
     name: 'Test',
