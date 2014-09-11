@@ -78,6 +78,10 @@ var dasherize = function(string) {
 var generateBlueprint = function(targetPath, fileName, options) {
     var blueprintPath = path.resolve(__dirname, '..', 'blueprint');
 
+    if (options.desc) {
+        options.description = options.desc;
+    }
+
     var templateFilePath = path.resolve(blueprintPath, fileName);
     var templateFile = fs.readFileSync(templateFilePath, {encoding: 'utf8'});
     var template = Handlebars.compile(templateFile);
@@ -104,7 +108,7 @@ var generateBlueprint = function(targetPath, fileName, options) {
 };
 
 
-var newCommand = function(projectName, author, options) {
+var newCommand = function(projectName, options) {
     var projectDirectoryPath = path.resolve(dasherize(projectName));
 
     var projectDirectory;
@@ -126,7 +130,7 @@ var newCommand = function(projectName, author, options) {
     process.chdir(projectDirectoryPath);
 
     options.force = true;
-    initCommand(projectName, author, options, function(err) {
+    initCommand(projectName, options, function(err) {
         if (err) {return console.log(err);}
         var message = '\nNow "cd '+dasherize(projectName)+'" and "npm start" to launch the server';
         console.log(message.bold.green);
@@ -401,7 +405,7 @@ program
   .description('init the project in a new directory and install it')
   .usage('<projectName> [options]')
   .option('-a, --author <author>', 'the author of the project')
-  .option('-d, --description <description>', 'the description of the project', '')
+  .option('-d, --desc <description>', 'the description of the project', '')
   .option('-u, --uri <projectURI>', 'the uri of the project (ex: http://<projectName>.com)')
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
   .option('-l, --license <license>', 'the license of the project (default to "MIT")', 'MIT')
@@ -414,7 +418,7 @@ program
   .description('generate the base structure of the application in the current directory and install it')
   .usage('<projectName> [options]')
   .option('-a, --author <author>', 'the author of the project')
-  .option('-d, --description <description>', 'the description of the project', '')
+  .option('-d, --desc <description>', 'the description of the project', '')
   .option('-u, --uri <projectURI>', 'the uri of the project (ex: http://<projectName>.com)')
   .option('-p, --port <port>', 'the port the server has to use (defaults to 4000)', 4000)
   .option('-l, --license <license>', 'the license of the project (default to "MIT")', 'MIT')

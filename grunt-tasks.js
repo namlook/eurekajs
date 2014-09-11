@@ -78,7 +78,7 @@ module.exports = function(grunt, vendorFiles){
         copy: {
             "assets": {
                 files: [
-                    {nonull: true, cwd: 'app', src: 'assets/**/*', dest: 'public', expand: true},
+                    {cwd: 'app', src: 'assets/**/*', dest: 'public', expand: true},
                 ]
             }
         },
