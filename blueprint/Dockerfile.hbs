@@ -16,7 +16,7 @@
 # $ isql -P abetterpassword -H <virtuoso-container-id> exec='grant SPARQL_UPDATE to "SPARQL";'
 #
 # start {{projectName}}:
-# docker run -d -p <host-port>:{{port}} --link virtuoso:db --name {{dasherizedProjectName}} {{dasherizedProjectName}}:{{version}}
+# docker run -d -p <host-port>:{{port}} --link virtuoso:db --name {{dasherizedProjectName}} {{organisation}}/{{dasherizedProjectName}}:{{version}}
 
 FROM dockerfile/nodejs
 MAINTAINER {{{author}}}
