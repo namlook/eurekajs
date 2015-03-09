@@ -22,15 +22,15 @@ case "$1" in
             ember install:addon eureka-widget-application-navbar
             ember install:addon eureka-widget-collection-display
             ember install:addon eureka-widget-collection-navbar
-            ember install:addon eureka-widget-collection-query
+            # ember install:addon eureka-widget-collection-query
             ember install:addon eureka-widget-model-display
             ember install:addon eureka-widget-model-form
             ember install:addon eureka-widget-model-navbar
             ;;
 
         watch)
-            ./node_modules/eurekapi/node_modules/nodemon/bin/nodemon.js  backend/index.js --watch config &
-            ./node_modules/eurekapi/node_modules/nodemon/bin/nodemon.js  --exec "ember serve --proxy http://localhost:4000" --watch config
+            ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  backend/index.js --watch config &
+            ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  --exec "ember serve --proxy http://localhost:4000" --watch config
             ;;
 
         deploy)
