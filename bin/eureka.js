@@ -365,16 +365,17 @@ var _dockerize = function(organization, options, callback) {
     var projectName = projectPackage.name;
     options.version = projectPackage.version;
     options.author = projectPackage.author;
-    options.port = require(path.resolve('./app/server/config.json')).port;
+    options.port = require(path.resolve('./config/server/production.js')).port;
     options.dasherizedProjectName = dasherize(projectName);
-    options.organization = organization;
+    options.organization = organization.toLowerCase();
 
     // generate Dockerfile from blueprints
     generateBlueprint('Dockerfile', 'Dockerfile.hbs', options);
 
     var imageName = options.organization+'/'+options.dasherizedProjectName+':'+options.version;
-    console.log("docker build --force-rm=true -t "+imageName+" .");
-    spawnCmd('docker', ['build', '--force-rm=true', '-t', imageName, '.'], callback);
+    console.log('Dockerfile generated, now run:');
+    console.log("\n\tdocker build --force-rm=true -t "+imageName+" .\n");
+    // spawnCmd('docker', ['build', '--force-rm=true', '-t', imageName, '.'], callback);
 };
 
 
