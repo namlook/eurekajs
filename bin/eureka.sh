@@ -3,9 +3,15 @@
 
 case "$1" in
         new)
-            ember new $2
+            ember new $2 --skip-npm --skip-bower
             cd $2
             npm uninstall --save-dev ember-data
+
+            ## fixes ember-cli@0.1.15
+            npm uninstall --save-dev glob
+            npm install --save-dev glob@4.4.0
+
+            ember install
 
             ember install:npm eurekajs
 
@@ -14,7 +20,16 @@ case "$1" in
             ember install:addon ember-bootstrap-hurry
             ember install:addon ember-moment
 
+            ## remove files which will be updated by eureka
+            ## so we don't have the prompt asking us to confirm
+            rm app/app.js
+            rm app/templates/application.hbs
+            rm config/environment.js
+
             ember install:addon ember-eureka
+
+            git add app config backend bower.json package.json
+            git commit -m "initialize eureka"
 
             ember install:addon eureka-mixin-actionable-widget
             ember install:addon eureka-mixin-query-parametrable-widget
@@ -23,18 +38,29 @@ case "$1" in
             ember install:addon eureka-widget-collection-display
             ember install:addon eureka-widget-collection-navbar
             # ember install:addon eureka-widget-collection-query
-            ember install:addon eureka-widget-model-display
-            ember install:addon eureka-widget-model-form
             ember install:addon eureka-widget-model-navbar
+            ember install:addon eureka-widget-model-form
+            ember install:addon eureka-widget-model-display
             ;;
 
         watch)
+            PORT=`grep 'port:' config/server.js | cut -d ':' -f 2 | cut -d ',' -f 1|head -n 1|tr -d '[[:space:]]'`
             ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  backend/index.js --watch config &
-            ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  --exec "ember serve --proxy http://localhost:4000" --watch config
+            ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  --exec "ember serve --proxy http://localhost:$PORT" --watch config
+            ;;
+
+        dockerize)
+            VERSION=`grep '"version"' package.json | cut -d '"' -f 4`
+            NAME=`grep '"name"' package.json | cut -d '"' -f 4`
+            docker build --rm -t namlook/$NAME:$VERSION .
             ;;
 
         deploy)
-            echo 'production'
+            VERSION=`grep '"version"' package.json | cut -d '"' -f 4`
+            NAME=`grep '"name"' package.json | cut -d '"' -f 4`
+            docker stop $NAME
+            docker rm $NAME
+            docker run -d -p 4000:4000 --link virtuoso:db --name $NAME namlook/$NAME:$VERSION
             ;;
 
         resource)
