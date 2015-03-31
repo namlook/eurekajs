@@ -67,6 +67,23 @@ case "$1" in
             ember generate eureka-resource $2
             ;;
 
+        drop-data)
+            GRAPHNAME=`grep graph config/server.js | cut -d ':' -f 2- |head -n 1|tr -d '[[:space:]]'|tr -d "'" |tr -d '"'`
+            echo "SPARQL CLEAR GRAPH '$GRAPHNAME'"
+            isql exec="SPARQL CLEAR GRAPH '$GRAPHNAME'"
+            ;;
+
+        import-data)
+            TTLDATA=$2
+            FILENAME=$(basename $2)
+            NAME=`grep '"name"' package.json | cut -d '"' -f 4`
+            echo "coping data to /tmp/$NAME-$FILENAME"
+            cp $TTLDATA /tmp/$NAME-$FILENAME
+            GRAPHNAME=`grep graph config/server.js | cut -d ':' -f 2- |head -n 1|tr -d '[[:space:]]'|tr -d "'" |tr -d '"'`
+            echo "loading data"
+            isql exec="DB.DBA.TTLP (file_to_string_output ('/tmp/$NAME-$FILENAME'), '', '$GRAPHNAME');"
+            ;;
+
         # restart)
         #     stop
         #     start
