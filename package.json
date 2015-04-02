@@ -21,7 +21,7 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
-    "archimedes": "namlook/archimedes",
+    "archimedes": "^0.0.4",
     "async": "^0.9.0",
     "bunyan": "^1.3.4",
     "colors": "^0.6.2",
