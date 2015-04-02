@@ -56,6 +56,9 @@ case "$1" in
 
             if [ -z "$AUTHOR" ]; then echo "\nERROR: no author found in package.json"; exit; fi
 
+            echo "building ember app for production"
+            ember build --env=production &&
+
             DOCKER_IMAGE="$AUTHOR/$NAME:$VERSION"
             DOCKER_PID=`docker ps | grep $DOCKER_IMAGE | cut -d " " -f 1`
 
