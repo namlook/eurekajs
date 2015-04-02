@@ -44,23 +44,39 @@ case "$1" in
             ;;
 
         watch)
-            PORT=`grep 'port:' config/server.js | cut -d ':' -f 2 | cut -d ',' -f 1|head -n 1|tr -d '[[:space:]]'`
+            if [ -z "$EUREKA_SERVER_PORT" ]; then echo "\nERROR: the variable EUREKA_SERVER_PORT is not defined, please set it:\n\t export EUREKA_SERVER_PORT=<port number>\n"; exit; fi
             ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  backend/index.js --watch config &
-            ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  --exec "ember serve --proxy http://localhost:$PORT" --watch config
+            ./node_modules/eurekajs/node_modules/nodemon/bin/nodemon.js  --exec "./node_modules/ember-cli/bin/ember serve --proxy http://localhost:$EUREKA_SERVER_PORT" --watch config
             ;;
 
         dockerize)
             VERSION=`grep '"version"' package.json | cut -d '"' -f 4`
             NAME=`grep '"name"' package.json | cut -d '"' -f 4`
-            docker build --rm -t namlook/$NAME:$VERSION .
+            AUTHOR=`grep '"author"' package.json | cut -d '"' -f 4`
+
+            if [ -z "$AUTHOR" ]; then echo "\nERROR: no author found in package.json"; exit; fi
+
+            DOCKER_IMAGE="$AUTHOR/$NAME:$VERSION"
+            DOCKER_PID=`docker ps | grep $DOCKER_IMAGE | cut -d " " -f 1`
+
+            echo "purging existing $DOCKER_IMAGE..."
+            docker stop $DOCKER_PID && docker rm $DOCKER_PID
+            docker rmi $DOCKER_IMAGE
+
+            echo "building the docker image $DOCKER_IMAGE..."
+            docker build --rm -t $DOCKER_IMAGE .
             ;;
 
         deploy)
             VERSION=`grep '"version"' package.json | cut -d '"' -f 4`
             NAME=`grep '"name"' package.json | cut -d '"' -f 4`
-            docker stop $NAME
-            docker rm $NAME
-            docker run -d -p 4000:4000 --link virtuoso:db --name $NAME namlook/$NAME:$VERSION
+            AUTHOR=`grep '"author"' package.json | cut -d '"' -f 4`
+            if [ -z "$AUTHOR" ]; then echo "\nERROR: no author found in package.json"; exit; fi
+
+            DOCKER_IMAGE="$AUTHOR/$NAME:$VERSION"
+
+            echo "uploading the docker image $DOCKER_IMAGE..."
+            docker push $DOCKER_IMAGE
             ;;
 
         resource)
