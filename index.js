@@ -112,9 +112,14 @@ Server.prototype.registerMiddlewares = function() {
 
     // enable CORS if needed
     if (this.config.enableCORS) {
-        var cors = require('cors');
         this.logger.info("CORS is enabled");
-        this.app.use(cors());
+        var cors = require('cors'); // XXX remove
+        this.app.use(cors()); // TODO replace by below
+        // app.use(function(req, res, next) {
+        //   res.header("Access-Control-Allow-Origin", "*");
+        //   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        //   next();
+        // });
     }
 
     // file handling
