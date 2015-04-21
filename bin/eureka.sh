@@ -8,15 +8,14 @@ case "$1" in
             npm uninstall --save-dev ember-data
 
             ## fixes ember-cli@0.1.15
-            npm uninstall --save-dev glob
-            npm install --save-dev glob@4.4.0
+            # npm uninstall --save-dev glob
+            # npm install --save-dev glob@4.4.0
 
             ember install
 
             ember install:npm eurekajs
 
             ember install:addon ember-typeahead-input
-            ember install:addon ember-dynamic-component
             ember install:addon ember-bootstrap-hurry
             ember install:addon ember-moment
 
@@ -26,21 +25,21 @@ case "$1" in
             rm app/templates/application.hbs
             rm config/environment.js
 
-            ember install:addon ember-eureka
+            ember install:addon namlook/ember-eureka
 
             git add app config backend bower.json package.json
             git commit -m "initialize eureka"
 
-            ember install:addon eureka-mixin-actionable-widget
-            ember install:addon eureka-mixin-query-parametrable-widget
-            ember install:addon eureka-widget-application-menu
-            ember install:addon eureka-widget-application-navbar
-            ember install:addon eureka-widget-collection-display
-            ember install:addon eureka-widget-collection-navbar
-            # ember install:addon eureka-widget-collection-query
-            ember install:addon eureka-widget-model-navbar
-            ember install:addon eureka-widget-model-form
-            ember install:addon eureka-widget-model-display
+            ember install:addon namlook/eureka-mixin-actionable-widget
+            ember install:addon namlook/eureka-mixin-query-parametrable-widget
+            ember install:addon namlook/eureka-widget-application-menu
+            ember install:addon namlook/eureka-widget-application-navbar
+            ember install:addon namlook/eureka-widget-collection-display
+            ember install:addon namlook/eureka-widget-collection-navbar
+            # ember install:addon namlook/eureka-widget-collection-query
+            ember install:addon namlook/eureka-widget-model-navbar
+            ember install:addon namlook/eureka-widget-model-form
+            ember install:addon namlook/eureka-widget-model-display
             ;;
 
         watch)
@@ -56,15 +55,19 @@ case "$1" in
 
             if [ -z "$AUTHOR" ]; then echo "\nERROR: no author found in package.json"; exit; fi
 
-            echo "building ember app for production"
-            ember build --env=production &&
+
+            read -p "Do you want do build the app for production? [y/N] " RESP
+            if [ "$RESP" = "y" ]; then
+                echo "building ember app for production"
+                ember build --env=production
+            fi
 
             DOCKER_IMAGE="$AUTHOR/$NAME:$VERSION"
             DOCKER_PID=`docker ps | grep $DOCKER_IMAGE | cut -d " " -f 1`
 
             echo "purging existing $DOCKER_IMAGE..."
-            docker stop $DOCKER_PID && docker rm $DOCKER_PID
-            docker rmi $DOCKER_IMAGE
+            docker stop $DOCKER_PID 2>/dev/null && docker rm $DOCKER_PID 2>/dev/null
+            docker rmi $DOCKER_IMAGE 2>/dev/null
 
             echo "building the docker image $DOCKER_IMAGE..."
             docker build --rm -t $DOCKER_IMAGE .
@@ -101,6 +104,13 @@ case "$1" in
             GRAPHNAME=`grep graph config/server.js | cut -d ':' -f 2- |head -n 1|tr -d '[[:space:]]'|tr -d "'" |tr -d '"'`
             echo "loading data"
             isql exec="DB.DBA.TTLP (file_to_string_output ('/tmp/$NAME-$FILENAME'), '', '$GRAPHNAME');"
+            ;;
+
+        push-version)
+            VERSION=$2
+            echo "publishing version $VERSION"
+            npm version $2
+            (git push origin master && git push origin --tags) # && npm publish)
             ;;
 
         # restart)
