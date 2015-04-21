@@ -47,7 +47,20 @@ var validateType = function(db, type) {
     return error;
 };
 
-var parseQuery = function(query) {
+/** returns true if the property is a relation **/
+var isRelation = function(schemas, resource, property) {
+    var resourceConfig = schemas[resource].schema;
+    propertyConfig = schemas[resource].properties[property];
+    if (propertyConfig) { // check if the property exists (_id is often not described in schema)
+        var relationType = propertyConfig.type;
+        if (schemas[relationType]) {
+            return true;
+        }
+    }
+    return false;
+};
+
+var parseQuery = function(query, schemas, resource) {
     var results = {
       query: {},
       options: {}
@@ -89,6 +102,17 @@ var parseQuery = function(query) {
                     value = {
                       '$exists': exists
                     };
+                }
+                /** the following allows to query relation without specified _id:
+                 *
+                 *    blog-post?blog._id=theblog -> blog-post?blog=theblog
+                 *
+                 *   TODO: add this into archimedes ?
+                 */
+                if (schemas) {
+                    if (isRelation(schemas, resource, key)) {
+                        key = key+'._id';
+                    }
                 }
             }
             results.query[key] = value;
@@ -196,7 +220,7 @@ engine.find = function(req, res) {
     }
 
     var type = _.str.classify(req.params.type);
-    var _ref = parseQuery(req.query);
+    var _ref = parseQuery(req.query, req.config.schemas, type);  // schemas and type are used for isRelation TODO: refactor
     var query = _ref.query;
     var options = _ref.options;
 
