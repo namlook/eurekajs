@@ -3,6 +3,7 @@
   "version": "0.0.6",
   "description": "",
   "main": "index.js",
+  "repository": "https://github.com/namlook/eurekajs",
   "scripts": {
     "test": "mocha test/*Test.js",
     "coverage": "mocha -r blanket -R html-cov test/*Test.js > coverage.html && open coverage.html"
