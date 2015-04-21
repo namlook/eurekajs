@@ -1,2 +1,2 @@
-eurekapi
-========
+eureka.js
+=========
