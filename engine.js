@@ -150,7 +150,7 @@ engine.count = function(req, res) {
     }
 
     var type = _.str.classify(req.params.type);
-    var _ref = parseQuery(req.query);
+    var _ref = parseQuery(req.query, req.config.schemas, type);  // schemas and type are used for isRelation TODO: refactor
     var options = params2pojo(_ref.options);
     var query = params2pojo(_ref.query);
     return req.db[type].count(query, options, function(err, results) {
@@ -264,7 +264,7 @@ engine.find = function(req, res) {
         if (err) {
             if (err.message != null) {err = err.message; }
             req.logger.error({error: err});
-            return res.json(500, {error: err });
+            return res.json(500, {error: err, query: query, options: options });
         }
         return res.json({
             results: results.map(function(o) {
@@ -304,7 +304,7 @@ engine.facets = function(req, res) {
         delete req.query._aggregation;
     }
 
-    var _ref = parseQuery(req.query);
+    var _ref = parseQuery(req.query, req.config.schemas, type);  // schemas and type are used for isRelation TODO: refactor
     query = params2pojo(_ref.query);
     options = params2pojo(_ref.options);
 
