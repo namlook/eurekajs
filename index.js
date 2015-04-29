@@ -207,6 +207,7 @@ Server.prototype.getDatabase = function() {
     }
 
     var Database = require("archimedes/lib/" + this.config.database.adapter + "/database");
+    this.logger.info({databaseConfig: this.config.database.config});
     var db = new Database(this.config.database.config);
     db.registerModels(models);
     return db;
