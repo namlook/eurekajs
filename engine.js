@@ -4,6 +4,7 @@ _.str = require('underscore.string');
 var gm = require('gm');
 var mkdirp = require('mkdirp');
 var fs = require('fs');
+var async = require('async');
 
 /*
  * Private methods
@@ -204,7 +205,7 @@ engine.count = function(req, res) {
  *
  * examples:
  *  /api/1/organism_classification?title@la=bandicota%20indica
- *  /api/1/publication&_limit=30
+ *  /api/1/publication&_limit=30&_offset=30
  *  /api/1/organism_classification?_populate=true&internetDisplay=true
  *  /api/1/individual/C0012
  *  /api/1/individual?_id=C0012
@@ -247,7 +248,7 @@ engine.find = function(req, res) {
     }
 
     if (req.params.id != null) {
-        if (req.params.id.indexOf(',')) {
+        if (req.params.id.indexOf(',') > -1) {
             query = {_id: req.params.id.split(',')};
         } else {
             query = req.db.reference(type, req.params.id);
@@ -260,12 +261,15 @@ engine.find = function(req, res) {
         }
     }
 
+
     return req.db[type].find(query, options, function(err, results) {
         if (err) {
             if (err.message != null) {err = err.message; }
             req.logger.error({error: err});
             return res.json(500, {error: err, query: query, options: options });
         }
+
+
         return res.json({
             results: results.map(function(o) {
                 return o.toJSONObject({
@@ -273,6 +277,136 @@ engine.find = function(req, res) {
                     dereference: true
                 });
             })
+        });
+    });
+};
+
+/*
+ * ## exportData
+ * Returns the data as a file in a specified format.
+ * The data must be ordered. If no '_sortBy' options are specified,
+ * the data is ordered by type.
+ *
+ * get /api/<version>/<type>/export/<format>?[<query>]&[<option>]
+ *
+ * examples:
+ *  /api/1/individual/export/csv?isTrappedAlive=true
+ *  /api/1/individual/export/json?gender=male&_sortBy=maturity
+ */
+engine.exportData = function(req, res) {
+    var error = validateType(req.db, req.params.type);
+    if (error) {
+        return res.json(500, {error: error });
+    }
+
+    var type = _.str.classify(req.params.type);
+    var _ref = parseQuery(req.query, req.config.schemas, type);  // schemas and type are used for isRelation TODO: refactor
+    var query = _ref.query;
+    var options = _ref.options;
+
+    options = params2pojo(options);
+    query = params2pojo(query);
+
+    if (!options.sortBy) {
+        options.sortBy = '_type';
+    } else if ((options.sortBy != null) && _.isString(options.sortBy)) {
+        options.sortBy = options.sortBy.split(',');
+    }
+
+    if (_.isString(options.populate) && options.populate.indexOf(',') > -1) {
+        options.populate = options.populate.split(',');
+    }
+
+    if (options.fields != null && _.isString(options.fields)) {
+        options.fields = options.fields.split(',');
+    }
+
+    var exportFormat = req.params.format;
+    if (exportFormat === 'tsv') {
+        exportFormat = 'csv';
+        options.delimiter = '\t';
+    }
+
+
+    req.db[type].count(_.clone(query), _.clone(options), function(err, total) {
+        if (err) {
+            if (err.message != null) {err = err.message; }
+            req.logger.error({error: err});
+            return res.json(500, {error: err, query: query, options: options });
+        }
+
+        if (total >= 10000) {
+            return res.json(413, {error: 'the response has to many results. Try to narrow down your query'});
+        }
+
+        var getData = function(options, callback) {
+             req.db[type].find(_.clone(query), _.clone(options), function(err, results) {
+                if (err) {
+                    if (err.message != null) {err = err.message; }
+                    req.logger.error({error: err});
+                    return callback({error: err, query: query, options: options });
+                }
+
+                var items;
+                if (exportFormat === 'json') {
+                    items = results.map(function(o) {
+                        return o.toJSON();
+                    });
+                } else if (exportFormat === 'csv') {
+                    items = results.map(function(o) {
+                        return o.toCSV({
+                            delimiter: options.delimiter,
+                            fields: options.fields
+                        });
+                    });
+                }
+                res.write(items.join('\n')+'\n');
+                return callback(null, 'ok');
+
+            });
+        };
+
+        var tripOptions = [];
+        if (!options.limit) {
+            var bulkLimit = 100;
+            var nbTrip = Math.round(total/bulkLimit);
+            var _options;
+            for (var i=0; i<=nbTrip; i++) {
+                _options = _.clone(options);
+                _options.limit=bulkLimit;
+                _options.offset=bulkLimit*i;
+                tripOptions.push(_options);
+            }
+        } else {
+            tripOptions.push(_.clone(options));
+        }
+
+
+        var fileExtension;
+        if (exportFormat === 'json') {
+            fileExtension = '.json';
+        } else if (exportFormat === 'csv') {
+            fileExtension = '.csv';
+            if (options.delimiter === '\t') {
+                fileExtension = '.tsv';
+            }
+        }
+
+        res.attachment(req.params.type+fileExtension);
+        // res.setHeader('Content-Type', 'text/html');
+
+        if (exportFormat === 'csv') {
+            var csvHeader = new req.db[type]().toCSVHeader({fields: options.fields});
+            res.write(csvHeader+'\n');
+        }
+
+        async.eachSeries(tripOptions, getData, function(err, results){
+            if (err) {
+                if (err.message != null) {err = err.message; }
+                req.logger.error({error: err});
+                return res.json(500, {error: err, query: query, options: options });
+            }
+            res.end('');
         });
     });
 };
@@ -593,6 +727,10 @@ module.exports = [
         method: 'get',
         url: "/:type/count",
         func: engine.count
+    }, {
+        method: 'get',
+        url: "/:type/export/:format",
+        func: engine.exportData
     }, {
         method: 'get',
         url: "/:type/facets/:field",
