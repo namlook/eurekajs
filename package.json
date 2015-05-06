@@ -22,7 +22,7 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
-    "archimedes": "git://github.com/namlook/archimedes.git#v0.0.6",
+    "archimedes": "~0.0.6",
     "async": "~0.9.0",
     "babel": "~4.7.16",
     "bunyan": "~1.3.4",
