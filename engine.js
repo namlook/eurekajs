@@ -281,6 +281,7 @@ engine.find = function(req, res) {
     });
 };
 
+
 /*
  * ## exportData
  * Returns the data as a file in a specified format.
@@ -292,6 +293,7 @@ engine.find = function(req, res) {
  * examples:
  *  /api/1/individual/export/csv?isTrappedAlive=true
  *  /api/1/individual/export/json?gender=male&_sortBy=maturity
+ *  /api/1/individual/export/json?gender=male&_sortBy=maturity&_asJSONArray=true
  */
 engine.exportData = function(req, res) {
     var error = validateType(req.db, req.params.type);
@@ -360,27 +362,37 @@ engine.exportData = function(req, res) {
                         });
                     });
                 }
-                res.write(items.join('\n')+'\n');
+                if (exportFormat === 'json' && options.asJSONArray) {
+                    if (options.__index === 0) {
+                        res.write(items.join(',\n'));
+                    } else {
+                        res.write(','+items.join(',\n'));
+                    }
+                } else {
+                    res.write(items.join('\n')+'\n');
+                }
                 return callback(null, 'ok');
 
             });
         };
 
         var tripOptions = [];
-        if (!options.limit) {
-            var bulkLimit = 100;
-            var nbTrip = Math.round(total/bulkLimit);
-            var _options;
-            for (var i=0; i<=nbTrip; i++) {
-                _options = _.clone(options);
-                _options.limit=bulkLimit;
-                _options.offset=bulkLimit*i;
-                tripOptions.push(_options);
-            }
-        } else {
-            tripOptions.push(_.clone(options));
+        if (options.limit) {
+            total = options.limit;
         }
-
+        var bulkLimit = 100;
+        var nbTrip = Math.round(total/bulkLimit);
+        if (total < bulkLimit) {
+            bulkLimit = total;
+        }
+        var _options;
+        for (var i=0; i<=nbTrip; i++) {
+            _options = _.clone(options);
+            _options.limit=bulkLimit;
+            _options.offset=bulkLimit*i;
+            _options.__index = i;
+            tripOptions.push(_options);
+        }
 
         var fileExtension;
         if (exportFormat === 'json') {
@@ -398,6 +410,8 @@ engine.exportData = function(req, res) {
         if (exportFormat === 'csv') {
             var csvHeader = new req.db[type]().toCSVHeader({fields: options.fields});
             res.write(csvHeader+'\n');
+        } else if (exportFormat == 'json' && options.asJSONArray) {
+            res.write('[');
         }
 
         async.eachSeries(tripOptions, getData, function(err, results){
@@ -405,6 +419,9 @@ engine.exportData = function(req, res) {
                 if (err.message != null) {err = err.message; }
                 req.logger.error({error: err});
                 return res.json(500, {error: err, query: query, options: options });
+            }
+            if (exportFormat == 'json' && options.asJSONArray) {
+                res.write(']');
             }
             res.end('');
         });
