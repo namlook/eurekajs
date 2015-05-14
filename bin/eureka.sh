@@ -11,35 +11,38 @@ case "$1" in
             # npm uninstall --save-dev glob
             # npm install --save-dev glob@4.4.0
 
-            ember install
+            npm install
+            npm install --save namlook/eurekajs#v0.0.12
+            bower install
 
-            ember install:npm eurekajs
+            # ember install:npm eurekajs
 
-            ember install:addon ember-typeahead-input
+            ember install:addon namlook/ember-select2-hurry#v0.0.4
             ember install:addon ember-bootstrap-hurry
             ember install:addon ember-moment
 
             ## remove files which will be updated by eureka
             ## so we don't have the prompt asking us to confirm
             rm app/app.js
+            rm app/router.js
             rm app/templates/application.hbs
             rm config/environment.js
 
-            ember install:addon namlook/ember-eureka
+            ember install:addon namlook/ember-eureka#v0.0.14
 
             git add app config backend bower.json package.json
             git commit -m "initialize eureka"
 
-            ember install:addon namlook/eureka-mixin-actionable-widget
-            ember install:addon namlook/eureka-mixin-query-parametrable-widget
-            ember install:addon namlook/eureka-widget-application-menu
-            ember install:addon namlook/eureka-widget-application-navbar
-            ember install:addon namlook/eureka-widget-collection-display
-            ember install:addon namlook/eureka-widget-collection-navbar
+            ember install:addon namlook/eureka-mixin-actionable-widget#v0.0.1
+            ember install:addon namlook/eureka-mixin-query-parametrable-widget#v0.0.1
+            ember install:addon namlook/eureka-widget-application-menu#v0.0.5
+            ember install:addon namlook/eureka-widget-application-navbar#v0.0.6
+            ember install:addon namlook/eureka-widget-collection-display#v0.0.5
+            ember install:addon namlook/eureka-widget-collection-navbar#v0.0.1
             # ember install:addon namlook/eureka-widget-collection-query
-            ember install:addon namlook/eureka-widget-model-navbar
-            ember install:addon namlook/eureka-widget-model-form
-            ember install:addon namlook/eureka-widget-model-display
+            ember install:addon namlook/eureka-widget-model-navbar#v0.0.2
+            ember install:addon namlook/eureka-widget-model-form#v0.0.3
+            ember install:addon namlook/eureka-widget-model-display#v0.0.4
             ;;
 
         watch)
