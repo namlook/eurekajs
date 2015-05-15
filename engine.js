@@ -366,7 +366,11 @@ engine.exportData = function(req, res) {
                     if (options.__index === 0) {
                         res.write(items.join(',\n'));
                     } else {
-                        res.write(','+items.join(',\n'));
+                        if (items.length) {
+                            res.write(','+items.join(',\n'));
+                        } else {
+                            console.error('something wrong, no items for', options);
+                        }
                     }
                 } else {
                     res.write(items.join('\n')+'\n');
