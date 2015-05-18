@@ -315,6 +315,10 @@ engine.exportData = function(req, res) {
         options.sortBy = options.sortBy.split(',');
     }
 
+    if (options.populate == null) {
+      options.populate = 0;
+    }
+
     if (_.isString(options.populate) && options.populate.indexOf(',') > -1) {
         options.populate = options.populate.split(',');
     }
@@ -337,8 +341,15 @@ engine.exportData = function(req, res) {
             return res.json(500, {error: err, query: query, options: options });
         }
 
-        if (total >= 10000) {
-            return res.json(413, {error: 'the response has to many results. Try to narrow down your query'});
+
+        if (options.populate) {
+            if (total >= 2000) {
+                return res.json(413, {error: 'The response has to many results (>2000). Try to narrow down your query'});
+            }
+        } else {
+            if (total >= 10000) {
+                return res.json(413, {error: 'The response has to many results (>10000). Try to narrow down your query'});
+            }
         }
 
         var getData = function(options, callback) {
@@ -352,7 +363,10 @@ engine.exportData = function(req, res) {
                 var items;
                 if (exportFormat === 'json') {
                     items = results.map(function(o) {
-                        return o.toJSON();
+                        return o.toJSON({
+                            populate: options.populate,
+                            dereference: true
+                        });
                     });
                 } else if (exportFormat === 'csv') {
                     items = results.map(function(o) {
@@ -409,7 +423,7 @@ engine.exportData = function(req, res) {
         }
 
         res.attachment(req.params.type+fileExtension);
-        // res.setHeader('Content-Type', 'text/html');
+        // res.setHeader('Content-Type', 'application/json');
 
         if (exportFormat === 'csv') {
             var csvHeader = new req.db[type]().toCSVHeader({fields: options.fields});
@@ -422,7 +436,9 @@ engine.exportData = function(req, res) {
             if (err) {
                 if (err.message != null) {err = err.message; }
                 req.logger.error({error: err});
-                return res.json(500, {error: err, query: query, options: options });
+                // return
+                // return res.end(err);
+                // return res.json(500, {error: err, query: query, options: options });
             }
             if (exportFormat == 'json' && options.asJSONArray) {
                 res.write(']');
