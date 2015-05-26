@@ -693,7 +693,7 @@ engine.sync = function(req, res) {
         if (e.message != null) {
             e = e.message;
         }
-        console.log('err: cannot parse payload. Reason: ', e);
+        req.logger.error({error: 'cannot parse payload. Reason: '+e, payload: payload});
         return res.json(500, {error: 'cannot parse payload. Reason: ' + e });
     }
 
@@ -739,14 +739,14 @@ engine.sync = function(req, res) {
         } catch (_error) {
             var e = _error;
             if (e.message != null) {e = e.message; }
-            console.log('xxxx', e, payload);
+            req.logger.error({error: e, payload: payload});
             return res.json(500, {error: e });
         }
 
         return obj.save(function(err, obj, infos) {
             if (err) {
-                console.log('yyy', err);
-                return res.json(500, {error: err });
+                req.logger.error({error: err});
+                return res.json(500, {error: err});
             }
 
             return res.json({
