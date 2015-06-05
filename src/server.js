@@ -78,7 +78,6 @@ export default class Server {
 
             var models = {};
             var db = new Database(this.config.database.config);
-            db.modelSchemas = {};
             Object.keys(this.config.schemas).forEach((modelName) => {
                 if (modelName === 'Basic') {
                     throw "EurekaServer: 'Basic' is a reserved word and can not be used as model name"; //
@@ -96,9 +95,7 @@ export default class Server {
                 });
 
                 // TODO put the following line in archimedes ?
-                db.modelSchemas[pascalCase(modelName)] = new ModelSchema(modelInfos, db);
-
-                this.config.resources[modelName].schema = modelInfos;
+                models[pascalCase(modelName)].schema = new ModelSchema(modelInfos, db);
             });
 
             db.registerModels(models);

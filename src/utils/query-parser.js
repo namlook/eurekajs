@@ -8,7 +8,7 @@ var specialPropertyNames = ['_id', '_type', '_ref'];
 export default class QueryParser {
     constructor(db, resourceName, reqQuery) {
         this.resourceName = resourceName;
-        this.modelSchema = db.modelSchemas[pascalCase(resourceName)];
+        this.modelSchema = db[pascalCase(resourceName)].schema;
         this.db = db;
         this.rawQuery = reqQuery;
         this._options = {};

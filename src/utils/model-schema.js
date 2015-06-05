@@ -12,7 +12,7 @@ class ModelProperty {
     }
 
     get isRelation() {
-        return !!this.modelSchema.db.modelSchemas[this.type];
+        return !!this.modelSchema.db[this.type];
     }
 
     validate() {
@@ -41,7 +41,7 @@ export default class ModelSchema {
 
         if (_.contains(propertyName, '.')) {
             let relation = this._properties[propertyName.split('.')[0]];
-            let relationSchema = this.db.modelSchemas[relation.type];
+            let relationSchema = this.db[relation.type].schema;
             let relationPropertyName = propertyName.split('.').slice(1).join('.');
             return relationSchema.getProperty(relationPropertyName);
         }
