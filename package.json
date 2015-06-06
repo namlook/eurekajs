@@ -9,9 +9,12 @@
     "build": "babel src --optional runtime --out-dir lib --source-maps",
     "lint": "eslint src tests",
     "lint-watch": "nodemon --exec 'eslint src tests' --watch src --watch tests",
-    "babel-watch": "babel src --watch --optional runtime --out-dir lib --source-maps",
-    "test": "babel tests --out-dir libtests --source-maps && mocha libtests/**/*.js | ./node_modules/bunyan/bin/bunyan -l info; rm -r libtests",
-    "coverage": "mocha --compilers js:babel/register -r blanket -R html-cov tests/**/*.js | ./node_modules/bunyan/bin/bunyan -l error > coverage.html && open coverage.html",
+    "babel-watch": "npm run babel-watch-src & npm run babel-watch-tests &",
+    "babel-watch-src": "babel src --watch --optional runtime --out-dir lib --source-maps",
+    "babel-watch-tests": "babel tests --watch --optional runtime --out-dir libtests --source-maps",
+    "watch": "nodemon --exec 'mocha libtests/**/*.js | ./node_modules/bunyan/bin/bunyan -l fatal' --watch lib --watch libtests ",
+    "test": "rm -rf libtests ; babel tests --out-dir libtests --source-maps && mocha libtests/**/*.js | ./node_modules/bunyan/bin/bunyan -l fatal; rm -r libtests",
+    "coverage": "mocha --compilers js:babel/register -r blanket -R html-cov tests/**/*.js | ./node_modules/bunyan/bin/bunyan -l fatal > coverage.html && open coverage.html",
     "coverage-istanbul": "istanbul cover node_modules/mocha/bin/_mocha --  --check-leaks libtests/**/*.js && open coverage/lcov-report/index.html"
   },
   "bin": {
@@ -35,6 +38,7 @@
     "bunyan": "^1.3.6",
     "compression": "^1.4.4",
     "express": "^4.12.4",
+    "joi": "^6.4.3",
     "lodash": "^3.9.3",
     "morgan": "^1.5.3",
     "require-dir": "^0.3.0",
