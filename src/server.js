@@ -79,6 +79,8 @@ export default class Server {
             var models = {};
             var db = new Database(this.config.database.config);
             Object.keys(this.config.schemas).forEach((modelName) => {
+                var modelNamePascalCase = pascalCase(modelName);
+
                 if (modelName === 'Basic') {
                     throw "EurekaServer: 'Basic' is a reserved word and can not be used as model name"; //
                 }
@@ -88,14 +90,14 @@ export default class Server {
                     this.logger.warn(modelName, 'has no properties');
                 }
 
-                this.logger.debug('register model', pascalCase(modelName), '(with', Object.keys(modelInfos.properties).length, 'properties)');
+                this.logger.debug('register model', modelNamePascalCase, '(with', Object.keys(modelInfos.properties).length, 'properties)');
 
-                models[pascalCase(modelName)] = Model.extend({
+                models[modelNamePascalCase] = Model.extend({
                     schema: modelInfos.properties
                 });
 
                 // TODO put the following line in archimedes ?
-                models[pascalCase(modelName)].schema = new ModelSchema(modelInfos, db);
+                models[modelNamePascalCase].schema = new ModelSchema(modelNamePascalCase, modelInfos, db);
             });
 
             db.registerModels(models);

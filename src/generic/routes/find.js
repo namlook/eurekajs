@@ -9,7 +9,6 @@ export default {
     action: function(req, res) {
         var {query, options} = req.parsedQuery;
 
-
         if (req.params.id) {
             query._id = req.params.id;
         }
