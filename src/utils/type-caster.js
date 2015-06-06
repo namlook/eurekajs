@@ -11,7 +11,7 @@ export default class TypeCaster {
 
         var val = parseInt(value, 10);
         if (isNaN(val)) {
-            throw `TypeCase error, the value ${value} should be an Integer or a String`;
+            throw `TypeCaster: error, the value ${value} should be an Integer or a String`;
         }
         return val;
     }
@@ -23,7 +23,7 @@ export default class TypeCaster {
 
         var val = parseFloat(value);
         if (isNaN(val)) {
-            throw `TypeCase error, the value ${value} should be a Float or a String`;
+            throw `TypeCaster error, the value ${value} should be a Float or a String`;
         }
         return val;
     }
