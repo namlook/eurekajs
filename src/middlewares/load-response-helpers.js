@@ -1,17 +1,17 @@
 
-var buildCustomErrorResponse = function(status) {
+var buildCustomErrorResponse = function(status, productionErrorMessage) {
     return function(error, infos) {
         var response = {status: status};
 
         if (this.req.server.config.env === 'production') {
-            error = 'An error happened. We have been notified';
+            error = productionErrorMessage || 'An error happened. We have been notified';
         } else {
             if (typeof error === 'object') {
                 error = error.message;
             }
         }
 
-        response[error] = error;
+        response.error = error;
 
         if (infos) {
             response.infos = infos;
@@ -23,9 +23,9 @@ var buildCustomErrorResponse = function(status) {
 };
 
 var httpResponses = {
-    notFound: buildCustomErrorResponse(404),
-    forbidden: buildCustomErrorResponse(403),
-    badRequest: buildCustomErrorResponse(400),
+    notFound: buildCustomErrorResponse(404, 'not found'),
+    forbidden: buildCustomErrorResponse(403, 'forbidden'),
+    badRequest: buildCustomErrorResponse(400, 'bad request'),
     serverError: buildCustomErrorResponse(500),
     sendResults: function(results) {
         let status = 200;
