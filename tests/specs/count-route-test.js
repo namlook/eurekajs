@@ -3,6 +3,7 @@
 
 import request from 'supertest';
 import chai from 'chai';
+chai.use(require('chai-http'));
 chai.config.includeStack = true;
 var expect = chai.expect;
 
@@ -70,9 +71,9 @@ describe('Route: [count]', function(){
         request(server.app)
             .get('/api/1/generic/i/count')
             .set('Accept', 'application/json')
-            .expect(200)
             .end(function(err, res){
                 expect(err).to.be.null;
+                expect(res).to.have.status(200);
                 expect(res.body.results).to.be.equal(10);
                 done();
             });

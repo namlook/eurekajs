@@ -3,6 +3,7 @@
 
 import request from 'supertest';
 import chai from 'chai';
+chai.use(require('chai-http'));
 chai.config.includeStack = true;
 var expect = chai.expect;
 
@@ -35,10 +36,9 @@ describe('Route: [create]', function(){
                 date: new Date(1984, 7, 3)
 
             })})
-            .expect(200)
-
             .end(function(err, res){
                 expect(err).to.be.null;
+                expect(res).to.have.status(200);
                 var results = res.body.results;
                 expect(results._id).to.not.be.null;
                 expect(results.text).to.be.equal('hello world');
@@ -70,10 +70,9 @@ describe('Route: [create]', function(){
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
             .send({payload: JSON.stringify(generics)})
-            .expect(200)
-
             .end(function(err, res){
                 expect(err).to.be.null;
+                expect(res).to.have.status(200);
 
                 var results = res.body.results;
                 expect(results).to.be.instanceof(Array);

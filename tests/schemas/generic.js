@@ -20,7 +20,9 @@ module.exports = {
         },
         array: {
             type: 'string',
-            multi: true
+            multi: {
+                validations: [{length: 3}]
+            }
         },
         relation: {
             type: 'GenericRelation'

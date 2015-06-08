@@ -1,6 +1,6 @@
 
 import _ from 'lodash';
-import TypeCaster from './type-caster';
+// import TypeCaster from './type-caster';
 import {pascalCase} from './index';
 
 var specialPropertyNames = ['_id', '_type', '_ref'];
@@ -22,6 +22,8 @@ var allowedOperators = [
     '$nall',
     '$exists'
 ];
+
+var arrayOperators = ['$all', '$nall', '$in', '$nin'];
 
 
 export default class QueryParser {
@@ -47,28 +49,45 @@ export default class QueryParser {
     }
 
 
-
-    validate() {
-        _.forOwn(this.query, (value, propertyName) => {
-
-            if (_.isObject(value)) {
-                _.forOwn(value, (val, operator) => {
-                    this._validate(propertyName, val, operator);
-                });
-            } else {
-                this._validate(propertyName, value);
-            }
-        });
-    }
-
-    _validate(propertyName, value, operator) {
+    validate(value, propertyName, operator) {
         if (operator) {
             if (!_.contains(allowedOperators, operator)) {
                 this._errors.push(`unknown operator ${operator}`);
             }
         }
-        this._modelSchema.validate({[propertyName]: value});
 
+        var property = this._modelSchema.getProperty(propertyName);
+
+        if (!property) {
+            this._errors.push(`Can't find the property ${propertyName} from ${pascalCase(this.resourceName)}`);
+            return null;
+        }
+
+        var castedValue;
+        if (_.isArray(value)) {
+            castedValue = [];
+            var validation;
+            value.forEach((val) => {
+                validation = property.validate(val);
+                if (validation.error) {
+                    validation.error.details.forEach((detail) => {
+                        this._errors.push(detail.message);
+                    });
+                } else {
+                    castedValue.push(validation.value);
+                }
+            });
+        } else {
+            validation = property.validate(value);
+            if (validation.error) {
+                validation.error.details.forEach((detail) => {
+                    this._errors.push(detail.message);
+                });
+            } else {
+                castedValue = validation.value;
+            }
+        }
+        return castedValue;
     }
 
 
@@ -95,10 +114,13 @@ export default class QueryParser {
             if (_.isObject(value)) {
                 query[propertyName] = {};
                 _.forOwn(value, (val, operator) => {
-                    query[propertyName][operator] = this._castValue(propertyName, val, true);
+                    if (_.contains(arrayOperators, operator)) {
+                        val = val.split(',');
+                    }
+                    query[propertyName][operator] = this.validate(val, propertyName, operator);
                 });
             } else {
-                query[propertyName] = this._castValue(propertyName, value);
+                query[propertyName] = this.validate(value, propertyName);
             }
         });
         return query;
@@ -122,28 +144,28 @@ export default class QueryParser {
     }
 
 
-    _castValue(propertyName, value, multi=false) {
-        var propertyType;
-        if (_.contains(specialPropertyNames, propertyName)) {
-            propertyType = 'string';
-        } else {
-            let property = this._modelSchema.getProperty(propertyName);
-            if (!property) {
-                this._errors.push(`Can't find the property ${propertyName} from ${pascalCase(this.resourceName)}`);
-                return null;
-            }
-            propertyType = this._modelSchema.getProperty(propertyName).type;
-        }
+    // _castValue(propertyName, value, multi=false) {
+    //     var propertyType;
+    //     if (_.contains(specialPropertyNames, propertyName)) {
+    //         propertyType = 'string';
+    //     } else {
+    //         let property = this._modelSchema.getProperty(propertyName);
+    //         if (!property) {
+    //             this._errors.push(`Can't find the property ${propertyName} from ${pascalCase(this.resourceName)}`);
+    //             return null;
+    //         }
+    //         propertyType = this._modelSchema.getProperty(propertyName).type;
+    //     }
 
-        var results;
-        if (multi) {
-            results = TypeCaster.array(value, propertyType);
-        } else {
-            results = TypeCaster[propertyType](value);
-        }
+    //     var results;
+    //     if (multi) {
+    //         results = TypeCaster.array(value, propertyType);
+    //     } else {
+    //         results = TypeCaster[propertyType](value);
+    //     }
 
-        return results;
-    }
+    //     return results;
+    // }
 
 
 
