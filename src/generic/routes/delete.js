@@ -8,7 +8,7 @@ import fs from 'fs';
 var removeReferencedFileMdw = function(req, res, next) {
 
     var filePathProperties = [];
-    var properties = req.resource.Model.schema.properties;
+    var properties = req.Model.schema.properties;
     properties.forEach(function(property) {
         /** if the property is a string, and propagateDeletion is true,
          *  it means that the property is represente the path of the file

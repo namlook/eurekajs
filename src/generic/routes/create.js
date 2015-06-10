@@ -6,8 +6,8 @@ export default {
     _generic: true,
     path: '/',
     method: 'post',
-    beforeHandler: [],
     handler: function(req, res) {
+        var Model = req.Model;
         try {
             var payload = JSON.parse(req.body.payload);
         } catch (error) {
@@ -21,7 +21,7 @@ export default {
             payload.forEach(function(pojo) {
                 delete pojo._type;
                 try {
-                    pojos.push(new req.resource.Model(pojo).toSerializableObject());
+                    pojos.push(new Model(pojo).toSerializableObject());
                 } catch (error) {
                 // req.logger.error({error: e, payload: payload});
                     return res.badRequest(error);
@@ -34,7 +34,7 @@ export default {
                 }
                 data.forEach(function(result) {
                     result.result._type = pascalCase(req.resource.name); // TODO use regular name
-                    result.result = new req.resource.Model(result.result).toJSONObject({
+                    result.result = new Model(result.result).toJSONObject({
                         dereference: true
                     });
                 });
@@ -50,7 +50,7 @@ export default {
             delete payload._type;
             var obj;
             try {
-                obj = new req.resource.Model(payload);
+                obj = new Model(payload);
             } catch (error) {
                 // req.logger.error({error: e, payload: payload});
                 return res.serverError(error);

@@ -43,7 +43,7 @@ var attachAsJSONArrayMdw = function(req, res, next) {
 
 /** check if the total results is small enough and attach it **/
 var attachTotalResultsMdw = function(req, res, next) {
-
+    var Model = req.Model;
     var {query, options} = req.parsedQuery;
 
     // count will modify the query and options so we have to clone them
@@ -52,7 +52,7 @@ var attachTotalResultsMdw = function(req, res, next) {
     query = _.clone(query);
     options = _.clone(options);
 
-    req.resource.Model.count(query, options, function(err, total) {
+    Model.count(query, options, function(err, total) {
         if (err) {
             return res.serverError(err);
         }
@@ -106,6 +106,7 @@ export default {
     ],
     handler: function(req, res) {
 
+        var Model = req.Model;
         var {format, total, asJSONArray} = req.attrs;
         var {query, options} = req.parsedQuery;
 
@@ -115,7 +116,7 @@ export default {
             query = _.clone(query);
             opt = _.clone(opt);
 
-            req.resource.Model.find(query, opt, function(_err, results) {
+            Model.find(query, opt, function(_err, results) {
                 if (_err) {
                     if (_err.message != null) {_err = _err.message; }
                     req.logger.error({error: _err});
@@ -187,7 +188,7 @@ export default {
         // res.setHeader('Content-Type', 'text/html');
 
         if (format === 'csv') {
-            var csvHeader = new req.resource.Model().toCSVHeader({fields: options.fields});
+            var csvHeader = new Model().toCSVHeader({fields: options.fields});
             res.write(csvHeader + '\n');
         } else if (format === 'json' && asJSONArray) {
             res.write('[');

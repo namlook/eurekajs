@@ -1,12 +1,13 @@
 
-import queryParserMiddleware from '../../middlewares/query-parser';
+import queryParserMdw from '../../middlewares/query-parser';
 
 export default {
     _generic: true,
     path: '/:id?',
     method: 'get',
-    beforeHandler: [queryParserMiddleware],
+    beforeHandler: [queryParserMdw],
     handler: function(req, res) {
+        var Model = req.Model;
         var {query, options} = req.parsedQuery;
 
         if (req.params.id) {
@@ -24,7 +25,7 @@ export default {
 
         req.logger.trace({query: query, options: options});
 
-        return req.resource.Model.find(query, options, function(err, data) {
+        return Model.find(query, options, function(err, data) {
             if (err) {
                 return res.serverError(err, {query: query, options: options});
             }

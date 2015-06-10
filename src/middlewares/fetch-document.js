@@ -3,7 +3,7 @@
  * send a 404 response otherwise
  */
 export default function(req, res, next) {
-    req.resource.Model.first({_id: req.params.id}, function(err, model) {
+    req.Model.first({_id: req.params.id}, function(err, model) {
         if (err) {
             return res.serverError(err);
         }
