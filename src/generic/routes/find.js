@@ -5,8 +5,8 @@ export default {
     _generic: true,
     path: '/:id?',
     method: 'get',
-    policies: [queryParserMiddleware],
-    action: function(req, res) {
+    beforeHandler: [queryParserMiddleware],
+    handler: function(req, res) {
         var {query, options} = req.parsedQuery;
 
         if (req.params.id) {
@@ -38,8 +38,10 @@ export default {
 
             if (fetchOne) {
                 results = results[0];
+                if (!results) {
+                    return res.notFound();
+                }
             }
-
             return res.sendResults(results);
         });
     }

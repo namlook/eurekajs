@@ -19,6 +19,7 @@ var eurekaBaseMiddleware = function(server) {
         req.db = server.database;
         req.logger = server.logger;
         req.server = server;
+        req.attrs = {};
         return next();
     };
 };

@@ -75,6 +75,10 @@ export default class ModelSchemaProperty {
         return _.isObject(this.config.multi) && this.config.multi.validations || [];
     }
 
+    get propagateDeletion() {
+        return !!this.config.propagateDeletion;
+    }
+
     get validations() {
         let validations = this.config.validate || [];
         let validationConfig = [this.type].concat(validations);
@@ -116,7 +120,7 @@ export default class ModelSchemaProperty {
             return undefined;
         }
         if (this.isMulti) {
-            var value = [];
+            value = [];
             for (let i = 0; i < _.random(1, 8); i++) {
                 value.push(this._getFixtureValue());
             }
@@ -133,10 +137,10 @@ export default class ModelSchemaProperty {
 
         // generate fixture from type
         var today = new Date();
-        var lorem = _.words("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+        var lorem = _.words('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.');
         var pickInLorem = _.random(0, 40);
         var type2faker = {
-            string: lorem.slice(pickInLorem, pickInLorem+_.random(4, 10)).join(' '),
+            string: lorem.slice(pickInLorem, pickInLorem + _.random(4, 10)).join(' '),
             number: _.random(0, 100, true),
             integer: _.random(0, 100), // TODO REMOVE
             float: _.random(0, 100, true), // TODO REMOVE

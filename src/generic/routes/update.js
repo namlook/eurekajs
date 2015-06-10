@@ -1,10 +1,11 @@
 
+import fetchDocumentMdw from '../../middlewares/fetch-document';
+import createRoute from './create';
+
 export default {
     _generic: true,
     path: '/:id',
     method: 'post',
-    policies: [],
-    action: function(req, res) {
-        return res.sendResults('ok');
-    }
+    beforeHandler: [fetchDocumentMdw],
+    handler: createRoute.handler
 };

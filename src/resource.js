@@ -103,7 +103,7 @@ export default class ResourceView {
                 _this.router[route.method](route.path, middleware);
             });
             _this.logger.debug(`register route: ${route.method} ${route.path}`);
-            _this.router[route.method](route.path, route.action);
+            _this.router[route.method](route.path, route.handler);
         });
 
         this.server.app.use(`${this.server.config.apiPathPrefix}${this.pathPrefix}`, _this.router);

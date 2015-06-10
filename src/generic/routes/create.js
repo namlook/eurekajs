@@ -6,8 +6,8 @@ export default {
     _generic: true,
     path: '/',
     method: 'post',
-    policies: [],
-    action: function(req, res) {
+    beforeHandler: [],
+    handler: function(req, res) {
         try {
             var payload = JSON.parse(req.body.payload);
         } catch (error) {

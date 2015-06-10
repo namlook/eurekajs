@@ -8,62 +8,12 @@ chai.config.includeStack = true;
 var expect = chai.expect;
 
 import server from '../server';
-
+import loadFixtures from '../utils/load-fixtures';
 
 describe('Route: [find]', function(){
 
     beforeEach(function(done){
-        server.database.clear(function(err) {
-            if (err) {
-                throw err;
-            }
-
-            var relations = [
-                {
-                    _id: 'relation0',
-                    _type: 'GenericRelation',
-                    text: 'relation 0',
-                    arf: 'bla'
-                },
-                {
-                    _id: 'relation1',
-                    _type: 'GenericRelation',
-                    text: 'relation 1',
-                    arf: 'ble'
-                }
-            ];
-
-            var generics = [];
-            for (var i = 1; i < 11; i++) {
-                generics.push({
-                    _id: `generic${i}`,
-                    _type: 'Generic',
-                    text: `hello world ${i}`,
-                    boolean: i % 2,
-                    integer: i,
-                    float: i + 0.14,
-                    date: new Date(1984, 7, i),
-                    relation: {_id: relations[i % 2]._id, _type: 'GenericRelation'}
-                });
-            }
-
-            relations = relations.map(function(pojo) {
-                return new server.database.GenericRelation(pojo).toSerializableObject();
-            });
-
-            generics = generics.map(function(pojo) {
-                return new server.database.Generic(pojo).toSerializableObject();
-            });
-
-
-            server.database.batchSync(relations, function(err1) {
-                expect(err1).to.be.null;
-                server.database.batchSync(generics, function(err2) {
-                    expect(err2).to.be.null;
-                    done();
-                });
-            });
-        });
+        loadFixtures(server, done);
     });
 
 
@@ -98,6 +48,17 @@ describe('Route: [find]', function(){
                 expect(doc.float).to.be.equal(1.14);
                 expect(new Date(doc.date).getTime()).to.be.equal(date.getTime());
 
+                done();
+            });
+    });
+
+    it('should return 404 if no document is found', function(done){
+        request(server.app)
+            .get('/api/1/generic/arf')
+            .set('Accept', 'application/json')
+            .end(function(err, res){
+                expect(err.status).to.equal(404);
+                expect(res.body.status).to.equal(404);
                 done();
             });
     });
@@ -269,6 +230,34 @@ describe('Route: [find]', function(){
                 expect(res.body.error).to.be.equal('bad request');
                 expect(res.body.infos.issue).to.be.equal('bad query');
                 expect(res.body.infos.reasons).to.deep.equal(['"related" must be a boolean']);
+                done();
+            });
+    });
+
+    it('should return an error when specified a bad field', function(done){
+        request(server.app)
+            .get('/api/1/generic?_fields=boolean,integ')
+            .set('Accept', 'application/json')
+            .end(function(err, res){
+                expect(err.status).to.equal(400);
+                expect(res.body.status).to.be.equal(400);
+                expect(res.body.error).to.be.equal('bad request');
+                expect(res.body.infos.issue).to.be.equal('bad query');
+                expect(res.body.infos.reasons).to.deep.equal(["unknown property 'integ' in _fields"]);
+                done();
+            });
+    });
+
+    it('should return an error when specified a bad sortBy', function(done){
+        request(server.app)
+            .get('/api/1/generic?_sortBy=boolean,integ')
+            .set('Accept', 'application/json')
+            .end(function(err, res){
+                expect(err.status).to.equal(400);
+                expect(res.body.status).to.be.equal(400);
+                expect(res.body.error).to.be.equal('bad request');
+                expect(res.body.infos.issue).to.be.equal('bad query');
+                expect(res.body.infos.reasons).to.deep.equal(["unknown property 'integ' in _sortBy"]);
                 done();
             });
     });

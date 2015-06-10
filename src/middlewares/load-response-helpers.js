@@ -27,6 +27,7 @@ var httpResponses = {
     forbidden: buildCustomErrorResponse(403, 'forbidden'),
     badRequest: buildCustomErrorResponse(400, 'bad request'),
     serverError: buildCustomErrorResponse(500),
+    requestTooLarge: buildCustomErrorResponse(413, 'request entity too large'),
     sendResults: function(results) {
         let status = 200;
         return this.status(status).json({results: results, status: status});

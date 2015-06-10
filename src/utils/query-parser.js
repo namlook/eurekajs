@@ -1,7 +1,7 @@
 
 import _ from 'lodash';
-// import TypeCaster from './type-caster';
 import {pascalCase} from './index';
+import joi from 'joi';
 
 var specialPropertyNames = ['_id', '_type', '_ref'];
 var allowedOperators = [
@@ -129,8 +129,8 @@ export default class QueryParser {
     _processOptions(rawOptions) {
         var options = rawOptions;
         options.limit = options.limit && _.parseInt(options.limit) || 30;
-        options.sortBy = options.sortBy && options.sortBy.split(',') || undefined;
-        options.fields = options.fields && options.fields.split(',') || undefined;
+        options.sortBy = options.sortBy && options.sortBy.split(',') || [];
+        options.fields = options.fields && options.fields.split(',') || [];
 
         var populate = options.populate;
         if (populate) {
@@ -140,34 +140,57 @@ export default class QueryParser {
                 options.populate = 1;
             }
         }
+        this._validateOptions(options);
         return options;
     }
 
+    _validateOptions(options) {
+        /** validate limit option **/
+        var limitValidation = joi.number().integer().min(0);
+        var {value: limitValue, error: limitError} = limitValidation.validate(options.limit);
+        if (limitError) {
+            this._errors.push(limitError.details[0]);
+        } else {
+            options.limit = limitValue;
+        }
 
-    // _castValue(propertyName, value, multi=false) {
-    //     var propertyType;
-    //     if (_.contains(specialPropertyNames, propertyName)) {
-    //         propertyType = 'string';
-    //     } else {
-    //         let property = this._modelSchema.getProperty(propertyName);
-    //         if (!property) {
-    //             this._errors.push(`Can't find the property ${propertyName} from ${pascalCase(this.resourceName)}`);
-    //             return null;
-    //         }
-    //         propertyType = this._modelSchema.getProperty(propertyName).type;
-    //     }
+        /** validate sortBy option **/
+        var sortByValidation = joi.array().items(joi.string());
+        var {value: sortByValue, error: sortByError} = sortByValidation.validate(options.sortBy);
+        if (sortByError) {
+            this._errors.push(sortByError.details[0]);
+        } else {
+            let unknownFields = sortByValue.map((field) => {
+                field = _.trim(field, '-');
+                if (!this._modelSchema.getProperty(field)) {
+                    this._errors.push(`unknown property '${field}' in _sortBy`);
+                    return field;
+                }
+            });
+            if (!unknownFields.length) {
+                options.sortBy = sortByValue;
+            }
+        }
 
-    //     var results;
-    //     if (multi) {
-    //         results = TypeCaster.array(value, propertyType);
-    //     } else {
-    //         results = TypeCaster[propertyType](value);
-    //     }
-
-    //     return results;
-    // }
-
-
-
-
+        /** validate fields option **/
+        var fieldsValidation = joi.array().items(joi.string());
+        var {value: fieldsValue, error: fieldsError} = fieldsValidation.validate(options.fields);
+        if (fieldsError) {
+            this._errors.push(fieldsError.details[0]);
+        } else {
+            let unknownFields = fieldsValue.map((field) => {
+                if (!this._modelSchema.getProperty(field)) {
+                    this._errors.push(`unknown property '${field}' in _fields`);
+                    return field;
+                }
+            });
+            if (!unknownFields.length) {
+             if (!fieldsValue.length) {
+                    options.fields = undefined; // TODO FIX THIS in archimedes
+                } else {
+                    options.fields = fieldsValue;
+                }
+            }
+        }
+    }
 }

@@ -5,8 +5,8 @@ export default {
     _generic: true,
     path: '/i/count',
     method: 'get',
-    policies: [queryParserMiddleware],
-    action: function(req, res) {
+    beforeHandler: [queryParserMiddleware],
+    handler: function(req, res) {
         var {query, options} = req.parsedQuery;
 
         return req.resource.Model.count(query, options, function(err, data) {

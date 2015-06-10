@@ -24,8 +24,13 @@ module.exports = {
                 validations: [{length: 3}]
             }
         },
+        attachement: {
+            type: 'string',
+            propagateDeletion: true
+        },
         relation: {
-            type: 'GenericRelation'
+            type: 'GenericRelation',
+            propagateDeletion: true
         },
         relations: {
             type: 'GenericRelation',

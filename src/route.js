@@ -24,8 +24,8 @@ export default class Route {
             throw `${routePathName} unknown method ${this.config.method}`;
         }
 
-        if (!this.action) {
-            throw `${routePathName} action not found and unknown generic route name`;
+        if (!this.handler) {
+            throw `${routePathName} handler not found and unknown generic route name`;
         }
     }
 
@@ -34,16 +34,25 @@ export default class Route {
     }
 
     get isGeneric() {
-        return this.genericConfig.action && this.config.action == null;
+        return this.genericConfig.handler && this.config.handler == null;
     }
 
     get genericConfig() {
         return this._resourceView.genericRoutes[this.name] || {};
     }
 
-    get action() {
-        return this.config.action || this.genericConfig.action;
+    get handler() {
+        return this.config.handler || this.genericConfig.handler;
     }
+
+    get beforeHandler() {
+        var middlewares = this.config.beforeHandler || [];
+        if (typeof middlewares === 'function') {
+            middlewares = middlewares(this);
+        }
+        return middlewares;
+    }
+
 
     get path() {
         return this.config.path || this.genericConfig.path;
@@ -65,6 +74,6 @@ export default class Route {
     }
 
     get middlewares() {
-        return this.config.middlewares || this._resourceView.middlewares.concat(this.policies);
+        return this.config.middlewares || this._resourceView.middlewares.concat(this.beforeHandler);
     }
 }

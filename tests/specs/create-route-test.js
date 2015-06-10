@@ -37,6 +37,7 @@ describe('Route: [create]', function(){
 
             })})
             .end(function(err, res){
+                console.log(err);
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
                 var results = res.body.results;
