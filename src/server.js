@@ -5,8 +5,8 @@ import requireDir from 'require-dir';
 import _ from 'lodash';
 import bunyan from 'bunyan';
 
-import ResourceView from './resource';
-import eurekaMiddlewares from './middlewares';
+import Resource from './resource';
+// import eurekaMiddlewares from './middlewares';
 
 import ModelSchema from './utils/model-schema';
 
@@ -14,6 +14,12 @@ import archimedes from 'archimedes';
 
 import {pascalCase} from './utils';
 
+/**
+ * the base middleware which will be present in all routes
+ *
+ * @api private
+ * @param {Server} server
+ */
 var eurekaBaseMiddleware = function(server) {
     return function baseMiddleware(req, res, next) {
         req.db = server.database;
@@ -24,47 +30,115 @@ var eurekaBaseMiddleware = function(server) {
     };
 };
 
+/**
+ * @class
+ */
 export default class Server {
 
     constructor(config) {
         this.config = config;
         this.logger = bunyan.createLogger({name: this.config.name, level: this.config.logLevel});
         this.app = express();
-        this.app.use(this.middlewares);
+        this.app.use(eurekaBaseMiddleware(this));
+    }
 
-        this._registerRoutes();
+    get path() {
+        return this.config.apiPathPrefix; // TODO CHANGE THAT
+    }
 
-        /** redirect all the non-api requests to the ember app **/
-        this.app.get('/*', function(req, res) {
-            return res.redirect('#' + req.url);
+    use(middleware) {
+        this.app.use(middleware);
+    }
+
+    /**
+     * Registers some plugins
+     *
+     * @api public
+     * @param {Object|Array.<Object>} plugins - the plugin should take the
+     *      form of {name: fn}
+     */
+    registerPlugins(plugins) {
+        // TODO
+        if (!_.isArray(plugins)) {
+            plugins = [plugins];
+        }
+
+        plugins.forEach((plugin) => {
+            if (typeof plugin === 'object') {
+                _.forOwn(plugin, (pluginFn) => {
+                    let {resources, schemas} = pluginFn(this);
+                    _.forOwn(resources, (conf) => {
+                        conf._plugin = true;
+                    });
+                    _.assign(this.config.resources, resources);
+                    _.assign(this.config.schemas, schemas);
+                });
+            } else {
+                throw `plugins should be an object: {name: fn}`;
+            }
         });
     }
 
-    get middlewares() {
-        if (!this._middlewares) {
-            var middlewares = this.config.middlewares || eurekaMiddlewares;
-            if (typeof middlewares === 'function') {
-                middlewares = middlewares(this);
+
+    /**
+     * Registers all the routes defined from the resources into the
+     * expres application
+     *
+     * @api public
+     * @params {Object} app - the express application (this.app)
+     */
+    mount() {
+        _.forOwn(this._resourcesConfig, (resourceConfig, resourceName) => {
+            if (resourceName[0] === '_') {
+                this.logger.warn(`skipping private resource: ${resourceName}`);
+            } else {
+                let resource = new Resource(resourceName, resourceConfig, this);
+                resource.mount(this.app);
             }
-            this._middlewares = _.compact(middlewares.concat(eurekaBaseMiddleware(this)));
-        }
-        return this._middlewares;
+        });
+
+        /** redirect all the non-api requests to the ember app **/
+        // this.app.get('/*', function(req, res) {
+        //     return res.redirect('#' + req.url);
+        // });
     }
 
+    /**
+     * Mounts all routes and starts the server
+     *
+     * @api public
+     * @param {callback} [callback]
+     */
     start(callback) {
+        // this.prepare();
+        this.mount();
         this.logger.debug(this.config);
-        this.server = http.createServer(this.app);
-        this.server.listen(this.config.port, callback);
+        this._httpServer = http.createServer(this.app);
+        this._httpServer.listen(this.config.port, callback);
         this.logger.info(`application started at http://${this.config.host}:${this.config.port}`);
     }
 
+
+    /**
+     * Stop the server
+     *
+     * @api public
+     * @param {callback} [callback]
+     */
     stop(callback) {
-        if (!this.server) {
+        if (!this._httpServer) {
            throw 'Server not started';
         }
-        this.server.close(callback);
+        this._httpServer.close(callback);
     }
 
+
+    /**
+     * Returns the database with the model defined in schema registered
+     *
+     * @api public
+     * @returns the database
+     */
     get database() {
         if (!this._database) {
             if (this.config.database == null) {
@@ -107,7 +181,49 @@ export default class Server {
         return this._database;
     }
 
-    get _resourceViews() {
+
+    /**
+     * Fill the configuration with default values
+     *
+     * @api public
+     * @param {Object} config - the configuration object
+     */
+    set config(config) {
+        config.environment = process.env.NODE_ENV || 'devel';
+        config.host = config.host || '0.0.0.0';
+        config.port = config.port || 4000;
+        config.version = config.version || 1;
+        config.apiPathPrefix = config.baseURI || (`/api/${config.version}`);
+        config.logLevel = config.logLevel || config.environment === 'production' && 'info' || 'debug';
+        config.publicDirectoryPath = config.publicDirectory || '/dist';
+        config.middlewares = config.middlewares || [];
+        this._config = config;
+    }
+
+
+    /**
+     * Returns the server configuration object
+     *
+     * @api public
+     * @returns the configuration object
+     */
+    get config() {
+        return this._config;
+    }
+
+
+    /*
+     *    Private methods
+     */
+
+
+    /**
+     * Returns all the resource configurations
+     *
+     * @api private
+     * @returns the resource configurations
+     */
+    get _resourcesConfig() {
         var resources = this.config.resources;
         if (!resources) {
             throw 'config.resources not specified';
@@ -118,26 +234,5 @@ export default class Server {
         return resources; // its the resources object
     }
 
-    set config(config) {
-        config.environment = process.env.NODE_ENV || 'devel';
-        config.host = config.host || '0.0.0.0';
-        config.port = config.port || 4000;
-        config.version = config.version || 1;
-        config.apiPathPrefix = config.baseURI || (`/api/${config.version}`);
-        config.logLevel = config.logLevel || config.environment === 'production' && 'info' || 'debug';
-        config.publicDirectoryPath = config.publicDirectory || '/dist';
-        this._config = config;
-    }
 
-    get config() {
-        return this._config;
-    }
-
-    _registerRoutes() {
-        Object.keys(this._resourceViews).forEach(resourceViewName => {
-            var resourceViewConfig = this._resourceViews[resourceViewName];
-            var resourceView = new ResourceView(resourceViewName, resourceViewConfig, this);
-            resourceView.register();
-        });
-    }
 }

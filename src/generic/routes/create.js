@@ -15,6 +15,7 @@ export default {
             return res.badRequest(`cannot parse payload. Reason: ${error}`);
         }
 
+
         /** if the payload is an array, use batchSync **/
         if (_.isArray(payload)) {
             var pojos = [];

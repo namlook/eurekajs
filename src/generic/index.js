@@ -9,7 +9,6 @@ import streamRoute from './routes/stream';
 import groupByRoute from './routes/group-by';
 
 export default {
-    middlewares: [],
     pathPrefix: '/',
     routes: {
         count: countRoute,

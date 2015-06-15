@@ -9,6 +9,9 @@ var expect = chai.expect;
 
 import server from '../server';
 
+server.mount();
+var application = server.app;
+
 describe('Route: [create]', function(){
 
     beforeEach(function(done){
@@ -24,7 +27,7 @@ describe('Route: [create]', function(){
 
         var date = new Date(1984, 7, 3);
 
-        request(server.app)
+        request(application)
             .post('/api/1/generic')
             // .set('Accept', 'application/json')
             .expect('Content-Type', /json/)
@@ -37,7 +40,6 @@ describe('Route: [create]', function(){
 
             })})
             .end(function(err, res){
-                console.log(err);
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
                 var results = res.body.results;
@@ -66,7 +68,7 @@ describe('Route: [create]', function(){
             });
         }
 
-        request(server.app)
+        request(application)
             .post('/api/1/generic')
             .set('Accept', 'application/json')
             .expect('Content-Type', /json/)

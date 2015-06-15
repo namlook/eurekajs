@@ -11,6 +11,9 @@ import server from '../server';
 import loadFixtures from '../utils/load-fixtures';
 import _ from 'lodash';
 
+server.mount();
+var application = server.app;
+
 describe('Route: [stream]', function(){
 
     beforeEach(function(done){
@@ -19,7 +22,7 @@ describe('Route: [stream]', function(){
 
 
     it('should return all documents in a json array', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/stream/json')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -32,7 +35,7 @@ describe('Route: [stream]', function(){
 
 
     it('should return all documents in a json array with query', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/stream/json?boolean=true')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -50,7 +53,7 @@ describe('Route: [stream]', function(){
     });
 
     it('should return all documents in json with the specified fields', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/stream/json?_fields=boolean,integer')
             .end(function(err, res){
                 expect(err).to.be.null;
@@ -68,7 +71,7 @@ describe('Route: [stream]', function(){
 
 
     it('should return all documents in csv', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/stream/csv')
             .end(function(err, res){
                 expect(err).to.be.null;
@@ -101,7 +104,7 @@ describe('Route: [stream]', function(){
     });
 
     it('should return all documents in csv with query', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/stream/csv?boolean=true')
             .end(function(err, res){
                 expect(err).to.be.null;
@@ -134,7 +137,7 @@ describe('Route: [stream]', function(){
     });
 
     it.skip('should return all documents in csv with the specified fields', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/stream/csv?_fields=boolean,integer')
             .end(function(err, res){
                 expect(err).to.be.null;
@@ -161,7 +164,7 @@ describe('Route: [stream]', function(){
     // it('should return a document by its id', function(done){
     //     var documentId = 'generic1';
     //     var date = new Date(1984, 7, 1);
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic/' + documentId)
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -182,7 +185,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should return 404 if no document is found', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic/arf')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -194,7 +197,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should sort the documents', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?_sortBy=-integer')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -212,7 +215,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should limit the documents', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?_limit=5')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -227,7 +230,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should return only the specified fields', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?_fields=integer,text')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -244,7 +247,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should populate all fields', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?_populate=1')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -261,7 +264,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should populate a specified field', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?_populate=relation')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -278,7 +281,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should allow $in operator', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?integer[$in]=2,4,6')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -296,7 +299,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should query relations', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?relation.text=relation 1')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -314,7 +317,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should return an error if a field in query is not specified in schema', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?unknwonField=3')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -328,7 +331,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should return an error when query with a bad operator', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?integer[$arf]=3')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -343,7 +346,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should return an error when query with a bad type', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?integer=bla&boolean=arf')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
@@ -361,7 +364,7 @@ describe('Route: [stream]', function(){
 
 
     // it('should return an error when query with a bad relation type', function(done){
-    //     request(server.app)
+    //     request(application)
     //         .get('/api/1/generic?relation.related=bla')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){

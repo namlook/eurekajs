@@ -1,126 +1,159 @@
 
-import express from 'express';
 import Route from './route';
 import _ from 'lodash';
 import {pascalCase} from './utils';
 
-import loadResourceInfos from './middlewares/load-resource-infos';
-import genericResourceView from './generic';
+import genericResource from './generic';
 
 
-export default class ResourceView {
+var baseResourceMiddleware = function(resource) {
+    return function _baseResourceMiddleware(req, res, next) {
+        req.resource = resource;
+        req.Model = resource.Model;
+        return next();
+    };
+};
+
+
+/**
+ * @class
+ *
+ */
+export default class Resource {
 
     constructor(name, config, server) {
         this.name = name;
         this.config = config;
-        this.router = express.Router(); // eslint-disable-line
         this.server = server;
-        this.logger = this.server.logger;
-        this._updateServerConfig();
+        this.logger = server.logger;
+        this.app = server.app; // eslint-disable-line
+        this.app.use(baseResourceMiddleware(this));
     }
 
-    get defaultMiddlewares() {
-        return [
-            loadResourceInfos(this)
-        ];
-    }
 
-    get schema() {
-        return this.config.schema;
-    }
-
-    get pathPrefix() {
-        return this.config.pathPrefix || `/${this.name}`;
-    }
-
-    get policies() {
-        var _policies = this.config.policies || [];
-        if (typeof _policies === 'function') {
-            _policies = _policies(this);
+    /**
+     * Returns the path prefix
+     *
+     * @api public
+     * @returns {string} The path prefix
+     */
+    get path() {
+        let path = this.config.pathPrefix;
+        if (path == null) {
+            path = `/${this.name}`;
+        } else if (path === '/') {
+            path = '';
         }
-        return _policies;
+        return path;
     }
 
-    get middlewares() {
-        var _middlewares = this.config.middlewares || genericResourceView.middlewares.concat(this.policies);
-        return this.defaultMiddlewares.concat(_middlewares);
+    get fullPath() {
+        return `${this.server.path}${this.path}`;
     }
 
-    get genericRoutes() {
-        return genericResourceView.routes;
+    set config(config) {
+        config.routes = config.routes || {};
+        config.beforeHandlers = config.beforeHandlers || [];
+        this._config = config;
     }
 
-    /** return the related model class **/
+    get config() {
+        return this._config;
+    }
+
+    get isPlugin() {
+        return !!this.config._plugin;
+    }
+
+    /**
+     * Returns the related model class
+     *
+     * @api public
+     * @returns {Model} The model class
+     */
     get Model() {
         return this.server.database[pascalCase(this.name)];
     }
 
-    /** returns all the routes for the resource **/
-    get routes() {
-        var resourceRoutes = this.config.routes || {};
 
+    /**
+     * Returns all the routes for the resource
+     *
+     * @api public
+     * @returns {Route[]} The routes
+     */
+    get routes() {
         var routes = [];
+
+        /**
+         * to prevent overloading custom routes by generic routes,
+         * we have to track the routes that have been already added
+         */
         var routeIds = [];
-        Object.keys(resourceRoutes).forEach(routeName => {
+
+        _.forOwn(this.config.routes, (routeConfig, routeName) => {
             if (routeName[0] === '_') {
                 this.logger.warn(`skipping private route: ${this.name}.${routeName}`);
-                return;
+                return null;
             }
-            let routeConfig = this.config.routes[routeName];
+
             if (routeConfig === false) {
-                this.logger.warn(`disabling generic route: ${this.name}.${routeName}`);
-                return;
+                this.logger.warn(`disabling route: ${this.name}.${routeName}`);
+                return null;
             }
+
             let route = new Route(routeName, routeConfig, this);
             routes.push(route);
             routeIds.push(route.id);
         });
 
-        Object.keys(this.genericRoutes).map((routeName) => {
-            var routeConfig = resourceRoutes[routeName];
-            if (routeConfig == null) {
-                routeConfig = this.genericRoutes[routeName];
-                let route = new Route(routeName, routeConfig, this);
-                if (routeIds.indexOf(route.id) === -1) {
-                    routes.push(route);
-                    routeIds.push(route.id);
+
+        /**
+         * Loading generic routes.
+         * only attach them if there is a Model
+         */
+        if (this.Model) {
+            _.forOwn(genericResource.routes, (routeConfig, routeName) => {
+                let genericRoute = new Route(routeName, routeConfig, this);
+                if (!_.contains(routeIds, genericRoute.id)) {
+                    routes.push(genericRoute);
+                    routeIds.push(genericRoute.id);
                 } else {
-                    this.logger.warn(`disabling generic route ${this.name}.${routeName} reason: "${route.id}" already taken`);
+                    this.logger.warn(`disabling generic route ${this.name}.${routeName} reason: "${genericRoute.id}" already taken`);
                 }
-            }
-        });
-
-        routes = _.sortBy(routes, 'path').reverse();
-        return routes;
-    }
-
-    register() {
-        this.logger.debug(`mounting ${this.server.config.apiPathPrefix}${this.pathPrefix}`);
-
-        var _this = this;
-        this.routes.forEach(function(route) {
-            route.middlewares.forEach(function(middleware) {
-                _this.router[route.method](route.path, middleware);
             });
-            _this.logger.debug(`register route: ${route.method} ${route.path}`);
-            _this.router[route.method](route.path, route.handler);
-        });
 
-        this.server.app.use(`${this.server.config.apiPathPrefix}${this.pathPrefix}`, _this.router);
+        }
+
+        return _.sortBy(routes, 'path').reverse();
     }
 
-    /** update the server config with the resource's one (if specified in config) **/
-    _updateServerConfig() {
-        var configUpdater = this.config.config;
-        if (configUpdater) {
-            if (typeof configUpdater === 'function') {
-                configUpdater(this.server.config, this);
-            } else {
-                Object.keys(configUpdater).forEach((key) => {
-                    this.server.config[key] = configUpdater[key];
-                });
+
+
+    /**
+     * returns all middlewares present in beforeHandlers hook
+     *
+     * @api private
+     */
+    get beforeHandlers() {
+        var handlers = this.config.beforeHandlers;
+        if (handlers) {
+            if (typeof handlers === 'function') {
+                handlers = handlers(this.server, this);
             }
         }
+        return handlers;
     }
 
+
+    mount(app) {
+        let plugin = this.isPlugin && 'plugin ' || '';
+        this.logger.debug(`mounting ${plugin}${this.name} on ${this.fullPath}`);
+
+
+        /*** register routes ***/
+        this.routes.forEach((route) => {
+            route.mount(app);
+        });
+    }
 }

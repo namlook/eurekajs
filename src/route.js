@@ -1,79 +1,135 @@
 
 export const allowedMethods = ['get', 'post', 'delete', 'put', 'head'];
 
+import genericResource from './generic';
+// import definePolicies from './utils/define-policies';
+
 
 export default class Route {
-    constructor(name, config, resourceView) {
+    constructor(name, config, resource) {
         this.name = name;
         this.config = config;
-        this._resourceView = resourceView;
+        this.resource = resource;
+        this.server = resource.server;
+        this.app = resource.app; // eslint-disable-line
         this._validate();
     }
 
     _validate() {
-        var routePathName = `${this._resourceView.name}.${this.name}`;
+        var routePathName = 'route';
+        if (this.config._generic) {
+            routePathName = `[generic].${this.name}`;
+        } else {
+            routePathName = `${this.resource.name}.${this.name}`;
+        }
         if (!this.path) {
-            throw `${routePathName} path not found`;
+            throw `${routePathName}: path not found`;
         }
 
         if (!this.method) {
-            throw `${routePathName} method not found`;
+            throw `${routePathName}: method not found`;
         }
 
         if (allowedMethods.indexOf(this.method) === -1) {
-            throw `${routePathName} unknown method ${this.config.method}`;
+            throw `${routePathName}: unknown method ${this.config.method}`;
         }
+
 
         if (!this.handler) {
-            throw `${routePathName} handler not found and unknown generic route name`;
+            throw `${routePathName}: handler not found and unknown generic route name`;
         }
     }
 
-    get id() {
-        return `${this.method} ${this.path}`;
+    get config() {
+        return this._config;
     }
 
-    get isGeneric() {
-        return this.genericConfig.handler && this.config.handler == null;
+    set config(config) {
+        config.beforeHandler = config.beforeHandler || [];
+        config.policies = config.policies || [];
+        this._config = config;
     }
 
-    get genericConfig() {
-        return this._resourceView.genericRoutes[this.name] || {};
+    /**
+     * returns all inherited handlers
+     *
+     * @api public
+     */
+    get handlers() {
+        return this.resource.beforeHandlers.concat(this.beforeHandler.concat([this.handler]));
     }
 
-    get handler() {
-        return this.config.handler || this.genericConfig.handler;
-    }
 
     get beforeHandler() {
-        var middlewares = this.config.beforeHandler || [];
-        if (typeof middlewares === 'function') {
-            middlewares = middlewares(this);
+        var middleware = this.config.beforeHandler;
+        if (typeof middleware === 'function') {
+            middleware = middleware(this.server, this.resource, this);
         }
-        return middlewares;
+        return middleware;
+    }
+
+    /**
+     * Register the policies hook
+     *
+     * @api private
+     * @TODO
+     */
+    // get policies() {
+    //     return registerPolicies(this.config.policies);
+    // }
+
+    /**
+     * Returns a registered middleware by its name
+     *
+     * @api public
+     * @param {string} name - the name of the registered middleware
+     */
+    getMiddleware(middlewareName) {
+        return this.server.getMiddleware(middlewareName);
+    }
+
+
+
+    /**
+     * Registers the route
+     *
+     * @api public
+     * @param {ExpressApplication} parentApp
+     */
+    mount(app) {
+        app[this.method](this.fullPath, this.handlers);
+    }
+
+
+    /**
+     * Returns the id of the route. A route ID is represented by its method
+     * and its full path
+     *
+     * @api public
+     */
+    get id() {
+        return `${this.method} ${this.fullPath}`;
+    }
+
+
+    get handler() {
+        return this.config.handler || this._genericConfig.handler;
     }
 
 
     get path() {
-        return this.config.path || this.genericConfig.path;
+        return this.config.path || this._genericConfig.path;
+    }
+
+    get fullPath() {
+        return `${this.resource.fullPath}${this.path}`;
     }
 
     get method() {
-        return this.config.method && this.config.method.toLowerCase() || this.genericConfig.method;
+        return this.config.method && this.config.method.toLowerCase() || this._genericConfig.method;
     }
 
-    get policies() {
-        var _policies = this.config.policies || [];
-        if (typeof _policies === 'function') {
-            _policies = _policies(this);
-        }
-        if (!this.isGeneric) {
-            return _policies;
-        }
-        return this.genericConfig.policies.concat(_policies);
-    }
-
-    get middlewares() {
-        return this.config.middlewares || this._resourceView.middlewares.concat(this.beforeHandler);
+    get _genericConfig() {
+        return genericResource.routes[this.name] || {};
     }
 }

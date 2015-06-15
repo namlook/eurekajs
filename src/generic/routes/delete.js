@@ -6,7 +6,6 @@ import fs from 'fs';
 
 /** remove referenced files from file system if propagateDeletion is true **/
 var removeReferencedFileMdw = function(req, res, next) {
-
     var filePathProperties = [];
     var properties = req.Model.schema.properties;
     properties.forEach(function(property) {

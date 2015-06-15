@@ -7,10 +7,13 @@ chai.use(require('chai-http'));
 chai.config.includeStack = true;
 var expect = chai.expect;
 
+import _ from 'lodash';
+
 import server from '../server';
 import loadFixtures from '../utils/load-fixtures';
 
-import _ from 'lodash';
+server.mount();
+var application = server.app;
 
 describe('Route: [update]', function(){
 
@@ -19,7 +22,7 @@ describe('Route: [update]', function(){
     });
 
     it('should update a document', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/generic3')
             .end(function(err, res) {
                 expect(err).to.be.null;
@@ -32,7 +35,7 @@ describe('Route: [update]', function(){
                 newGeneric3.text = 'yes baby';
                 newGeneric3.integer = 42;
 
-                request(server.app)
+                request(application)
                     .post('/api/1/generic/generic3')
                     .set('Accept', 'application/json')
                     .expect('Content-Type', /json/)

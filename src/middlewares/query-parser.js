@@ -1,7 +1,7 @@
 
 import QueryParser from '../utils/query-parser';
 
-export default function(req, res, next) {
+export default function queryParser(req, res, next) {
     req.parsedQuery = new QueryParser(req.db, req.resource.name, req.query);
 
     var errors = req.parsedQuery.errors;

@@ -10,6 +10,9 @@ var expect = chai.expect;
 import server from '../server';
 import loadFixtures from '../utils/load-fixtures';
 
+server.mount();
+var application = server.app;
+
 describe('Route: [count]', function(){
 
     beforeEach(function(done){
@@ -18,7 +21,7 @@ describe('Route: [count]', function(){
 
 
     it('should count the documents', function(done) {
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/count')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -30,7 +33,7 @@ describe('Route: [count]', function(){
     });
 
     it('should count the documents with a query', function(done) {
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/count?boolean=true')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -42,7 +45,7 @@ describe('Route: [count]', function(){
     });
 
     it('should return an error if a field in query is not specified in schema', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/count?unknwonField=3')
             .set('Accept', 'application/json')
             .end(function(err, res){

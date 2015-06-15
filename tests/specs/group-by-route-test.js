@@ -10,6 +10,9 @@ var expect = chai.expect;
 import server from '../server';
 import loadFixtures from '../utils/load-fixtures';
 
+server.mount();
+var application = server.app;
+
 describe('Route: [group-by]', function(){
 
     beforeEach(function(done){
@@ -18,7 +21,7 @@ describe('Route: [group-by]', function(){
 
 
     it('should group by a property', function(done) {
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/group-by/boolean')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -41,7 +44,7 @@ describe('Route: [group-by]', function(){
 
 
     it('should group by a relation property', function(done) {
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/group-by/relation.text')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -63,7 +66,7 @@ describe('Route: [group-by]', function(){
     });
 
     it('should group by a property with a query', function(done) {
-        request(server.app)
+        request(application)
             .get('/api/1/generic/i/group-by/boolean?integer[$gt]=3')
             .set('Accept', 'application/json')
             .end(function(err, res){

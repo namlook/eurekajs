@@ -22,16 +22,25 @@ var buildCustomErrorResponse = function(status, productionErrorMessage) {
     };
 };
 
+var buildCustomSuccessResponse = function(status) {
+    return function(data) {
+        var response = {status: status, results: data};
+        return this.status(status).json(response);
+    };
+};
+
 var httpResponses = {
-    notFound: buildCustomErrorResponse(404, 'not found'),
-    forbidden: buildCustomErrorResponse(403, 'forbidden'),
     badRequest: buildCustomErrorResponse(400, 'bad request'),
-    serverError: buildCustomErrorResponse(500),
+    unauthorized: buildCustomErrorResponse(401, 'unauthorized'),
+    forbidden: buildCustomErrorResponse(403, 'forbidden'),
+    notFound: buildCustomErrorResponse(404, 'not found'),
+    conflict: buildCustomErrorResponse(409, 'conflict'),
     requestTooLarge: buildCustomErrorResponse(413, 'request entity too large'),
-    sendResults: function(results) {
-        let status = 200;
-        return this.status(status).json({results: results, status: status});
-    }
+    serverError: buildCustomErrorResponse(500),
+
+    ok: buildCustomSuccessResponse(200),
+    sendResults: buildCustomSuccessResponse(200),
+    created: buildCustomSuccessResponse(201)
 };
 
 var addResponseHelpers = function(res) {

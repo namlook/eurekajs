@@ -10,6 +10,9 @@ var expect = chai.expect;
 import server from '../server';
 import loadFixtures from '../utils/load-fixtures';
 
+server.mount();
+var application = server.app;
+
 describe('Route: [delete]', function(){
 
     beforeEach(function(done){
@@ -17,7 +20,7 @@ describe('Route: [delete]', function(){
     });
 
     it('should delete a document', function(done) {
-        request(server.app)
+        request(application)
             .get('/api/1/generic/generic3')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -25,14 +28,14 @@ describe('Route: [delete]', function(){
                 expect(res).to.have.status(200);
                 expect(res.body.results._id).to.be.equal('generic3');
 
-                request(server.app)
+                request(application)
                     .delete('/api/1/generic/generic3')
                     .set('Accept', 'application/json')
                     .end(function(err2, res2){
                         expect(err2).to.be.null;
                         expect(res2).to.have.status(204);
 
-                        request(server.app)
+                        request(application)
                             .get('/api/1/generic/generic3')
                             .set('Accept', 'application/json')
                             .end(function(err3, res3){
@@ -48,21 +51,21 @@ describe('Route: [delete]', function(){
 
     it('should delete cascade relations of the documents', function(done) {
 
-        request(server.app)
+        request(application)
             .delete('/api/1/generic/generic3')
             .set('Accept', 'application/json')
             .end(function(err, res){
                 expect(err).to.be.null;
                 expect(res).to.have.status(204);
 
-                request(server.app)
+                request(application)
                     .get('/api/1/generic-relation/relation0')
                     .set('Accept', 'application/json')
                     .end(function(err2, res2){
                         expect(err2).to.be.null;
                         expect(res2.body.results._id).to.equal('relation0');
 
-                        request(server.app)
+                        request(application)
                             .get('/api/1/generic-relation/relation1')
                             .set('Accept', 'application/json')
                             .end(function(err3, res3){
@@ -77,21 +80,21 @@ describe('Route: [delete]', function(){
     });
 
     it('should delete with query?');//, function(done) {
-    //     request(server.app)
+    //     request(application)
     //         .delete('/api/1/generic?boolean=true')
     //         .set('Accept', 'application/json')
     //         .end(function(err, res){
     //             expect(err).to.be.null;
     //             expect(res).to.have.status(204);
 
-    //             request(server.app)
+    //             request(application)
     //                 .get('/api/1/generic?boolean=false')
     //                 .set('Accept', 'application/json')
     //                 .end(function(err2, res2){
     //                     expect(err2).to.be.null;
     //                     expect(res2.body.results.length).to.equal(5);
 
-    //                     request(server.app)
+    //                     request(application)
     //                         .get('/api/1/generic?boolean=true')
     //                         .set('Accept', 'application/json')
     //                         .end(function(err3, res3){

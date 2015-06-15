@@ -10,6 +10,9 @@ var expect = chai.expect;
 import server from '../server';
 import loadFixtures from '../utils/load-fixtures';
 
+server.mount();
+var application = server.app;
+
 describe('Route: [find]', function(){
 
     beforeEach(function(done){
@@ -18,7 +21,7 @@ describe('Route: [find]', function(){
 
 
     it('should return all documents', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -33,7 +36,7 @@ describe('Route: [find]', function(){
     it('should return a document by its id', function(done){
         var documentId = 'generic1';
         var date = new Date(1984, 7, 1);
-        request(server.app)
+        request(application)
             .get('/api/1/generic/' + documentId)
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -53,7 +56,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return 404 if no document is found', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic/arf')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -64,7 +67,7 @@ describe('Route: [find]', function(){
     });
 
     it('should sort the documents', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?_sortBy=-integer')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -81,7 +84,7 @@ describe('Route: [find]', function(){
     });
 
     it('should limit the documents', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?_limit=5')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -95,7 +98,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return only the specified fields', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?_fields=integer,text')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -111,7 +114,7 @@ describe('Route: [find]', function(){
     });
 
     it('should populate all fields', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?_populate=1')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -127,7 +130,7 @@ describe('Route: [find]', function(){
     });
 
     it('should populate a specified field', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?_populate=relation')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -143,7 +146,7 @@ describe('Route: [find]', function(){
     });
 
     it('should allow $in operator', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?integer[$in]=2,4,6')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -160,7 +163,7 @@ describe('Route: [find]', function(){
     });
 
     it('should query relations', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?relation.text=relation 1')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -177,7 +180,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return an error if a field in query is not specified in schema', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?unknwonField=3')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -190,7 +193,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return an error when query with a bad operator', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?integer[$arf]=3')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -204,7 +207,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return an error when query with a bad type', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?integer=bla&boolean=arf')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -221,7 +224,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return an error when query with a bad relation type', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?relation.related=bla')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -235,7 +238,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return an error when specified a bad field', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?_fields=boolean,integ')
             .set('Accept', 'application/json')
             .end(function(err, res){
@@ -249,7 +252,7 @@ describe('Route: [find]', function(){
     });
 
     it('should return an error when specified a bad sortBy', function(done){
-        request(server.app)
+        request(application)
             .get('/api/1/generic?_sortBy=boolean,integ')
             .set('Accept', 'application/json')
             .end(function(err, res){

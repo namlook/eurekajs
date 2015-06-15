@@ -9,6 +9,10 @@ module.exports = {
         },
         password: {
             type: 'password'
+        },
+        groups: {
+            type: 'string',
+            multi: true
         }
     }
 };
