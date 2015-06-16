@@ -40,8 +40,12 @@
     "compression": "^1.4.4",
     "express": "^4.12.4",
     "joi": "^6.4.3",
+    "jsonwebtoken": "^5.0.1",
     "lodash": "^3.9.3",
     "morgan": "^1.5.3",
+    "passport": "^0.2.2",
+    "passport-http": "^0.2.2",
+    "passport-jwt": "^1.1.0",
     "require-dir": "^0.3.0",
     "serve-favicon": "^2.2.1"
   },
