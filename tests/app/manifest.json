@@ -1,0 +1,21 @@
+{
+    "connections": [
+        {"port": 5000}
+    ],
+    "plugins": {
+        "../../lib/plugins/archimedes": {
+            "database": {
+                "adapter": "rdf",
+                "config": {
+                    "store": "virtuoso",
+                    "host": "192.168.99.100",
+                    "graphURI": "http://test.org"
+                }
+            },
+            "schemas": {}
+        },
+        "../../lib/plugins/eureka": {
+            "resources": ["generic", "foo"]
+        }
+    }
+}

@@ -1,4 +1,3 @@
-
 import _ from 'lodash';
 
 export var pascalCase = function(string) {
