@@ -171,7 +171,6 @@ var fillRequest = function(plugin) {
 
 var eurekaPlugin = function(plugin, options, next) {
 
-
     if (options.log) {
         options.log = _.isArray(options.log) && options.log || [options.log];
 
@@ -190,7 +189,9 @@ var eurekaPlugin = function(plugin, options, next) {
 
     plugin.expose('database', plugin.plugins.archimedes.db);
 
-    _.forOwn(options.resources, (resourceConfig, resourceName) => {
+    var resources = _.cloneDeep(options.resources);
+
+    _.forOwn(resources, (resourceConfig, resourceName) => {
 
         var pathPrefix = resourceConfig.prefix;
         if (pathPrefix) {
