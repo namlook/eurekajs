@@ -62,8 +62,15 @@ export default class ModelSchema {
         }
 
         if (!callback) {
-            return joi.validate(pojo, this._validator, options);
+            let {error, value} = joi.validate(pojo, this._validator, options);
+
+            if (error) {
+                error = `${error.name}: ${error.details[0].message}`;
+            }
+
+            return {error, value};
         }
+
         joi.validate(pojo, this._validator, options, callback);
     }
 

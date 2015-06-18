@@ -1,4 +1,6 @@
 
+import _ from 'lodash';
+
 /**
  * to disable eureka magic on a route,
  * just set `config.plugins.eureka = false`
@@ -74,12 +76,94 @@ class GenericResource {
         };
     }
 
+
     get create() {
         return {
             method: 'POST',
             path: '/',
             handler: function(request, reply) {
-                reply.ok({results: `create a ${request.resourceName}`});
+                let {payload, Model, db} = request;
+
+                /**
+                 * if the payload is a string, try to parse it as a JSON
+                 */
+                if (typeof payload === 'string') {
+                    try {
+                        payload = JSON.parse(payload);
+                    } catch (parseError) {
+                        return reply.badRequest('The payload should be a valid JSON', {payload: payload, parseError: parseError});
+                    }
+                }
+
+                /**
+                 * if the payload is an array, performs a batch sync
+                 */
+                if (_.isArray(payload)) {
+                    var pojos = [];
+
+                    /**
+                     * for each item in payload, validate and convert it
+                     * into an archimedes' Model object
+                     */
+                    for (let index in payload) {
+                        let item = payload[index];
+                        let {error, value} = Model.schema.validate(item);
+                        if (error) {
+                            return reply.badRequest(error, {failedDocument: item});
+                        }
+
+                        delete value._type; // TODO remove in the future ?
+
+                        try {
+                            pojos.push(new Model(value).toSerializableObject());
+                        } catch (createModelError) {
+                            return reply.badImplementation(createModelError);
+                        }
+                    }
+
+                    /**
+                     * process batch syncing
+                     */
+                    return db.batchSync(pojos, function(err, data) {
+                        if (err) {
+                            return reply.badImplementation(err);
+                        }
+
+                        let savedObj = data.map(function(item) {
+                            item = item.result; // TODO clean this in archimedes
+                            item._type = Model.schema.name;
+                            return new Model(item).toJSONObject({
+                                dereference: true
+                            });
+                        });
+
+                        return reply.created(savedObj);
+                      });
+
+                /**
+                 * if the payload is an object, perform a regular save
+                 */
+                } else {
+                    let {error, value} = Model.schema.validate(payload);
+
+                    if (error) {
+                        return reply.badRequest(error, {failedDocument: payload});
+                    }
+
+                    try {
+                        var obj = new Model(value);
+                    } catch (createModelError2) {
+                        return reply.badImplementation(createModelError2);
+                    }
+
+                    obj.save(function(err, savedObj) {
+                        if (err) {
+                            return reply.badImplementation(err);
+                        }
+
+                        return reply.created(savedObj.toJSONObject({dereference: true}));
+                    });
+                }
             }
         };
     }

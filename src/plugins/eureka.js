@@ -22,12 +22,18 @@ var decoratePlugin = function(plugin) {
 
     _.forOwn(Boom, (fn, name) => {
         plugin.decorate('reply', name, function(message, data) {
-            return this.response(fn(message, data));
+            let boomError = fn(message);
+            boomError.output.payload.infos = data;
+            return this.response(boomError);
         });
     });
 
     plugin.decorate('reply', 'ok', function (results) {
         return this.response({ statusCode: 200, results: results });
+    });
+
+    plugin.decorate('reply', 'created', function (results) {
+        return this.response({ statusCode: 201, results: results }).code(201);
     });
 
     plugin.decorate('reply', 'noContent', function() {

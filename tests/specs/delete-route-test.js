@@ -14,7 +14,7 @@ import Glue from 'glue';
 
 import loadFixtures from '../utils/load-fixtures';
 
-describe('Route [count]', function() {
+describe('Route [delete]', function() {
 
     /** load the server **/
     var server;
@@ -69,6 +69,33 @@ describe('Route [count]', function() {
             });
         });
     });
+
+
+    it('should throw an error if the document is not in the database', function(done) {
+
+       let deleteOptions = {
+            method: 'DELETE',
+            url: `/api/1/generic/generic3`
+        };
+
+        server.inject(deleteOptions, function(deleteResponse) {
+            expect(deleteResponse.statusCode).to.equal(204);
+
+
+           let deleteOptions2 = {
+                method: 'DELETE',
+                url: `/api/1/generic/generic3`
+            };
+
+            server.inject(deleteOptions2, function(deleteResponse2) {
+                expect(deleteResponse2.statusCode).to.equal(404);
+
+                done();
+            });
+        });
+    });
+
+
 
     it('should delete cascade relations of the documents', function(done) {
 
