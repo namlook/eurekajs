@@ -168,15 +168,15 @@ class GenericResource {
         };
     }
 
+
     get update() {
         return {
             method: ['PUT', 'POST', 'PATCH'],
             path: `/{id}`,
-            handler: function(request, reply) {
-                reply.ok({results: `update a ${request.resourceName}`});
-            }
+            handler: this.create.handler
         };
     }
+
 
     get delete() {
         return {
@@ -190,6 +190,17 @@ class GenericResource {
 
                     return reply.noContent();
                 });
+            }
+        };
+    }
+
+
+    get groupBy() {
+        return {
+            method: 'GET',
+            path: '/i/group-by/{property}',
+            handler: function(request, reply) {
+                return reply.ok(request.pre);
             }
         };
     }

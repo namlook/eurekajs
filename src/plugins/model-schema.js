@@ -79,6 +79,14 @@ export default class ModelSchema {
         _.forOwn(this._properties, (property, propertyName) => {
             validator[propertyName] = property._validator;
         });
+
+        // BIG HACK !!!
+        validator._id = joi.string();
+        validator._type = joi.string();
+        validator._ref = joi.string();
+        validator._uri = joi.string();
+        validator._class = joi.string();
+
         return validator;
     }
 }

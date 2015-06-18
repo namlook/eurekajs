@@ -23,7 +23,9 @@ var decoratePlugin = function(plugin) {
     _.forOwn(Boom, (fn, name) => {
         plugin.decorate('reply', name, function(message, data) {
             let boomError = fn(message);
-            boomError.output.payload.infos = data;
+            if (data) {
+                boomError.output.payload.infos = data;
+            }
             return this.response(boomError);
         });
     });
