@@ -31,7 +31,7 @@ class GenericResource {
 
                     var results = data.map(function(o) {
                         return o.toJSONObject({
-                            populate: false, // TODO options
+                            populate: queryOptions.populate,
                             dereference: true
                         });
                     });

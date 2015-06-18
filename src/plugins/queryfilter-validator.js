@@ -24,7 +24,7 @@ var allowedOperators = [
 
 // var arrayOperators = ['$all', '$nall', '$in', '$nin'];
 
-var operatorValidator = {
+var operatorValidator = joi.object().keys({
     $eq: joi.any(),
     $gt: joi.number(),
     $lt: joi.number(),
@@ -43,7 +43,7 @@ var operatorValidator = {
     $year: joi.number(),
     $month: joi.number(),
     $day: joi.number()
-};
+}).unknown(true);
 
 class QueryFilterValidator {
     constructor(db, modelSchema) {

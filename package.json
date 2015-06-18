@@ -6,16 +6,14 @@
   "repository": "https://github.com/namlook/eurekajs",
   "scripts": {
     "prepublish": "babel src --optional runtime --out-dir lib",
-    "build": "babel src --optional runtime --out-dir lib --source-maps",
+    "build": "rm -rf lib libtests ; babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps",
+    "test": "./node_modules/lab/bin/lab libtests/specs",
     "lint": "eslint src tests",
-    "lint-watch": "nodemon --exec 'eslint src tests' --watch src --watch tests",
-    "babel-watch": "npm run babel-watch-src & npm run babel-watch-tests &",
-    "babel-watch-src": "babel src --watch --optional runtime --out-dir lib --source-maps",
-    "babel-watch-tests": "babel tests --watch --optional runtime --out-dir libtests --source-maps",
-    "watch": "nodemon --exec 'mocha -R spec libtests/**/*.js | ./node_modules/bunyan/bin/bunyan --color -l fatal' --watch lib --watch libtests",
-    "test": "rm -rf libtests ; babel tests --out-dir libtests --source-maps && mocha libtests/**/*.js | ./node_modules/bunyan/bin/bunyan -l fatal; rm -r libtests",
-    "coverage": "mocha --compilers js:babel/register -r blanket -R html-cov tests/**/*.js | ./node_modules/bunyan/bin/bunyan -l fatal > coverage.html && open coverage.html",
-    "coverage-istanbul": "istanbul cover node_modules/mocha/bin/_mocha --  --check-leaks libtests/**/*.js && open coverage/lcov-report/index.html"
+    "watch-lint": "nodemon --exec 'eslint src tests' --watch src --watch tests",
+    "watch-tests": "nodemon --exec './node_modules/lab/bin/lab libtests/specs -vl' --watch lib --watch libtests",
+    "watch-babel-src": "babel src --watch --optional runtime --out-dir lib --source-maps",
+    "watch-babel-tests": "babel tests --watch --optional runtime --out-dir libtests --source-maps",
+    "coverage": "./node_modules/lab/bin/lab -r html -o coverage.html libtests/specs ; open coverage.html"
   },
   "bin": {
     "eureka": "bin/eureka.sh"
@@ -42,11 +40,10 @@
   },
   "devDependencies": {
     "babel-runtime": "^5.4.7",
-    "blanket": "^1.1.7",
-    "chai": "^2.3.0",
-    "chai-http": "^1.0.0",
+    "code": "^1.4.1",
     "eslint": "^0.22.1",
     "glue": "^2.0.0",
+    "lab": "^5.10.0",
     "source-map-support": "^0.3.1"
   }
 }

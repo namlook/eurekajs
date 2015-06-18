@@ -9,7 +9,9 @@ import joi from 'joi';
 
 var queryOptionValidator = {
     limit: joi.number().min(1),
-    sortBy: joi.string()
+    sortBy: joi.string(),
+    fields: joi.array(joi.string()),
+    populate: [joi.number(), joi.boolean()]
 };
 
 
@@ -141,7 +143,18 @@ var fillRequest = function(plugin) {
                 let propName = sortByProperties[index];
                 propName = _.trimLeft(propName, '-');
                 if (!Model.schema.getProperty(propName)) {
-                    return reply.badRequest(`unknown property ${propName} for model ${Model.schema.name}`);
+                    return reply.badRequest(`sortBy: unknown property ${propName} for model ${Model.schema.name}`);
+                }
+            }
+        }
+
+
+        /** check if all fields properties are specified in model **/
+        if (value.fields) {
+            for (let index in value.fields) {
+                let propName = value.fields[index];
+                if (!Model.schema.getProperty(propName)) {
+                    return reply.badRequest(`fields: unknown property ${propName} for model ${Model.schema.name}`);
                 }
             }
         }
@@ -187,6 +200,8 @@ var eurekaPlugin = function(plugin, options, next) {
         } else {
             pathPrefix = `/${resourceName}`; // TODO plurialize
         }
+
+        pathPrefix = `/api/1${pathPrefix}`; // TODO put this in config
 
         var routes = resourceConfig.routes;
 
