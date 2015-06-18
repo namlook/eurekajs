@@ -1,5 +1,4 @@
 
-
 import Lab from 'lab';
 var lab = exports.lab = Lab.script();
 
@@ -15,7 +14,7 @@ import Glue from 'glue';
 import loadFixtures from '../utils/load-fixtures';
 
 Glue.compose(manifest, function(err, server) {
-    expect(err).to.be.null()
+    expect(err).to.be.null();
 
     describe('Route [find]', function() {
 

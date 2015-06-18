@@ -2,7 +2,6 @@
 require('source-map-support').install();
 
 import Glue from 'glue';
-import requireDir from 'require-dir';
 import manifest from './manifest';
 
 
