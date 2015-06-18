@@ -1,12 +1,12 @@
 
 import archimedes from 'archimedes';
+import ModelSchema from './model-schema';
 import {pascalCase} from '../utils';
 import _ from 'lodash';
 
 var archimedesPlugin = function(plugin, options, next) {
 
     if (options.log) {
-
         options.log = _.isArray(options.log) && options.log || [options.log];
 
         plugin.on('log', function(message) {
@@ -16,7 +16,6 @@ var archimedesPlugin = function(plugin, options, next) {
                 }
             }
         });
-
     }
 
 
@@ -30,10 +29,6 @@ var archimedesPlugin = function(plugin, options, next) {
     var models = {};
     var db = new Database(databaseConfig);
 
-    plugin.log(['arf', 'warn'], 'arf');
-    plugin.log(['arf', 'database'], 'showed arf');
-    plugin.log(['foo', 'warn', 'database'], 'showed foo');
-
     _.forOwn(schemas, (modelInfos, modelName) => {
         var modelNamePascalCase = pascalCase(modelName);
 
@@ -42,20 +37,18 @@ var archimedesPlugin = function(plugin, options, next) {
         }
 
         if (!modelInfos.properties) {
-            // plugin.log(['warn', 'database'], `${modelName} has no properties`);
-            console.warn(`WARNING: ${modelName} has no properties`);
+            plugin.log(['warn', 'database'], `${modelName} has no properties`);
             modelInfos.properties = {};
         }
 
-        console.log(`register model ${modelNamePascalCase} (with ${Object.keys(modelInfos.properties).length} properties)`);
-        // plugin.log(['info', 'database'], `register model ${modelNamePascalCase} (with ${Object.keys(modelInfos.properties).length} properties)`);
+        plugin.log(['info', 'database'], `register model ${modelNamePascalCase} (with ${Object.keys(modelInfos.properties).length} properties)`);
 
         models[modelNamePascalCase] = Model.extend({
             schema: modelInfos.properties
         });
 
         // TODO put the following line in archimedes ?
-        // models[modelNamePascalCase].schema = new ModelSchema(modelNamePascalCase, modelInfos, db);
+        models[modelNamePascalCase].schema = new ModelSchema(modelNamePascalCase, modelInfos, db);
     });
 
     db.registerModels(models);

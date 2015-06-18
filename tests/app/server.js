@@ -2,9 +2,9 @@
 require('source-map-support').install();
 
 import Glue from 'glue';
-import resources from './resources';
+import requireDir from 'require-dir';
 
-console.log('------', resources);
+var logs = ['warn', 'info'];
 
 var manifest = {
     connections: [
@@ -12,7 +12,7 @@ var manifest = {
     ],
     plugins: {
         '../../../lib/plugins/archimedes': {
-            log: 'warn',
+            log: logs,
             database: {
                 adapter: 'rdf',
                 config: {
@@ -21,10 +21,11 @@ var manifest = {
                     graphURI: 'http://test.org'
                 }
             },
-            schemas: {} //requireDir('./schemas'),
+            schemas: requireDir('./schemas')
         },
         '../../../lib/plugins/eureka': {
-            resources: resources
+            log: logs,
+            resources: requireDir('./resources')
         }
     }
 };

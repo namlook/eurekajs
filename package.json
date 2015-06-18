@@ -34,8 +34,11 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
+    "boom": "^2.8.0",
     "hapi": "^8.6.1",
-    "lodash": "^3.9.3"
+    "joi": "^6.4.3",
+    "lodash": "^3.9.3",
+    "require-dir": "^0.3.0"
   },
   "devDependencies": {
     "babel-runtime": "^5.4.7",

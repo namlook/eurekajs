@@ -1,30 +1,176 @@
 
 import _ from 'lodash';
+import {pascalCase} from '../utils';
+import queryFilterValidator from './queryfilter-validator';
+import Boom from 'boom';
 
 
+import joi from 'joi';
+
+var queryOptionValidator = {
+    limit: joi.number().min(1),
+    sortBy: joi.string()
+};
+
+
+/**
+ * fill `reply` with Boom helpers
+ */
 var decoratePlugin = function(plugin) {
-    plugin.decorate('reply', 'ok', function (results) {
-        return this.response({ status: 200, results: results });
+
+    _.forOwn(Boom, (fn, name) => {
+        plugin.decorate('reply', name, function(message, data) {
+            return this.response(fn(message, data));
+        });
     });
 
-    plugin.decorate('reply', 'notFound', function () {
-        return this.response({ status: 404, error: 'notFound' }).code(404);
+    plugin.decorate('reply', 'ok', function (results) {
+        return this.response({ statusCode: 200, results: results });
     });
+
+    plugin.decorate('reply', 'noContent', function() {
+        return this.response({statusCode: 204}).code(204);
+    });
+
 };
 
 var fillRequest = function(plugin) {
-    plugin.ext('onPreHandler', function(request, reply) {
-        request.Model = _.get(request, 'route.settings.plugins.eureka.resourceName');
-        request.db = request.server.plugins.eureka.database;
-        request.pre.arf = 'foo';
+
+    /**
+     * Fill the request with helpers:
+     *  - request.resourceName
+     *  - request.db
+     *  - request.Model (if appropriated)
+     */
+    plugin.ext('onPostAuth', function(request, reply) {
+        let db = request.server.plugins.eureka.database;
+        let resourceName = _.get(request, 'route.settings.plugins.eureka.resourceName');
+        let Model = db[pascalCase(resourceName)];
+
+        if (Model) {
+            request.Model = Model;
+        }
+
+        request.resourceName = resourceName;
+        request.db = db;
+        // request.pre.arf = 'foo';
         // console.log(request.route);
         // console.log(request.server.table()[0].table[2].settings);
+
+        return reply.continue();
+    });
+
+
+
+    /**
+     * Prefetch the document
+     * If request.params.id and request.Model exist, fetch the document
+     * and attach it to request.pre.document
+     */
+    plugin.ext('onPreHandler', function(request, reply) {
+        if (request.Model && request.params.id) {
+            request.Model.first({_id: request.params.id}, function(err, document) {
+                if (err) {
+                    return reply.badImplementation();
+                }
+
+                if (!document) {
+                    return reply.notFound();
+                }
+
+                request.pre.document = document;
+                return reply.continue();
+            });
+        } else {
+            return reply.continue();
+        }
+    });
+
+
+
+    /**
+     * extract filter from `request.query`, validate it against
+     * the model properties and add it as `request.pre.queryFilter`
+     */
+    plugin.ext('onPostAuth', function(request, reply) {
+        let {db, query, Model} = request;
+
+        if (!Model) {
+            return reply.continue();
+        }
+
+        let queryFilter = query.filter || {};
+        let {value, errors} = queryFilterValidator(db, Model.schema, queryFilter);
+
+        if (errors.length) {
+            return reply.badRequest(errors[0]);
+        }
+
+        request.pre.queryFilter = value;
+
+        // remove filter from query
+        request.query = _.omit(request.query, 'filter');
+
+        reply.continue();
+    });
+
+
+    /**
+     * extract options from `request.query`, validate them as jsonApi
+     * and add them to `request.pre.queryOptions`
+     */
+    plugin.ext('onPostAuth', function(request, reply) {
+        let {query, Model} = request;
+        if (!Model) {
+            return reply.continue();
+        }
+
+        let queryOptions = _.omit(query, 'filter');
+
+        let {value, error} = joi.validate(
+            queryOptions, queryOptionValidator, {stripUnknown: true});
+
+        if (error) {
+            return reply.badRequest(error);
+        }
+
+        /** check if all sortBy properties are specified in model **/
+        if (value.sortBy) {
+            var sortByProperties = value.sortBy.split(',');
+            for (let index in sortByProperties) {
+                let propName = sortByProperties[index];
+                propName = _.trimLeft(propName, '-');
+                if (!Model.schema.getProperty(propName)) {
+                    return reply.badRequest(`unknown property ${propName} for model ${Model.schema.name}`);
+                }
+            }
+        }
+
+        request.pre.queryOptions = value;
+
+        // remove model specific options from query
+        request.query = _.omit(request.query, _.keys(value));
+
         reply.continue();
     });
 };
 
 
 var eurekaPlugin = function(plugin, options, next) {
+
+
+    if (options.log) {
+        options.log = _.isArray(options.log) && options.log || [options.log];
+
+        plugin.on('log', function(message) {
+            if (_.contains(message.tags, 'eureka')) {
+                if (_.intersection(message.tags, options.log).length) {
+                    console.log(message.tags, message.data);
+                }
+            }
+        });
+    }
+
 
     decoratePlugin(plugin);
     fillRequest(plugin);
@@ -46,7 +192,9 @@ var eurekaPlugin = function(plugin, options, next) {
 
         /*** fill resourceName **/
         routes.forEach(function(route) {
-            _.set(route, 'config.plugins.eureka.resourceName', resourceName);
+            if (_.get(route, 'config.plugins.eureka.resourceName') == null) {
+                _.set(route, 'config.plugins.eureka.resourceName', resourceName);
+            }
 
             if (pathPrefix) {
                 if (route.path === '/') {
@@ -55,8 +203,10 @@ var eurekaPlugin = function(plugin, options, next) {
                     route.path = pathPrefix + route.path;
                 }
             }
+            plugin.log(['debug', 'eureka', 'route'], `attach route: ${route.method} ${route.path} on ${resourceName}`);
         });
 
+        plugin.log(['info', 'eureka'], `mounting ${resourceName} (${routes.length} routes)`);
         plugin.route(routes);
     });
 
