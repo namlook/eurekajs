@@ -15,7 +15,8 @@ class GenericResource {
             this.count,
             this.create,
             this.update,
-            this.delete
+            this.delete,
+            this.groupBy
         ];
     }
 
@@ -200,7 +201,36 @@ class GenericResource {
             method: 'GET',
             path: '/i/group-by/{property}',
             handler: function(request, reply) {
-                return reply.ok(request.pre);
+                let {Model} = request;
+                let {queryFilter, property} = request.pre;
+
+                Model.facets(property, queryFilter, function(err, data) {
+                    if (err) {
+                        return reply.badImplementation(err);
+                    }
+
+                    /** TODO put this hack into archimedes **/
+                    if (Model.schema.getProperty(property).type === 'boolean') {
+                        data = data.map(o => {
+                            o.facet = Boolean(_.parseInt(o.facet));
+                            return o;
+                        });
+                    }
+
+                    return reply.ok(data);
+                });
+            },
+            config: {
+                pre: [
+                    {assign: 'property', method: function(request, reply) {
+                        let Model = request.Model;
+                        let property = request.params.property;
+                        if (!Model.schema.getProperty(property)) {
+                            return reply.badRequest(`unknown property "${property}" for model ${Model.schema.name}`);
+                        }
+                        reply(request.params.property);
+                    }}
+                ]
             }
         };
     }
