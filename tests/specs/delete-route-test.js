@@ -1,0 +1,107 @@
+
+import Lab from 'lab';
+var lab = exports.lab = Lab.script();
+
+import Code from 'code';
+var describe = lab.describe;
+var it = lab.it;
+var before = lab.before;
+var beforeEach = lab.beforeEach;
+var expect = Code.expect;
+
+import manifest from '../app/manifest';
+import Glue from 'glue';
+
+import loadFixtures from '../utils/load-fixtures';
+
+describe('Route [count]', function() {
+
+    /** load the server **/
+    var server;
+    before(function(done) {
+        Glue.compose(manifest, function(err, s) {
+            expect(err).to.be.null();
+            server = s;
+            done();
+        });
+    });
+
+
+    /** load the fixtures **/
+    beforeEach(function(done){
+        loadFixtures(server, done);
+    });
+
+
+    it('should delete a document', function(done) {
+
+       let getOptions = {
+            method: 'GET',
+            url: `/api/1/generic/generic3`
+        };
+
+        server.inject(getOptions, function(getResponse) {
+            expect(getResponse.statusCode).to.equal(200);
+            expect(getResponse.result.statusCode).to.equal(200);
+
+            let data = getResponse.result.results;
+            expect(data._id).to.be.equal('generic3');
+
+
+           let deleteOptions = {
+                method: 'DELETE',
+                url: `/api/1/generic/generic3`
+            };
+
+            server.inject(deleteOptions, function(deleteResponse) {
+                expect(deleteResponse.statusCode).to.equal(204);
+
+               let getOptions2 = {
+                    method: 'GET',
+                    url: `/api/1/generic/generic3`
+                };
+
+                server.inject(getOptions2, function(getResponse2) {
+                    expect(getResponse2.statusCode).to.equal(404);
+                    expect(getResponse2.result.statusCode).to.equal(404);
+                    done();
+                });
+            });
+        });
+    });
+
+    it('should delete cascade relations of the documents', function(done) {
+
+       let deleteOptions = {
+            method: 'DELETE',
+            url: `/api/1/generic/generic3`
+        };
+
+        server.inject(deleteOptions, function(getResponse) {
+            expect(getResponse.statusCode).to.equal(204);
+
+           let getRel0Options = {
+                method: 'GET',
+                url: `/api/1/generic-relation/relation0`
+            };
+
+            server.inject(getRel0Options, function(getRel0Response) {
+                expect(getRel0Response.statusCode).to.equal(200);
+
+                let doc = getRel0Response.result.results;
+                expect(doc._id).to.equal('relation0');
+
+               let getRel1Options = {
+                    method: 'GET',
+                    url: `/api/1/generic-relation/generic1`
+                };
+
+                server.inject(getRel1Options, function(getRel1Response) {
+                    expect(getRel1Response.statusCode).to.equal(404);
+                    expect(getRel1Response.result.statusCode).to.equal(404);
+                    done();
+                });
+            });
+        });
+    });
+});
