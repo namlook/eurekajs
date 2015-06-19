@@ -4,8 +4,7 @@ import {pascalCase} from '../utils';
 import queryFilterValidator from './queryfilter-validator';
 import Boom from 'boom';
 
-import generic from '..//generic-resource';
-
+import Resource from './resource';
 
 import joi from 'joi';
 
@@ -200,41 +199,42 @@ var eurekaPlugin = function(plugin, options, next) {
 
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
 
-        var pathPrefix = resourceConfig.prefix;
-        if (pathPrefix) {
-            if (resourceConfig.prefix !== '/') {
-                pathPrefix = resourceConfig.prefix;
-            }
-        } else {
-            pathPrefix = `/${resourceName}`; // TODO plurialize
-        }
+        // var pathPrefix = resourceConfig.prefix;
+        // if (pathPrefix) {
+        //     if (resourceConfig.prefix !== '/') {
+        //         pathPrefix = resourceConfig.prefix;
+        //     }
+        // } else {
+        //     pathPrefix = `/${resourceName}`; // TODO plurialize
+        // }
 
-        pathPrefix = `/api/1${pathPrefix}`; // TODO put this in config
+        // pathPrefix = `/api/1${pathPrefix}`; // TODO put this in config
 
-        var routes = resourceConfig.routes;
+        // var routes = resourceConfig.routes;
 
-        if (!resourceConfig.__eurekaRegistered__) {
-            /*** fill resourceName **/
-            routes.forEach(function(route) {
-                if (_.get(route, 'config.plugins.eureka.resourceName') == null) {
-                    _.set(route, 'config.plugins.eureka.resourceName', resourceName);
-                }
+        // if (!resourceConfig.__eurekaRegistered__) {
+        //     /*** fill resourceName **/
+        //     routes.forEach(function(route) {
+        //         if (_.get(route, 'config.plugins.eureka.resourceName') == null) {
+        //             _.set(route, 'config.plugins.eureka.resourceName', resourceName);
+        //         }
 
-                if (pathPrefix) {
-                    if (route.path === '/') {
-                        route.path = pathPrefix;
-                    } else {
-                        route.path = pathPrefix + route.path;
-                    }
-                }
-                plugin.log(['debug', 'eureka', 'route'], `attach route: ${route.method} ${route.path} on ${resourceName}`);
-            });
-            resourceConfig.__eurekaRegistered__ = true;
-        } else {
-            plugin.log(['debug', 'eureka', 'resource'], `the resource ${resourceName} has already been registered. Skipping...`);
-        }
+        //         if (pathPrefix) {
+        //             if (route.path === '/') {
+        //                 route.path = pathPrefix;
+        //             } else {
+        //                 route.path = pathPrefix + route.path;
+        //             }
+        //         }
+        //         plugin.log(['debug', 'eureka', 'route'], `attach route: ${route.method} ${route.path} on ${resourceName}`);
+        //     });
+        //     resourceConfig.__eurekaRegistered__ = true;
+        // } else {
+        //     plugin.log(['debug', 'eureka', 'resource'], `the resource ${resourceName} has already been registered. Skipping...`);
+        // }
 
-
+        let resource = new Resource(resourceName, resourceConfig, {apiRootPrefix: options.apiRootPrefix});
+        let routes = resource.routes;
         plugin.log(['info', 'eureka'], `mounting ${resourceName} (${routes.length} routes)`);
         plugin.route(routes);
     });

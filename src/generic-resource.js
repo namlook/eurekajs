@@ -1,5 +1,6 @@
 
 import _ from 'lodash';
+import joi from 'joi';
 
 
 var sync = function(request, callback) {
@@ -105,7 +106,7 @@ var sync = function(request, callback) {
  * just set `config.plugins.eureka = false`
  */
 
-class GenericResource {
+export default new class GenericResource {
 
     get routes() {
         return [
@@ -115,7 +116,8 @@ class GenericResource {
             this.create,
             this.update,
             this.delete,
-            this.groupBy
+            this.groupBy,
+            this.stream
         ];
     }
 
@@ -196,7 +198,6 @@ class GenericResource {
                     return reply.created(data);
                 });
 
-
             }
         };
     }
@@ -207,6 +208,7 @@ class GenericResource {
             method: ['PUT', 'POST', 'PATCH'],
             path: `/{id}`,
             handler: function(request, reply) {
+
                 sync(request, function(err, data) {
                     if (err) {
                         if (err.type === 'ParseError') {
@@ -219,6 +221,7 @@ class GenericResource {
                     }
                     return reply.ok(data);
                 });
+
             }
         };
     }
@@ -274,6 +277,165 @@ class GenericResource {
             }
         };
     }
+
+
+    get stream() {
+        return {
+            method: 'GET',
+            path: '/i/stream/{format}',
+            handler: function(request, reply) {
+                return reply.notImplemented();
+
+                // return reply(Model.stream(queryFilter, queryOptions))
+
+                // return reply.ok(request.pre.total);
+
+                // var Model = req.Model;
+                // var {format, total, asJSONArray} = req.attrs;
+                // var {query, options} = req.parsedQuery;
+
+                // options.sortBy = [];
+
+                // var getData = function(opt, callback) {
+                //     query = _.clone(query);
+                //     opt = _.clone(opt);
+
+                //     Model.find(query, opt, function(_err, results) {
+                //         if (_err) {
+                //             if (_err.message != null) {_err = _err.message; }
+                //             req.logger.error({error: _err});
+                //             return callback({error: _err, query: query, options: opt });
+                //         }
+
+                //         var items;
+                //         if (format === 'json') {
+                //             items = results.map(function(o) {
+                //                 return o.toJSON({
+                //                     populate: opt.populate,
+                //                     dereference: true
+                //                 });
+                //             });
+                //         } else if (format === 'csv') {
+                //             items = results.map(function(o) {
+                //                 return o.toCSV({
+                //                     delimiter: opt.delimiter,
+                //                     fields: opt.fields
+                //                 });
+                //             });
+                //         }
+
+                //         if (format === 'json' && asJSONArray) {
+                //             if (opt.__index === 0) {
+                //                 res.write(items.join(',\n'));
+                //             } else {
+                //                 if (items.length) {
+                //                     res.write(',' + items.join(',\n'));
+                //                 } else {
+                //                     req.logger.error('something wrong, no items for', opt);
+                //                 }
+                //             }
+                //         } else {
+                //             res.write(items.join('\n') + '\n');
+                //         }
+
+                //         return callback(null, 'ok');
+
+                //     });
+                // };
+
+                // var tripOptions = [];
+                // if (options.limit) {
+                //     total = options.limit;
+                // }
+                // var bulkLimit = 100;
+                // var nbTrip = Math.round(total / bulkLimit);
+                // if (total < bulkLimit) {
+                //     bulkLimit = total;
+                // }
+
+                // var _options;
+                // for (var i = 0; i <= nbTrip; i++) {
+                //     _options = _.clone(options);
+                //     _options.limit = bulkLimit;
+                //     _options.offset = bulkLimit * i;
+                //     _options.__index = i;
+                //     tripOptions.push(_options);
+                // }
+
+                // var fileExtension = format;
+                // if (format === 'csv' && options.delimiter === '\t') {
+                //     fileExtension = 'tsv';
+                // }
+
+                // res.attachment(`${req.resource.name}.${fileExtension}`);
+                // // res.setHeader('Content-Type', 'application/json');
+                // // res.setHeader('Content-Type', 'text/html');
+
+                // if (format === 'csv') {
+                //     var csvHeader = new Model().toCSVHeader({fields: options.fields});
+                //     res.write(csvHeader + '\n');
+                // } else if (format === 'json' && asJSONArray) {
+                //     res.write('[');
+                // }
+
+                // async.eachSeries(tripOptions, getData, function(asyncErr){
+                //     if (asyncErr) {
+                //         if (asyncErr.message != null) {asyncErr = asyncErr.message; }
+                //         req.logger.error({error: asyncErr});
+                //     }
+                //     if (format === 'json' && asJSONArray) {
+                //         res.write(']');
+                //     }
+                //     res.end('');
+                // });
+
+
+
+            },
+            config: {
+                validate: {
+                    params: {
+                        format: joi.string().only('json', 'csv', 'tsv').label('format')
+                    },
+                    query: {
+                        asJsonArray: joi.boolean()
+                    }
+                },
+                pre: [
+                    {assign: 'total', method: function(request, reply) {
+                        let {Model} = request;
+                        let {queryFilter, queryOptions} = request.pre;
+
+                        // count will modify the query and options so we have to clone them
+                        // TODO sanitize this in archimedes
+
+                        let query = _.cloneDeep(queryFilter);
+                        let options = _.cloneDeep(queryOptions);
+
+                        Model.count(query, options, function(err, total) {
+                            if (err) {
+                                return reply.badImplementation(err);
+                            }
+
+                            if (options.populate) {
+                                if (total >= 5000) {
+                                    return reply.entityTooLarge('The response has to many results (>5000). Try to narrow down your query');
+                                }
+                            } else {
+                                if (total >= 10000) {
+                                    return res.entityTooLarge('The response has to many results (>10000). Try to narrow down your query');
+                                }
+                            }
+
+                            reply(total);
+                        });
+                    }}
+                ]
+            }
+        };
+    }
 }
 
-export default new GenericResource();
+
+
+// export default new GenericResource();

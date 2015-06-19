@@ -22,7 +22,8 @@ export default {
         },
         '../../../lib/plugins/eureka': {
             log: logs,
-            resources: requireDir('./resources')
+            resources: requireDir('./resources'),
+            apiRootPrefix: '/api/1'
         }
     }
 };
