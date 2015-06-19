@@ -4,6 +4,8 @@ import {pascalCase} from '../utils';
 import queryFilterValidator from './queryfilter-validator';
 import Boom from 'boom';
 
+import generic from '..//generic-resource';
+
 
 import joi from 'joi';
 
@@ -178,7 +180,6 @@ var fillRequest = function(plugin) {
 
 
 var eurekaPlugin = function(plugin, options, next) {
-
     if (options.log) {
         options.log = _.isArray(options.log) && options.log || [options.log];
 
@@ -197,9 +198,7 @@ var eurekaPlugin = function(plugin, options, next) {
 
     plugin.expose('database', plugin.plugins.archimedes.db);
 
-    var resources = _.cloneDeep(options.resources);
-
-    _.forOwn(resources, (resourceConfig, resourceName) => {
+    _.forOwn(options.resources, (resourceConfig, resourceName) => {
 
         var pathPrefix = resourceConfig.prefix;
         if (pathPrefix) {
@@ -214,21 +213,27 @@ var eurekaPlugin = function(plugin, options, next) {
 
         var routes = resourceConfig.routes;
 
-        /*** fill resourceName **/
-        routes.forEach(function(route) {
-            if (_.get(route, 'config.plugins.eureka.resourceName') == null) {
-                _.set(route, 'config.plugins.eureka.resourceName', resourceName);
-            }
-
-            if (pathPrefix) {
-                if (route.path === '/') {
-                    route.path = pathPrefix;
-                } else {
-                    route.path = pathPrefix + route.path;
+        if (!resourceConfig.__eurekaRegistered__) {
+            /*** fill resourceName **/
+            routes.forEach(function(route) {
+                if (_.get(route, 'config.plugins.eureka.resourceName') == null) {
+                    _.set(route, 'config.plugins.eureka.resourceName', resourceName);
                 }
-            }
-            plugin.log(['debug', 'eureka', 'route'], `attach route: ${route.method} ${route.path} on ${resourceName}`);
-        });
+
+                if (pathPrefix) {
+                    if (route.path === '/') {
+                        route.path = pathPrefix;
+                    } else {
+                        route.path = pathPrefix + route.path;
+                    }
+                }
+                plugin.log(['debug', 'eureka', 'route'], `attach route: ${route.method} ${route.path} on ${resourceName}`);
+            });
+            resourceConfig.__eurekaRegistered__ = true;
+        } else {
+            plugin.log(['debug', 'eureka', 'resource'], `the resource ${resourceName} has already been registered. Skipping...`);
+        }
+
 
         plugin.log(['info', 'eureka'], `mounting ${resourceName} (${routes.length} routes)`);
         plugin.route(routes);
