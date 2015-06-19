@@ -249,7 +249,7 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown property unknwonField for model Generic');
+            expect(response.result.message).to.equal('unknown property "unknwonField" for model Generic');
 
             done();
         });
@@ -269,7 +269,7 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown operator $arf');
+            expect(response.result.message).to.equal('unknown operator "$arf"');
 
             done();
         });

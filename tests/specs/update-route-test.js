@@ -58,8 +58,8 @@ describe('Route [update]', function() {
             };
 
             server.inject(postOptions, function(postResponse) {
-                expect(postResponse.statusCode).to.equal(201);
-                expect(postResponse.result.statusCode).to.equal(201);
+                expect(postResponse.statusCode).to.equal(200);
+                expect(postResponse.result.statusCode).to.equal(200);
 
                 let data = postResponse.result.results;
                 expect(data._id).to.equal('generic3');

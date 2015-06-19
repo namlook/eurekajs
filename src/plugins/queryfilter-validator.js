@@ -55,14 +55,14 @@ class QueryFilterValidator {
     _validateValue(value, propertyName, operator) {
         if (operator) {
             if (!_.contains(allowedOperators, operator)) {
-                this.errors.push(`unknown operator ${operator}`);
+                this.errors.push(`unknown operator "${operator}"`);
             }
         }
 
         var property = this._modelSchema.getProperty(propertyName);
 
         if (!property) {
-            this.errors.push(`unknown property ${propertyName} for model ${pascalCase(this._modelSchema.name)}`);
+            this.errors.push(`unknown property "${propertyName}" for model ${pascalCase(this._modelSchema.name)}`);
             return null;
         }
 

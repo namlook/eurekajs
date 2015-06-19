@@ -141,4 +141,21 @@ describe('Route [group-by]', function() {
 
 
 
+    it('should throw an error if the filter contains unknown properties', function(done) {
+        let options = {
+            method: 'GET',
+            url: '/api/1/generic/i/group-by/boolean?filter[unknownField]=3'
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('unknown property "unknownField" for model Generic');
+
+
+            done();
+        });
+
+    });
 });
