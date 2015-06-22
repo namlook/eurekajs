@@ -7,7 +7,14 @@ export default {
     connections: [
         {port: 5000}
     ],
+    server: {
+        app: {
+            secret: 'ssh'
+        }
+    },
     plugins: {
+        'hapi-auth-basic': null,
+        'hapi-auth-jwt': null,
         '../../../lib/plugins/archimedes': {
             log: logs,
             database: {
@@ -24,6 +31,7 @@ export default {
             log: logs,
             resources: requireDir('./resources'),
             apiRootPrefix: '/api/1'
-        }
+        },
+        '../../../lib/plugins/policies': null
     }
 };

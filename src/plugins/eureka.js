@@ -6,6 +6,8 @@ import Boom from 'boom';
 
 import Resource from './resource';
 
+import Bcrypt from 'bcrypt';
+
 import joi from 'joi';
 
 var queryOptionValidator = {
@@ -178,7 +180,53 @@ var fillRequest = function(plugin) {
 };
 
 
+/**
+ * set the authentification layer
+ */
+var setAuthentification = function(plugin) {
+
+    let basicValidation = function(username, password, callback) {
+        let db = plugin.plugins.eureka.database;
+        // let UserModel = plugin.plugins.eureka.userModel;
+        // let usernameField = plugin.plugins.eureka.usernameField;
+        // let passwordField = plugin.plugins.eureka.passwordField;
+
+        let UserModel = 'User';
+        let usernameField = 'email';
+        let passwordField = 'password';
+
+        let query = {[usernameField]: username};
+
+        db[UserModel].first(query, (err, user) => {
+            if (err) {
+                return callback(err);
+            }
+
+            if (!user) {
+                return callback(null, false);
+            }
+
+            Bcrypt.compare(password, user.get(passwordField), (compareErr, isValid) => {
+                return callback(null, isValid, user.toJSONObject());
+            });
+
+        });
+    };
+
+    plugin.auth.strategy('simple', 'basic', {validateFunc: basicValidation});
+
+
+    plugin.auth.strategy('token', 'jwt', {
+        key: plugin.settings.app.secret,
+        validateFunc: function(decodedToken, callback) {
+            return callback(null, true, decodedToken);
+        }
+    });
+};
+
+
 var eurekaPlugin = function(plugin, options, next) {
+
     if (options.log) {
         options.log = _.isArray(options.log) && options.log || [options.log];
 
@@ -191,48 +239,17 @@ var eurekaPlugin = function(plugin, options, next) {
         });
     }
 
+    plugin.expose('database', plugin.plugins.archimedes.db);
+    // plugin.expose('userModel', 'User');
+    // plugin.expose('usernameField', 'email');
+    // plugin.expose('passwordField', 'password');
 
+    setAuthentification(plugin);
     decoratePlugin(plugin);
     fillRequest(plugin);
 
-    plugin.expose('database', plugin.plugins.archimedes.db);
 
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
-
-        // var pathPrefix = resourceConfig.prefix;
-        // if (pathPrefix) {
-        //     if (resourceConfig.prefix !== '/') {
-        //         pathPrefix = resourceConfig.prefix;
-        //     }
-        // } else {
-        //     pathPrefix = `/${resourceName}`; // TODO plurialize
-        // }
-
-        // pathPrefix = `/api/1${pathPrefix}`; // TODO put this in config
-
-        // var routes = resourceConfig.routes;
-
-        // if (!resourceConfig.__eurekaRegistered__) {
-        //     /*** fill resourceName **/
-        //     routes.forEach(function(route) {
-        //         if (_.get(route, 'config.plugins.eureka.resourceName') == null) {
-        //             _.set(route, 'config.plugins.eureka.resourceName', resourceName);
-        //         }
-
-        //         if (pathPrefix) {
-        //             if (route.path === '/') {
-        //                 route.path = pathPrefix;
-        //             } else {
-        //                 route.path = pathPrefix + route.path;
-        //             }
-        //         }
-        //         plugin.log(['debug', 'eureka', 'route'], `attach route: ${route.method} ${route.path} on ${resourceName}`);
-        //     });
-        //     resourceConfig.__eurekaRegistered__ = true;
-        // } else {
-        //     plugin.log(['debug', 'eureka', 'resource'], `the resource ${resourceName} has already been registered. Skipping...`);
-        // }
-
         let resource = new Resource(resourceName, resourceConfig, {apiRootPrefix: options.apiRootPrefix});
         let routes = resource.routes;
         plugin.log(['info', 'eureka'], `mounting ${resourceName} (${routes.length} routes)`);

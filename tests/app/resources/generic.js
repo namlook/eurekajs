@@ -1,6 +1,6 @@
 
-import generic from '../../../lib/generic-resource';
+import genericRoutes from '../../../lib/generic-routes';
 
 export default {
-    routes: generic.routes
+    routes: genericRoutes.all
 };
