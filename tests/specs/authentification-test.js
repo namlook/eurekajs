@@ -42,6 +42,7 @@ describe('Authentification', function() {
             method: 'POST',
             url: '/api/1/auth',
             payload: {
+                login: 'newuser',
                 email: 'newuser@test.com',
                 password: 'secret'
             }
@@ -64,6 +65,142 @@ describe('Authentification', function() {
                 done();
             });
 
+        });
+    });
+
+
+    it('should return an error if the email is already taken', (done) => {
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/auth',
+            payload: {
+                login: 'newuser',
+                email: 'user1@test.com',
+                password: 'secret'
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(409);
+            expect(response.result.statusCode).to.equal(409);
+            expect(response.result.error).to.equal('Conflict');
+            expect(response.result.message).to.equal('email is taken');
+
+            done();
+        });
+    });
+
+
+    it('should return an error if the email is invalid', (done) => {
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/auth',
+            payload: {
+                login: 'newuser',
+                email: 'thebad email',
+                password: 'secret'
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
+
+            done();
+        });
+    });
+
+
+
+    it('should return an error if the email is missing', (done) => {
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/auth',
+            payload: {
+                login: 'newuser',
+                password: 'secret'
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('child "email" fails because ["email" is required]');
+
+            done();
+        });
+    });
+
+
+
+    it('should return an error if the login is missing', (done) => {
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/auth',
+            payload: {
+                email: 'newuser@test.com',
+                password: 'secret'
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('child "login" fails because ["login" is required]');
+
+            done();
+        });
+    });
+
+
+    it('should return an error if the password is missing', (done) => {
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/auth',
+            payload: {
+                login: 'newuser',
+                email: 'newuser@test.com'
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('child "password" fails because ["password" is required]');
+
+            done();
+        });
+    });
+
+    it('should return an error if the login is already taken', (done) => {
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/auth',
+            payload: {
+                login: 'user1',
+                email: 'newuser@test.com',
+                password: 'secret'
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(409);
+            expect(response.result.statusCode).to.equal(409);
+            expect(response.result.error).to.equal('Conflict');
+            expect(response.result.message).to.equal('login is taken');
+
+            done();
         });
     });
 

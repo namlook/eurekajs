@@ -86,6 +86,7 @@ export default {
             users.push({
                 _id: `user${i}`,
                 _type: 'User',
+                login: `user${i}`,
                 email: `user${i}@test.com`,
                 password: Bcrypt.hashSync(`secret${i}`, 10)
             });

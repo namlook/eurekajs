@@ -80,7 +80,7 @@ var fillRequest = function(plugin) {
      * If request.params.id and request.Model exist, fetch the document
      * and attach it to request.pre.document
      */
-    plugin.ext('onPreHandler', function(request, reply) {
+    plugin.ext('onPostAuth', function(request, reply) {
         if (request.Model && request.params.id) {
             request.Model.first({_id: request.params.id}, function(err, document) {
                 if (err) {
