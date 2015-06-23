@@ -84,7 +84,7 @@ var fillRequest = function(plugin) {
         if (request.Model && request.params.id) {
             request.Model.first({_id: request.params.id}, function(err, document) {
                 if (err) {
-                    return reply.badImplementation();
+                    return reply.badImplementation(err);
                 }
 
                 if (!document) {

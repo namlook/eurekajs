@@ -14,6 +14,8 @@ import Glue from 'glue';
 
 import fixtures from '../utils/fixtures';
 
+import Bcrypt from 'bcrypt';
+
 describe('Authentification', function() {
 
     /** load the server **/
@@ -35,292 +37,365 @@ describe('Authentification', function() {
         });
     });
 
-
-    it('should create a user with an encrypted password', (done) => {
-
-        let options = {
-            method: 'POST',
-            url: '/api/1/auth',
-            payload: {
-                login: 'newuser',
-                email: 'newuser@test.com',
-                password: 'secret'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(201);
-            expect(response.result.statusCode).to.equal(201);
-
-            let user = response.result.results;
-            expect(user._id).to.exist();
-            expect(user._type).to.exist();
-            expect(user.email).to.equal('newuser@test.com');
-            expect(user.password).to.not.exists();
-
-            let db = server.plugins.eureka.database;
-            db.User.first({email: user.email}, (err, fetchedUser) => {
-                expect(err).to.be.null();
-                expect(fetchedUser.get('password')).to.not.equal('secret');
-                done();
-            });
-
-        });
-    });
+    describe('[signing up]', function() {
 
 
-    it('should return an error if the email is already taken', (done) => {
+        it('with an encrypted password', (done) => {
 
-        let options = {
-            method: 'POST',
-            url: '/api/1/auth',
-            payload: {
-                login: 'newuser',
-                email: 'user1@test.com',
-                password: 'secret'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(409);
-            expect(response.result.statusCode).to.equal(409);
-            expect(response.result.error).to.equal('Conflict');
-            expect(response.result.message).to.equal('email is taken');
-
-            done();
-        });
-    });
-
-
-    it('should return an error if the email is invalid', (done) => {
-
-        let options = {
-            method: 'POST',
-            url: '/api/1/auth',
-            payload: {
-                login: 'newuser',
-                email: 'thebad email',
-                password: 'secret'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
-
-            done();
-        });
-    });
-
-
-
-    it('should return an error if the email is missing', (done) => {
-
-        let options = {
-            method: 'POST',
-            url: '/api/1/auth',
-            payload: {
-                login: 'newuser',
-                password: 'secret'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('child "email" fails because ["email" is required]');
-
-            done();
-        });
-    });
-
-
-
-    it('should return an error if the login is missing', (done) => {
-
-        let options = {
-            method: 'POST',
-            url: '/api/1/auth',
-            payload: {
-                email: 'newuser@test.com',
-                password: 'secret'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('child "login" fails because ["login" is required]');
-
-            done();
-        });
-    });
-
-
-    it('should return an error if the password is missing', (done) => {
-
-        let options = {
-            method: 'POST',
-            url: '/api/1/auth',
-            payload: {
-                login: 'newuser',
-                email: 'newuser@test.com'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('child "password" fails because ["password" is required]');
-
-            done();
-        });
-    });
-
-    it('should return an error if the login is already taken', (done) => {
-
-        let options = {
-            method: 'POST',
-            url: '/api/1/auth',
-            payload: {
-                login: 'user1',
-                email: 'newuser@test.com',
-                password: 'secret'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(409);
-            expect(response.result.statusCode).to.equal(409);
-            expect(response.result.error).to.equal('Conflict');
-            expect(response.result.message).to.equal('login is taken');
-
-            done();
-        });
-    });
-
-
-    it('should allow the user to get an access token', (done) => {
-        let basicDigest = new Buffer('user1@test.com:secret1').toString('base64');
-
-        let options = {
-            method: 'GET',
-            url: '/api/1/auth',
-            headers: {
-                Authorization: `Basic ${basicDigest}`
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
-            expect(response.result.results.token).to.exist();
-            done();
-        });
-    });
-
-
-    it('should return an error if the user credentials are invalids', (done) => {
-        let basicDigest = new Buffer('user1@test.com:badpassword').toString('base64');
-
-        let options = {
-            method: 'GET',
-            url: '/api/1/auth',
-            headers: {
-                Authorization: `Basic ${basicDigest}`
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(401);
-            expect(response.result.statusCode).to.equal(401);
-            expect(response.result.error).to.equal('Unauthorized');
-            expect(response.result.message).to.equal('Bad username or password');
-            done();
-        });
-    });
-
-    it('should allow access to a resource protected by token', (done) => {
-
-        let options = {
-            method: 'GET',
-            url: '/api/1/auth',
-            credentials: {
-                _id: 'user1',
-                email: 'user1@test.com'
-            }
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
-            let token = response.result.results.token;
-
-            let tokenOptions = {
-                method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/only-auth',
-                headers: {
-                    Authorization: `Bearer ${token}`
+            let options = {
+                method: 'POST',
+                url: '/api/1/auth',
+                payload: {
+                    login: 'newuser',
+                    email: 'newuser@test.com',
+                    password: 'secret'
                 }
             };
 
-            server.inject(tokenOptions, function(tokenResponse) {
-                expect(tokenResponse.statusCode).to.equal(200);
-                expect(tokenResponse.result.statusCode).to.equal(200);
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(201);
+                expect(response.result.statusCode).to.equal(201);
 
-                let doc = tokenResponse.result.results;
-                expect(doc._id).to.equal('userstuff1');
-                expect(doc._owner).to.equal('user1');
-                expect(doc.title).to.equal('the secret thing of user 1');
-                expect(doc.isSecret).to.be.true();
+                let user = response.result.results;
+                expect(user._id).to.exist();
+                expect(user._type).to.exist();
+                expect(user.email).to.equal('newuser@test.com');
+                expect(user.password).to.not.exists();
+
+                let db = server.plugins.eureka.database;
+                db.User.first({email: user.email}, (err, fetchedUser) => {
+                    expect(err).to.be.null();
+                    let fetchedPassword = fetchedUser.get('password');
+                    expect(fetchedPassword).to.not.equal('secret');
+                    let isValid = Bcrypt.compareSync('secret', fetchedPassword);
+                    expect(isValid).to.be.true();
+                    done();
+                });
+
+            });
+        });
+
+        describe('should return and error', function() {
+
+            it('if the email is already taken', (done) => {
+
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth',
+                    payload: {
+                        login: 'newuser',
+                        email: 'user1@test.com',
+                        password: 'secret'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(409);
+                    expect(response.result.statusCode).to.equal(409);
+                    expect(response.result.error).to.equal('Conflict');
+                    expect(response.result.message).to.equal('email is taken');
+
+                    done();
+                });
+            });
+
+
+            it('if the email is invalid', (done) => {
+
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth',
+                    payload: {
+                        login: 'newuser',
+                        email: 'thebad email',
+                        password: 'secret'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(400);
+                    expect(response.result.statusCode).to.equal(400);
+                    expect(response.result.error).to.equal('Bad Request');
+                    expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
+
+                    done();
+                });
+            });
+
+
+
+            it('if the email is missing', (done) => {
+
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth',
+                    payload: {
+                        login: 'newuser',
+                        password: 'secret'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(400);
+                    expect(response.result.statusCode).to.equal(400);
+                    expect(response.result.error).to.equal('Bad Request');
+                    expect(response.result.message).to.equal('child "email" fails because ["email" is required]');
+
+                    done();
+                });
+            });
+
+
+
+            it('if the login is missing', (done) => {
+
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth',
+                    payload: {
+                        email: 'newuser@test.com',
+                        password: 'secret'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(400);
+                    expect(response.result.statusCode).to.equal(400);
+                    expect(response.result.error).to.equal('Bad Request');
+                    expect(response.result.message).to.equal('child "login" fails because ["login" is required]');
+
+                    done();
+                });
+            });
+
+
+            it('if the password is missing', (done) => {
+
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth',
+                    payload: {
+                        login: 'newuser',
+                        email: 'newuser@test.com'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(400);
+                    expect(response.result.statusCode).to.equal(400);
+                    expect(response.result.error).to.equal('Bad Request');
+                    expect(response.result.message).to.equal('child "password" fails because ["password" is required]');
+
+                    done();
+                });
+            });
+
+            it('if the login is already taken', (done) => {
+
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth',
+                    payload: {
+                        login: 'user1',
+                        email: 'newuser@test.com',
+                        password: 'secret'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(409);
+                    expect(response.result.statusCode).to.equal(409);
+                    expect(response.result.error).to.equal('Conflict');
+                    expect(response.result.message).to.equal('login is taken');
+
+                    done();
+                });
+            });
+
+        });
+
+    });
+
+
+    describe('[autentification]', function() {
+
+        it('the user with an access token', (done) => {
+            let basicDigest = new Buffer('user1@test.com:secret1').toString('base64');
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/auth',
+                headers: {
+                    Authorization: `Basic ${basicDigest}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.result.statusCode).to.equal(200);
+                expect(response.result.results.token).to.exist();
+                done();
+            });
+        });
+
+    });
+
+    describe('[reseting password]', function() {
+
+        it('should send an email with the password reset token', (done) => {
+
+            let options = {
+                method: 'POST',
+                url: '/api/1/auth/password-request',
+                payload: {
+                    email: 'user1@test.com'
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.result.statusCode).to.equal(200);
+                expect(response.result.results.token).to.exists();
 
                 done();
             });
         });
-    });
 
 
-    it('should return an error if the token is malformed', (done) => {
-        let options = {
-            method: 'GET',
-            url: '/api/1/user-stuff/userstuff1/only-auth',
-            headers: {
-                Authorization: `Bearer badtoken`
-            }
-        };
 
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('Bad HTTP authentication header format');
-            done();
+        it('should set the new password', (done) => {
+
+            let options = {
+                method: 'POST',
+                url: '/api/1/auth/password-request',
+                payload: {
+                    email: 'user1@test.com'
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.result.statusCode).to.equal(200);
+                var token = response.result.results.token;
+
+                let resetOptions = {
+                    method: 'POST',
+                    url: '/api/1/auth/password-reset',
+                    payload: {
+                        token: token,
+                        password: 'newpassword'
+                    }
+                };
+
+                server.inject(resetOptions, function(resetResponse) {
+                    expect(resetResponse.statusCode).to.equal(200);
+                    expect(resetResponse.result.statusCode).to.equal(200);
+
+                    let db = server.plugins.eureka.database;
+                    db.User.first({email: 'user1@test.com'}, (err, user) => {
+                        expect(err).to.be.null();
+
+                        let isValid = Bcrypt.compareSync('newpassword', user.get('password'));
+                        expect(isValid).to.be.true();
+                        done();
+                    });
+
+                });
+            });
         });
-    });
 
 
-    it('should return an error if the token is invalid', (done) => {
-        let options = {
-            method: 'GET',
-            url: '/api/1/user-stuff/userstuff1/only-auth',
-            headers: {
-                Authorization: `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoibmljbyIsImlhdCI6MTQzNDk3NTU5N30.BDYlQTXhLgUzbgkT8PfWScsUekhYmW-Ex5HRQXiDNRJ`
-            }
-        };
+        describe('should return an error', function() {
 
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(401);
-            expect(response.result.statusCode).to.equal(401);
-            expect(response.result.error).to.equal('Unauthorized');
-            expect(response.result.message).to.equal('Invalid signature received for JSON Web Token validation');
-            done();
+            it('if email doesnt exist', (done) => {
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth/password-request',
+                    payload: {
+                        email: 'nonexistingemail@test.com'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(404);
+                    expect(response.result.statusCode).to.equal(404);
+                    expect(response.result.error).to.equal('Not Found');
+                    expect(response.result.message).to.equal('email not found');
+
+                    done();
+                });
+            });
+
+
+            it('if email is invalid', (done) => {
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth/password-request',
+                    payload: {
+                        email: 'invalid email'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(400);
+                    expect(response.result.statusCode).to.equal(400);
+                    expect(response.result.error).to.equal('Bad Request');
+                    expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
+
+                    done();
+                });
+            });
+
+            it('if the password reset token is used twice', (done) => {
+                let options = {
+                    method: 'POST',
+                    url: '/api/1/auth/password-request',
+                    payload: {
+                        email: 'user1@test.com'
+                    }
+                };
+
+                server.inject(options, function(response) {
+                    expect(response.statusCode).to.equal(200);
+                    expect(response.result.statusCode).to.equal(200);
+                    var token = response.result.results.token;
+
+                    let resetOptions = {
+                        method: 'POST',
+                        url: '/api/1/auth/password-reset',
+                        payload: {
+                            token: token,
+                            password: 'newpassword'
+                        }
+                    };
+
+                    server.inject(resetOptions, function(resetResponse) {
+                        expect(resetResponse.statusCode).to.equal(200);
+                        expect(resetResponse.result.statusCode).to.equal(200);
+                        expect(resetResponse.result.results).to.equal('the password has been reset');
+
+                        let resetOptions2 = {
+                            method: 'POST',
+                            url: '/api/1/auth/password-reset',
+                            payload: {
+                                token: token,
+                                password: 'newpassword'
+                            }
+                        };
+
+                        server.inject(resetOptions2, function(resetResponse2) {
+                            expect(resetResponse2.statusCode).to.equal(400);
+                            expect(resetResponse2.result.statusCode).to.equal(400);
+                            expect(resetResponse2.result.error).to.equal('Bad Request');
+                            expect(resetResponse2.result.message).to.equal('Cannot find a match. The token may have been used already.');
+                            done();
+                        });
+                    });
+                });
+            });
+
         });
-    });
 
+    });
 
 });
