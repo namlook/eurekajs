@@ -255,7 +255,10 @@ describe('Authentification', function() {
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
                 expect(response.result.statusCode).to.equal(200);
-                expect(response.result.results.token).to.exists();
+                let data = response.result.results;
+                expect(data.status).to.equal('the password reset token has been send by email');
+                expect(data.infos.envelope.from).to.equal('contact@project.com');
+                expect(data.infos.envelope.to).to.include(['user1@test.com']);
 
                 done();
             });
@@ -276,7 +279,10 @@ describe('Authentification', function() {
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
                 expect(response.result.statusCode).to.equal(200);
-                var token = response.result.results.token;
+
+                let receivedEmail = response.result.results.infos.response.toString();
+                let base64Token = receivedEmail.split('password-reset?token=')[1].split('\n')[0];
+                var token = new Buffer(base64Token, 'base64').toString();
 
                 let resetOptions = {
                     method: 'POST',
@@ -358,7 +364,10 @@ describe('Authentification', function() {
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(200);
                     expect(response.result.statusCode).to.equal(200);
-                    var token = response.result.results.token;
+
+                    let receivedEmail = response.result.results.infos.response.toString();
+                    let base64Token = receivedEmail.split('password-reset?token=')[1].split('\n')[0];
+                    var token = new Buffer(base64Token, 'base64').toString();
 
                     let resetOptions = {
                         method: 'POST',

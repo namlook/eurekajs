@@ -152,7 +152,7 @@ export default {
 
                 user.save(function(err) {
                     if (err) {
-                        return reply.badImplemendation(err);
+                        return reply.badImplementation(err);
                     }
 
                     let token = jwt.sign(
@@ -161,7 +161,34 @@ export default {
                         {expiresInMinutes: 180}
                     );
 
-                    reply.ok({token: token}); // TODO send this by email
+                    let base64Token = new Buffer(token).toString('base64');
+                    let clientRootUrl = request.server.settings.app.clientRootUrl;
+
+                    var envelope = {
+                        from: request.server.settings.app.email,
+                        to: user.get('email'),
+                        subject: 'Password reset',
+                        // html: {
+                        //     path: 'password-reset.html'
+                        // },
+                        text: `Click on the following link to reset your password:
+                            ${clientRootUrl}/password-reset?token=${base64Token}
+                        `
+                        // context: {
+                        //     token: base64Token
+                        // }
+                    };
+
+                    var Mailer = request.server.plugins.mailer;
+                    // console.log(data);
+                    Mailer.sendMail(envelope, function (mailError, infos) {
+                        if (mailError) {
+                            return reply.badImplementation(mailError);
+                        }
+                        // console.log('---', infos);
+                        reply.ok({status: 'the password reset token has been send by email', infos: infos});
+                    });
+
                 });
             }
         },
@@ -201,7 +228,7 @@ export default {
                             let {db} = request;
                             db.User.first({passwordResetToken: request.pre.resetToken}, function(err, user) {
                                 if (err) {
-                                    return reply.badImplemendation(err);
+                                    return reply.badImplementation(err);
                                 }
                                 if (!user) {
                                     return reply.badRequest('Cannot find a match. The token may have been used already.');
@@ -224,7 +251,7 @@ export default {
 
                 user.save(function(err) {
                     if (err) {
-                        return reply.badImplemendation(err);
+                        return reply.badImplementation(err);
                     }
                     return reply.ok('the password has been reset');
                 });

@@ -34,12 +34,15 @@
   "dependencies": {
     "bcrypt": "^0.8.3",
     "boom": "^2.8.0",
+    "handlebars": "^3.0.3",
     "hapi": "^8.6.1",
     "hapi-auth-basic": "^2.0.0",
     "hapi-auth-jwt": "^2.1.2",
+    "hapi-mailer": "^4.0.0",
     "joi": "^6.4.3",
     "jsonwebtoken": "^5.0.2",
     "lodash": "^3.9.3",
+    "nodemailer-stub-transport": "^1.0.0",
     "require-dir": "^0.3.0"
   },
   "devDependencies": {
