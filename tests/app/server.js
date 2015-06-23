@@ -1,25 +1,23 @@
 
 require('source-map-support').install();
 
-import Glue from 'glue';
-import manifest from './manifest';
+import eureka from '../../lib';
+import config from '../config';
 
 
-Glue.compose(manifest, function(err, server) {
+let eurekaServer = eureka(config);
+
+eurekaServer.beforeRegister = function(server, next) {
+    server.on('log', function(message) {
+        console.log(message.tags, message.data);
+    });
+    next(null);
+};
+
+eurekaServer.start(function(err, server) {
     if (err) {
         throw err;
     }
 
-    server.on('log', function(message) {
-        console.log(message.tags, message.data);
-    });
-
-    server.start(function(startErr) {
-        if (startErr) {
-            throw startErr;
-        }
-
-        server.log('info', `Server running at: http://${server.info.address}:${server.info.port}`);
-    });
-
+    server.log('info', `Server running at: http://${server.info.address}:${server.info.port}`);
 });

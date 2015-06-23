@@ -18,7 +18,6 @@ var archimedesPlugin = function(plugin, options, next) {
         });
     }
 
-
     let adapter = options.database.adapter;
     let databaseConfig = options.database.config;
     let schemas = options.schemas;

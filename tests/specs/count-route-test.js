@@ -9,9 +9,8 @@ var before = lab.before;
 var beforeEach = lab.beforeEach;
 var expect = Code.expect;
 
-import manifest from '../app/manifest';
-import Glue from 'glue';
-
+import eureka from '../../lib';
+import config from '../config';
 import fixtures from '../utils/fixtures';
 
 describe('Route [count]', function() {
@@ -19,8 +18,8 @@ describe('Route [count]', function() {
     /** load the server **/
     var server;
     before(function(done) {
-        Glue.compose(manifest, function(err, s) {
-            expect(err).to.be.null();
+        eureka(config).compose(function(err, s) {
+            expect(err).to.not.exists();
             server = s;
             done();
         });
