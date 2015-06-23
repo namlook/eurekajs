@@ -1,13 +1,22 @@
 
 import Bcrypt from 'bcrypt';
 
-export default function(server, done) {
-    var database = server.plugins.eureka.database;
+export default {
 
-    database.clear(function(err) {
-        if (err) {
-            throw err;
-        }
+    clear: function(server, done) {
+        var database = server.plugins.eureka.database;
+
+        database.clear(function(err) {
+            if (err) {
+                throw err;
+            }
+
+            done();
+        });
+    },
+
+    genericDocuments: function(server, done) {
+        var database = server.plugins.eureka.database;
 
         var relations = [
             {
@@ -48,6 +57,30 @@ export default function(server, done) {
         });
 
 
+        let data = relations.concat(generics);
+        database.batchSync(data, (syncErr) => {
+            if (syncErr) {
+                throw syncErr;
+            }
+
+            database.count(function(err3, total) {
+                if (err3) {
+                    throw err3;
+                }
+                if (!total) {
+                    throw 'No tests fixtures has been inserted. Is the database connected ?';
+                }
+                done();
+            });
+
+        });
+
+    },
+
+
+    userDocuments: function(server, done) {
+        var database = server.plugins.eureka.database;
+
         var users = [];
         for (let i = 0; i < 5; i++) {
             users.push({
@@ -76,7 +109,7 @@ export default function(server, done) {
         });
 
 
-        let data = relations.concat(generics).concat(users).concat(userStuff);
+        let data = users.concat(userStuff);
 
         database.batchSync(data, (syncErr) => {
             if (syncErr) {
@@ -94,5 +127,5 @@ export default function(server, done) {
             });
 
         });
-    });
-}
+    }
+};

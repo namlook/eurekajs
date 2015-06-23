@@ -11,7 +11,7 @@ var expect = Code.expect;
 import manifest from '../app/manifest';
 import Glue from 'glue';
 
-import loadFixtures from '../utils/load-fixtures';
+import fixtures from '../utils/fixtures';
 
 
 describe('Route [stream]', function() {
@@ -26,11 +26,12 @@ describe('Route [stream]', function() {
         });
     });
 
-    /** load the fixtures **/
+     /** load the fixtures **/
     beforeEach(function(done){
-        loadFixtures(server, done);
+        fixtures.clear(server, function() {
+            fixtures.genericDocuments(server, done);
+        });
     });
-
 
     it('should return all documents', function(done){
         let options = {

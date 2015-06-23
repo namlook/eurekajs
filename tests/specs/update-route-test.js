@@ -14,7 +14,7 @@ import Glue from 'glue';
 
 import _ from 'lodash';
 
-import loadFixtures from '../utils/load-fixtures';
+import fixtures from '../utils/fixtures';
 
 describe('Route [update]', function() {
 
@@ -29,9 +29,11 @@ describe('Route [update]', function() {
     });
 
 
-    /** load the fixtures **/
+     /** load the fixtures **/
     beforeEach(function(done){
-        loadFixtures(server, done);
+        fixtures.clear(server, function() {
+            fixtures.genericDocuments(server, done);
+        });
     });
 
 

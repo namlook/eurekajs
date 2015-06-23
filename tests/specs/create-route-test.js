@@ -12,7 +12,7 @@ var expect = Code.expect;
 import manifest from '../app/manifest';
 import Glue from 'glue';
 
-import loadFixtures from '../utils/load-fixtures';
+import fixtures from '../utils/fixtures';
 
 describe('Route [create]', function() {
 
@@ -27,9 +27,11 @@ describe('Route [create]', function() {
     });
 
 
-    /** load the fixtures **/
+     /** load the fixtures **/
     beforeEach(function(done){
-        loadFixtures(server, done);
+        fixtures.clear(server, function() {
+            fixtures.genericDocuments(server, done);
+        });
     });
 
     it('should create a document', function(done){

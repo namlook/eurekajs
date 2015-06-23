@@ -12,7 +12,7 @@ var expect = Code.expect;
 import manifest from '../app/manifest';
 import Glue from 'glue';
 
-import loadFixtures from '../utils/load-fixtures';
+import fixtures from '../utils/fixtures';
 
 describe('Authentification', function() {
 
@@ -28,7 +28,11 @@ describe('Authentification', function() {
 
     /** load the fixtures **/
     beforeEach(function(done){
-        loadFixtures(server, done);
+        fixtures.clear(server, function() {
+            fixtures.genericDocuments(server, function() {
+                fixtures.userDocuments(server, done);
+            });
+        });
     });
 
 
@@ -84,8 +88,27 @@ describe('Authentification', function() {
     });
 
 
-    it('should allow the user to get an access token', (done) => {
-        let basicDigest = new Buffer('user1@test.com:secret1').toString('base64');
+    it('should return an error if the user credentials are invalids', (done) => {
+        let basicDigest = new Buffer('user1@test.com:badpassword').toString('base64');
+
+        let options = {
+            method: 'GET',
+            url: '/api/1/auth',
+            headers: {
+                Authorization: `Basic ${basicDigest}`
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(401);
+            expect(response.result.statusCode).to.equal(401);
+            expect(response.result.error).to.equal('Unauthorized');
+            expect(response.result.message).to.equal('Bad username or password');
+            done();
+        });
+    });
+
+    it('should allow access to a resource protected by token', (done) => {
 
         let options = {
             method: 'GET',
@@ -123,5 +146,44 @@ describe('Authentification', function() {
             });
         });
     });
+
+
+    it('should return an error if the token is malformed', (done) => {
+        let options = {
+            method: 'GET',
+            url: '/api/1/user-stuff/userstuff1/only-auth',
+            headers: {
+                Authorization: `Bearer badtoken`
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('Bad HTTP authentication header format');
+            done();
+        });
+    });
+
+
+    it('should return an error if the token is invalid', (done) => {
+        let options = {
+            method: 'GET',
+            url: '/api/1/user-stuff/userstuff1/only-auth',
+            headers: {
+                Authorization: `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoibmljbyIsImlhdCI6MTQzNDk3NTU5N30.BDYlQTXhLgUzbgkT8PfWScsUekhYmW-Ex5HRQXiDNRJ`
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(401);
+            expect(response.result.statusCode).to.equal(401);
+            expect(response.result.error).to.equal('Unauthorized');
+            expect(response.result.message).to.equal('Invalid signature received for JSON Web Token validation');
+            done();
+        });
+    });
+
 
 });
