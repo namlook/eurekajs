@@ -8,6 +8,9 @@ module.exports = {
             type: 'string',
             validate: ['email']
         },
+        emailVerified: {
+            type: 'boolean'
+        },
         password: {
             type: 'string'
         },

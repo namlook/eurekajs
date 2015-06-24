@@ -61,9 +61,8 @@ export default {
             },
             handler: function(request, reply) {
                 let {db, payload} = request;
-
+                let secret = request.server.settings.app.secret;
                 let user = new db.User(payload);
-
                 let encryptedPassword = Bcrypt.hashSync(user.get('password'), 10);
 
                 user.set('password', encryptedPassword);
@@ -79,11 +78,88 @@ export default {
 
                     delete userPojo.password;
 
-                    return reply.created(userPojo);
+                    let token = jwt.sign(
+                        {email: payload.email, userId: userPojo._id},
+                        secret,
+                        {expiresInMinutes: 180}
+                    );
+
+                    let base64Token = new Buffer(token).toString('base64');
+                    let clientRootUrl = request.server.settings.app.clientRootUrl;
+
+                    var envelope = {
+                        from: request.server.settings.app.email,
+                        to: user.get('email'),
+                        subject: 'Email verification',
+                        // html: {
+                        //     path: 'email-verification.html'
+                        // },
+                        text: `Click on the following link to verify your email:
+                            ${clientRootUrl}/verify-email?token=${base64Token}
+                        `
+                        // context: {
+                        //     token: base64Token
+                        // }
+                    };
+
+                    var Mailer = request.server.plugins.mailer;
+                    Mailer.sendMail(envelope, function (mailError) {
+                        if (mailError) {
+                            return reply.badImplementation(mailError);
+                        }
+                        return reply.created(userPojo);
+                    });
+
                 });
             }
         },
 
+
+        /**
+         * Verify the user email
+         */
+        {
+            method: 'GET',
+            path: '/verify-email/{token}',
+            config: {
+                validate: {
+                    params: {
+                        token: joi.string().required()
+                    }
+                }
+            },
+            handler: function(request, reply) {
+                let db = request.db;
+                let token = request.params.token;
+                let secret = request.server.settings.app.secret;
+
+                jwt.verify(token, secret, function(err, decoded) {
+                    if (err) {
+                        return reply.badRequest(err.message);
+                    }
+
+                    db.User.first({email: decoded.email}, (firstErr, user) => {
+                        if (firstErr) {
+                            return reply.badImplementation(firstErr);
+                        }
+
+                        if (!user) {
+                            return reply.badRequest('email not found in database');
+                        }
+
+                        user.set('emailVerified', true);
+
+                        user.save((saveErr) => {
+                            if (saveErr) {
+                                return reply.badImplementation(saveErr);
+                            }
+
+                            reply.ok('the email has been verified');
+                        });
+                    });
+                });
+            }
+        },
 
         /**
          * Request an access token.
@@ -180,12 +256,10 @@ export default {
                     };
 
                     var Mailer = request.server.plugins.mailer;
-                    // console.log(data);
-                    Mailer.sendMail(envelope, function (mailError, infos) {
+                    Mailer.sendMail(envelope, function (mailError) {
                         if (mailError) {
                             return reply.badImplementation(mailError);
                         }
-                        // console.log('---', infos);
                         reply.ok('the password reset token has been send by email');
                     });
 
@@ -215,7 +289,7 @@ export default {
                             let secret = request.server.settings.app.secret;
                             jwt.verify(request.payload.token, secret, function(err, decoded) {
                                 if (err) {
-                                    return reply.badRequest(decoded.message);
+                                    return reply.badRequest(err.message);
                                 }
 
                                 return reply(decoded.token);
