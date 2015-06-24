@@ -14,6 +14,7 @@ import config from '../config';
 import fixtures from '../utils/fixtures';
 
 import Bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 
 describe('Authentification', function() {
@@ -40,7 +41,7 @@ describe('Authentification', function() {
     describe('[signing up]', function() {
 
 
-        it('with an encrypted password', (done) => {
+        it('should create a user with an encrypted password', (done) => {
 
             let options = {
                 method: 'POST',
@@ -74,6 +75,8 @@ describe('Authentification', function() {
 
             });
         });
+
+        it('should verify the email');
 
         describe('should return and error', function() {
 
@@ -254,11 +257,8 @@ describe('Authentification', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                let data = response.result.results;
-                expect(data.status).to.equal('the password reset token has been send by email');
-                expect(data.infos.envelope.from).to.equal('contact@project.com');
-                expect(data.infos.envelope.to).to.include(['user1@test.com']);
+                expect(response.result.statusCode).to.equal(200)
+                expect(response.result.results).to.equal('the password reset token has been send by email');
 
                 done();
             });
@@ -279,33 +279,40 @@ describe('Authentification', function() {
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
                 expect(response.result.statusCode).to.equal(200);
+                expect(response.result.results).to.equal('the password reset token has been send by email');
 
-                let receivedEmail = response.result.results.infos.response.toString();
-                let base64Token = receivedEmail.split('password-reset?token=')[1].split('\n')[0];
-                var token = new Buffer(base64Token, 'base64').toString();
+                var email = 'user1@test.com';
+                server.plugins.eureka.database.User.first({email: email}, (userErr, user) => {
+                    expect(userErr).to.not.exists();
 
-                let resetOptions = {
-                    method: 'POST',
-                    url: '/api/1/auth/password-reset',
-                    payload: {
-                        token: token,
-                        password: 'newpassword'
-                    }
-                };
+                    let token = jwt.sign(
+                        {email: email, token: user.get('passwordResetToken')},
+                        server.settings.app.secret,
+                        {expiresInMinutes: 180}
+                    );
 
-                server.inject(resetOptions, function(resetResponse) {
-                    expect(resetResponse.statusCode).to.equal(200);
-                    expect(resetResponse.result.statusCode).to.equal(200);
+                    let resetOptions = {
+                        method: 'POST',
+                        url: '/api/1/auth/password-reset',
+                        payload: {
+                            token: token,
+                            password: 'newpassword'
+                        }
+                    };
 
-                    let db = server.plugins.eureka.database;
-                    db.User.first({email: 'user1@test.com'}, (err, user) => {
-                        expect(err).to.be.null();
+                    server.inject(resetOptions, function(resetResponse) {
+                        expect(resetResponse.statusCode).to.equal(200);
+                        expect(resetResponse.result.statusCode).to.equal(200);
 
-                        let isValid = Bcrypt.compareSync('newpassword', user.get('password'));
-                        expect(isValid).to.be.true();
-                        done();
+                        let db = server.plugins.eureka.database;
+                        db.User.first({email: 'user1@test.com'}, (err, fetchedUser) => {
+                            expect(err).to.be.null();
+
+                            let isValid = Bcrypt.compareSync('newpassword', fetchedUser.get('password'));
+                            expect(isValid).to.be.true();
+                            done();
+                        });
                     });
-
                 });
             });
         });
@@ -365,25 +372,19 @@ describe('Authentification', function() {
                     expect(response.statusCode).to.equal(200);
                     expect(response.result.statusCode).to.equal(200);
 
-                    let receivedEmail = response.result.results.infos.response.toString();
-                    let base64Token = receivedEmail.split('password-reset?token=')[1].split('\n')[0];
-                    var token = new Buffer(base64Token, 'base64').toString();
+                    expect(response.result.results).to.equal('the password reset token has been send by email');
 
-                    let resetOptions = {
-                        method: 'POST',
-                        url: '/api/1/auth/password-reset',
-                        payload: {
-                            token: token,
-                            password: 'newpassword'
-                        }
-                    };
+                    var email = 'user1@test.com';
+                    server.plugins.eureka.database.User.first({email: email}, (userErr, user) => {
+                        expect(userErr).to.not.exists();
 
-                    server.inject(resetOptions, function(resetResponse) {
-                        expect(resetResponse.statusCode).to.equal(200);
-                        expect(resetResponse.result.statusCode).to.equal(200);
-                        expect(resetResponse.result.results).to.equal('the password has been reset');
+                        let token = jwt.sign(
+                            {email: email, token: user.get('passwordResetToken')},
+                            server.settings.app.secret,
+                            {expiresInMinutes: 180}
+                        );
 
-                        let resetOptions2 = {
+                        let resetOptions = {
                             method: 'POST',
                             url: '/api/1/auth/password-reset',
                             payload: {
@@ -392,12 +393,27 @@ describe('Authentification', function() {
                             }
                         };
 
-                        server.inject(resetOptions2, function(resetResponse2) {
-                            expect(resetResponse2.statusCode).to.equal(400);
-                            expect(resetResponse2.result.statusCode).to.equal(400);
-                            expect(resetResponse2.result.error).to.equal('Bad Request');
-                            expect(resetResponse2.result.message).to.equal('Cannot find a match. The token may have been used already.');
-                            done();
+                        server.inject(resetOptions, function(resetResponse) {
+                            expect(resetResponse.statusCode).to.equal(200);
+                            expect(resetResponse.result.statusCode).to.equal(200);
+                            expect(resetResponse.result.results).to.equal('the password has been reset');
+
+                            let resetOptions2 = {
+                                method: 'POST',
+                                url: '/api/1/auth/password-reset',
+                                payload: {
+                                    token: token,
+                                    password: 'newpassword'
+                                }
+                            };
+
+                            server.inject(resetOptions2, function(resetResponse2) {
+                                expect(resetResponse2.statusCode).to.equal(400);
+                                expect(resetResponse2.result.statusCode).to.equal(400);
+                                expect(resetResponse2.result.error).to.equal('Bad Request');
+                                expect(resetResponse2.result.message).to.equal('Cannot find a match. The token may have been used already.');
+                                done();
+                            });
                         });
                     });
                 });

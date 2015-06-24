@@ -186,7 +186,7 @@ export default {
                             return reply.badImplementation(mailError);
                         }
                         // console.log('---', infos);
-                        reply.ok({status: 'the password reset token has been send by email', infos: infos});
+                        reply.ok('the password reset token has been send by email');
                     });
 
                 });
