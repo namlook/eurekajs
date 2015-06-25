@@ -56,8 +56,21 @@ export default {
             return new database.Generic(pojo).toSerializableObject();
         });
 
+        var publicStuff = [];
+        for (let i = 0; i < 10; i++) {
+            publicStuff.push({
+                _id: `publicstuff${i}`,
+                _type: 'PublicStuff',
+                title: `public hello ${i}`
+            });
+        }
 
-        let data = relations.concat(generics);
+        publicStuff = publicStuff.map(function(pojo) {
+            return new database.PublicStuff(pojo).toSerializableObject();
+        });
+
+
+        let data = relations.concat(generics).concat(publicStuff);
         database.batchSync(data, (syncErr) => {
             if (syncErr) {
                 throw syncErr;
@@ -95,6 +108,15 @@ export default {
             return new database.User(pojo).toSerializableObject();
         });
 
+        users.push(new database.User({
+            _id: 'admin',
+            _type: 'User',
+            login: 'admin',
+            email: 'admin@test.com',
+            password: Bcrypt.hashSync(`adminsecret`, 10),
+            scope: ['admin']
+        }).toSerializableObject());
+
 
         var scopes = {
             0: ['secret-keeper'],
@@ -117,6 +139,7 @@ export default {
         userStuff = userStuff.map(function(pojo) {
             return new database.UserStuff(pojo).toSerializableObject();
         });
+
 
 
         let data = users.concat(userStuff);

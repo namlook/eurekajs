@@ -6,8 +6,8 @@
   "repository": "https://github.com/namlook/eurekajs",
   "scripts": {
     "prepublish": "rm -rf lib libtests ; babel src --optional runtime --out-dir lib",
-    "build": "eslint src tests && rm -rf lib libtests ; babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps",
-    "test": "eslint src tests && rm -rf lib libtests ; babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps && ./node_modules/lab/bin/lab libtests/specs -vSl",
+    "build": "rm -rf lib libtests ; eslint src tests 1>&2 &&  babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps",
+    "test": "rm -rf lib libtests ; eslint src tests 1>&2 &&  babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps && ./node_modules/lab/bin/lab libtests/specs -vSl",
     "lint": "eslint src tests",
     "watch-lint": "nodemon --exec 'eslint src tests' --watch src --watch tests",
     "watch-tests": "nodemon --exec './node_modules/lab/bin/lab libtests/specs -vl' --watch lib --watch libtests",

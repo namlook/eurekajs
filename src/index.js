@@ -121,7 +121,8 @@ export default function(eurekaConfig) {
                     var eurekaPluginConfig = {
                         log: config.log,
                         resources: config.resources,
-                        apiRootPrefix: config.app.apiRootPrefix
+                        apiRootPrefix: config.app.apiRootPrefix,
+                        serverConfig: config
                     };
 
 
@@ -145,23 +146,6 @@ export default function(eurekaConfig) {
                         that.afterRegister(server, function(afterRegisterErr) {
                             if (afterRegisterErr) {
                                 return callback(afterRegisterErr);
-                            }
-
-
-
-                            /**
-                             * if config.auth is true, secure all routes
-                             * with an access token. If so, a User model
-                             * should be registered.
-                             */
-                            if (config.auth) {
-                                if (!server.plugins.eureka.database.User) {
-                                    return callback('config.auth is enabled but no User model has been registered');
-                                }
-                                server.log(['info', 'eureka'], 'config.auth is true, locking all routes by default');
-                                server.auth.default({
-                                    strategy: 'token'
-                                });
                             }
 
                             callback(null, server);

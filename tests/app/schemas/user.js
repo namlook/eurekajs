@@ -17,7 +17,7 @@ module.exports = {
         passwordResetToken: {
             type: 'string'
         },
-        groups: {
+        scope: {
             type: 'string',
             multi: true
         }

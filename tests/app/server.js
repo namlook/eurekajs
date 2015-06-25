@@ -4,6 +4,8 @@ require('source-map-support').install();
 import eureka from '../../lib';
 import config from '../config';
 
+import fixtures from '../utils/fixtures';
+
 
 let eurekaServer = eureka(config);
 
@@ -19,5 +21,13 @@ eurekaServer.start(function(err, server) {
         throw err;
     }
 
-    server.log('info', `Server running at: http://${server.info.address}:${server.info.port}`);
+    fixtures.clear(server, function() {
+        fixtures.genericDocuments(server, function() {
+            fixtures.userDocuments(server, function() {
+                server.log('info', `Server running at: http://${server.info.address}:${server.info.port}`);
+            });
+
+        });
+    });
+
 });

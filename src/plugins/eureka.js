@@ -255,6 +255,9 @@ var initPolicies = function(plugin) {
         request.route.settings.plugins.eureka.policies = policies;
 
         if (scopes.length) {
+            if (scopes.indexOf('admin') === -1) {
+                scopes.push('admin'); // admin can always access to routes
+            }
             request.route.settings.auth.scope = scopes;
         } else {
             delete request.route.settings.auth.scope;
@@ -270,7 +273,19 @@ var initPolicies = function(plugin) {
         }
 
         var credentials = request.auth.credentials;
+        credentials.scope = credentials.scope || [];
 
+        /**
+         * if the user has 'admin' in his scope, is a superuser
+         * let's get him in
+         */
+        if (credentials.scope.indexOf('admin') > -1) {
+            return reply.continue();
+        }
+
+        /**
+         * process prolicies
+         */
         var policies = [];
         for (let index in _policies) {
             let policy = _policies[index];
@@ -290,10 +305,19 @@ var initPolicies = function(plugin) {
                 key = 'scope';
             }
 
-            let value = _.get(credentials, key);
-            policies.push({propertyName, value});
+            let credentialValues = _.get(credentials, key);
+
+            if (!_.isArray(credentialValues)) {
+                credentialValues = [credentialValues];
+            }
+
+            policies.push({propertyName, credentialValues});
         }
 
+        /**
+         * check the policies against the document
+         * or fill the request.pre.queryFilter
+         */
         var doc = request.pre.document;
         var queryFilter = request.pre.queryFilter;
 
@@ -301,14 +325,14 @@ var initPolicies = function(plugin) {
             var hasAuthorization = false;
 
             for (let index in policies) {
-                let {propertyName, value} = policies[index];
+                let {propertyName, credentialValues} = policies[index];
 
                 let documentScopes = doc.get(propertyName);
                 if (!_.isArray(documentScopes)) {
                     documentScopes = [documentScopes];
                 }
 
-                if (documentScopes.indexOf(value) > -1) {
+                if (_.intersection(documentScopes, credentialValues).length) {
                     hasAuthorization = true;
                 }
             }
@@ -320,16 +344,17 @@ var initPolicies = function(plugin) {
         } else if(queryFilter) {
             var query = {};
             for (let index in policies) {
-                let {propertyName, value} = policies[index];
+                let {propertyName, credentialValues} = policies[index];
                 if (!query[propertyName]) {
                     query[propertyName] = [];
                 }
-                query[propertyName].push(value);
+                query[propertyName].push(credentialValues);
             }
 
             _.forOwn(query, (values, propertyName) => {
+                values = _.flatten(values);
                 if (values.length > 1) {
-                    _.set(queryFilter, `${propertyName}.$all`, values);
+                    _.set(queryFilter, `${propertyName}.$in`, values);
                 } else {
                     queryFilter[propertyName] = values[0];
                 }
@@ -367,8 +392,31 @@ var eurekaPlugin = function(plugin, options, next) {
     initPolicies(plugin);
 
 
+
+    /**
+     * if config.auth is true, secure all routes
+     * with an access token. If so, a User model
+     * should be registered.
+     */
+    if (options.serverConfig.auth) {
+        if (!plugin.plugins.archimedes.db.User) {
+            return next('config.auth is enabled but no User model has been registered');
+        }
+        if (options.serverConfig.auth === true) {
+            options.serverConfig.auth = {
+                strategy: 'token',
+                scope: ['admin']
+            };
+        }
+        plugin.log(['info', 'eureka'],
+            `config.auth: locking all routes {strategy: "${options.serverConfig.auth.strategy}", scope: "${options.serverConfig.auth.scope.toString()}}"`);
+        plugin.auth.default(options.serverConfig.auth);
+    }
+
+
+
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
-        let resource = new Resource(resourceName, resourceConfig, {apiRootPrefix: options.apiRootPrefix});
+        let resource = new Resource(resourceName, resourceConfig, options.serverConfig);
         let routes = resource.routes;
         try {
             plugin.route(routes);
@@ -377,6 +425,8 @@ var eurekaPlugin = function(plugin, options, next) {
             throw `error while mounting ${resourceName}. Reason: ${e}`;
         }
     });
+
+
 
     next();
 };

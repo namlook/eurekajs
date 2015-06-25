@@ -78,6 +78,7 @@ describe('Authorization', function() {
             });
         });
 
+
         describe('should return an error', function() {
             it('if the user credentials are invalids', (done) => {
                 var basicDigest = new Buffer('user1@test.com:badpassword').toString('base64');
@@ -455,6 +456,37 @@ describe('Authorization', function() {
                 done();
             });
         });
+
+        it('should filter document when the user have multiple scopes', (done) => {
+
+            var token = getToken({
+                _id: 'user1',
+                email: 'user1@test.com',
+                scope: ['secret-keeper', 'new-guy']
+            });
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/user-stuff/i/only-secretkeeper-documents',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.result.statusCode).to.equal(200);
+                let scopes = response.result.results.map(function(o) {
+                    return _.dropWhile(o._scope, function(n) {
+                        return n !== 'secret-keeper' && n !== 'new-guy';
+                    });
+                });
+                expect(scopes.length).to.equal(6);
+                expect(_.flatten(scopes)).to.only.include(['secret-keeper', 'new-guy']);
+                done();
+            });
+        });
+
     });
 
     describe('[resource access]', function() {
@@ -466,7 +498,7 @@ describe('Authorization', function() {
 
                 let options = {
                     method: 'GET',
-                    url: '/api/1/user'
+                    url: '/api/1/public-stuff'
                 };
 
                 _server.inject(options, function(response) {
@@ -486,7 +518,7 @@ describe('Authorization', function() {
 
                 let options = {
                     method: 'GET',
-                    url: '/api/1/user'
+                    url: '/api/1/public-stuff'
                 };
 
                 _server.inject(options, function(response) {
@@ -541,6 +573,55 @@ describe('Authorization', function() {
                 done();
             });
         });
+    });
+
+    describe('[admin access]', function() {
+
+        it('should always grant access to a user which have admin in scope', (done) => {
+            var token = getToken({
+                _id: 'admin',
+                email: 'admin@test.com',
+                scope: ['admin']
+            });
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/user-stuff',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.result.statusCode).to.equal(200);
+                done();
+            });
+        });
+
+        it('should always grant access to the admin all documents', (done) => {
+            var token = getToken({
+                _id: 'user1',
+                email: 'user1@test.com',
+                scope: ['admin']
+            });
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/user-stuff/i/only-secretkeeper-documents',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.result.statusCode).to.equal(200);
+                expect(response.result.results.length).to.equal(10);
+                done();
+            });
+        });
+
     });
 
 });
