@@ -17,20 +17,30 @@ export default class Resource {
     }
 
     get routes() {
+        var resourceConfig = this.config;
         var routes = this.config.routes || [];
         return routes.map((route) => {
-            let {path, method, handler, config} = route;
+            let {path, method, handler, config: routeConfig} = route;
 
+            var config = {};
             /**
              * set resourceName on the eurekaConfig so we can access it
              * on middlewares
              */
-            config = config || {};
             let resourceNamePath = 'plugins.eureka.resourceName';
             if (_.get(config, resourceNamePath) == null) {
                 _.set(config, resourceNamePath, this.name);
             }
 
+            /**
+             * if their is no route auth defined and the resource
+             * config.auth is specified, then set the route auth
+             */
+            if (resourceConfig.auth != null) {
+                if (!_.get(config, 'auth')) {
+                    _.set(config, 'auth', resourceConfig.auth);
+                }
+            }
 
             /**
              * set the full path of the route
@@ -39,6 +49,8 @@ export default class Resource {
                 path = '';
             }
             path = `${this.apiRootPrefix}${this.prefix}${path}`;
+
+            config = Object.assign({}, config, routeConfig);
 
             return {
                 path,

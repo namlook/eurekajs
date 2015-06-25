@@ -224,6 +224,123 @@ var setAuthentification = function(plugin) {
     });
 };
 
+/**
+ * process policies
+ */
+var initPolicies = function(plugin) {
+
+    plugin.ext('onPreAuth', function (request, reply) {
+        var _scopes = _.get(request, 'route.settings.auth.scope');
+
+        if (!_scopes) {
+            return reply.continue();
+        }
+
+        if (!_.isArray(_scopes)) {
+            _scopes = [_scopes];
+        }
+
+        var policies = [];
+        var scopes = [];
+
+        for (let index in _scopes) {
+            let scope = _scopes[index];
+            if (_.contains(scope, ':')) {
+                policies.push(scope);
+            } else {
+                scopes.push(scope);
+            }
+        }
+
+        request.route.settings.plugins.eureka.policies = policies;
+
+        if (scopes.length) {
+            request.route.settings.auth.scope = scopes;
+        } else {
+            delete request.route.settings.auth.scope;
+        }
+        reply.continue();
+    });
+
+
+    plugin.ext('onPreHandler', function(request, reply) {
+        var _policies = _.get(request, 'route.settings.plugins.eureka.policies') || [];
+        if (!_policies.length) {
+            return reply.continue();
+        }
+
+        var credentials = request.auth.credentials;
+
+        var policies = [];
+        for (let index in _policies) {
+            let policy = _policies[index];
+            let match = policy.match(/(userId|userScope):doc\.(.+)/);
+
+            if (match == null) {
+                request.server.log(['error', 'eureka', 'policies'], `malformed policy ${policy}`);
+                continue;
+                // return reply.badImplementation(`malformed policy ${policy}`);
+            }
+
+            let [, key, propertyName] = match;
+
+            if (key === 'userId') {
+                key = '_id';
+            } else if (key === 'userScope') {
+                key = 'scope';
+            }
+
+            let value = _.get(credentials, key);
+            policies.push({propertyName, value});
+        }
+
+        var doc = request.pre.document;
+        var queryFilter = request.pre.queryFilter;
+
+        if(doc) {
+            var hasAuthorization = false;
+
+            for (let index in policies) {
+                let {propertyName, value} = policies[index];
+
+                let documentScopes = doc.get(propertyName);
+                if (!_.isArray(documentScopes)) {
+                    documentScopes = [documentScopes];
+                }
+
+                if (documentScopes.indexOf(value) > -1) {
+                    hasAuthorization = true;
+                }
+            }
+
+            if (!hasAuthorization) {
+                return reply.unauthorized("you don't have the authorization to access this document");
+            }
+
+        } else if(queryFilter) {
+            var query = {};
+            for (let index in policies) {
+                let {propertyName, value} = policies[index];
+                if (!query[propertyName]) {
+                    query[propertyName] = [];
+                }
+                query[propertyName].push(value);
+            }
+
+            _.forOwn(query, (values, propertyName) => {
+                if (values.length > 1) {
+                    _.set(queryFilter, `${propertyName}.$all`, values);
+                } else {
+                    queryFilter[propertyName] = values[0];
+                }
+            });
+
+        }
+        return reply.continue();
+    });
+
+};
+
 
 var eurekaPlugin = function(plugin, options, next) {
 
@@ -247,13 +364,18 @@ var eurekaPlugin = function(plugin, options, next) {
     setAuthentification(plugin);
     decoratePlugin(plugin);
     fillRequest(plugin);
+    initPolicies(plugin);
 
 
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
         let resource = new Resource(resourceName, resourceConfig, {apiRootPrefix: options.apiRootPrefix});
         let routes = resource.routes;
-        plugin.log(['info', 'eureka'], `mounting ${resourceName} (${routes.length} routes)`);
-        plugin.route(routes);
+        try {
+            plugin.route(routes);
+            plugin.log(['info', 'eureka'], `mounting ${resourceName} (${routes.length} routes)`);
+        } catch (e) {
+            throw `error while mounting ${resourceName}. Reason: ${e}`;
+        }
     });
 
     next();

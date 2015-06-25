@@ -1,4 +1,5 @@
 
+import joi from 'joi';
 import Glue from 'glue';
 
 import HapiMailer from 'hapi-mailer';
@@ -6,7 +7,6 @@ import HapiAuthBasic from 'hapi-auth-basic';
 import HapiAuthJwt from 'hapi-auth-jwt';
 import archimedesPlugin from './plugins/archimedes';
 import eurekaPlugin from './plugins/eureka';
-import policiesPlugin from './plugins/policies';
 
 // var exampleConfig = {
 //     port: 5000,
@@ -32,8 +32,37 @@ import policiesPlugin from './plugins/policies';
 //     resources: requireDir('./resources')
 // };
 
+var eurekaConfigValidator = {
+    port: joi.number().required(),
+    log: [joi.string(), joi.array(joi.string())],
+    auth: joi.boolean(),
+    app: joi.object().keys({
+        secret: joi.string().required(),
+        apiRootPrefix: joi.string().required(),
+        email: joi.string().email().required(),
+        clientRootUrl: joi.string().uri().required()
+    }),
+    database: joi.object().keys({
+        adapter: joi.object().keys({
+            type: joi.string().required(),
+            dialect: joi.string(),
+            graphURI: joi.string().uri().required()
+        }).required(),
+        host: joi.string().ip().default('localhost'),
+        schemas: joi.object()
+    }),
+    resources: joi.object(),
+    mailer: joi.object()
+};
 
-export default function(config) {
+
+export default function(eurekaConfig) {
+    var {error, value: config} = joi.validate(eurekaConfig, eurekaConfigValidator);
+
+    if (error) {
+        throw error.details;
+    }
+
     var manifest = {
         connections: [
             {port: config.port}
@@ -75,7 +104,7 @@ export default function(config) {
                     }
 
 
-                    var archimedesConfig = {
+                    var archimedesPluginConfig = {
                         log: config.log,
                         database: {
                             adapter: config.database.adapter.type,
@@ -89,7 +118,7 @@ export default function(config) {
                     };
 
 
-                    var eurekaConfig = {
+                    var eurekaPluginConfig = {
                         log: config.log,
                         resources: config.resources,
                         apiRootPrefix: config.app.apiRootPrefix
@@ -100,12 +129,12 @@ export default function(config) {
                      * register plugins
                      */
                     server.register([
+
                         {register: HapiMailer, options: config.mailer},
                         HapiAuthBasic,
                         HapiAuthJwt,
-                        {register: archimedesPlugin, options: archimedesConfig},
-                        {register: eurekaPlugin, options: eurekaConfig},
-                        policiesPlugin
+                        {register: archimedesPlugin, options: archimedesPluginConfig},
+                        {register: eurekaPlugin, options: eurekaPluginConfig}
 
                     ], function(registerErr) {
                         if (registerErr) {
@@ -116,6 +145,23 @@ export default function(config) {
                         that.afterRegister(server, function(afterRegisterErr) {
                             if (afterRegisterErr) {
                                 return callback(afterRegisterErr);
+                            }
+
+
+
+                            /**
+                             * if config.auth is true, secure all routes
+                             * with an access token. If so, a User model
+                             * should be registered.
+                             */
+                            if (config.auth) {
+                                if (!server.plugins.eureka.database.User) {
+                                    return callback('config.auth is enabled but no User model has been registered');
+                                }
+                                server.log(['info', 'eureka'], 'config.auth is true, locking all routes by default');
+                                server.auth.default({
+                                    strategy: 'token'
+                                });
                             }
 
                             callback(null, server);

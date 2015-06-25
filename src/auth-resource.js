@@ -4,6 +4,7 @@ import Bcrypt from 'bcrypt';
 import joi from 'joi';
 
 export default {
+    auth: false,
     prefix: '/auth',
     routes: [
 
@@ -330,7 +331,20 @@ export default {
                     return reply.ok('the password has been reset');
                 });
             }
-        }
+        },
+
+
+        /**
+         * deleting a user account should be implemented
+         * has it is always specific to the buisiness
+         */
+         {
+            method: 'DELETE',
+            path: '/{userId}',
+            handler: function(request, reply) {
+                return reply.notImplemented();
+            }
+         }
 
     ]
 };

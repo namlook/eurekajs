@@ -96,11 +96,20 @@ export default {
         });
 
 
+        var scopes = {
+            0: ['secret-keeper'],
+            1: ['secret-keeper', 'other-secret'],
+            2: ['new-guy'],
+            3: ['other-secret'],
+            4: ['admin']
+        };
+
         var userStuff = [];
         for (let i = 0; i < 10; i++) {
             userStuff.push({
                 _id: `userstuff${i}`,
                 _owner: `user${i % 5}`,
+                _scope: scopes[i % 5],
                 title: `the secret thing of user ${i % 5}`,
                 isSecret: Boolean(i % 5)
             });

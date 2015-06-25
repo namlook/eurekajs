@@ -5,15 +5,15 @@
   "main": "index.js",
   "repository": "https://github.com/namlook/eurekajs",
   "scripts": {
-    "prepublish": "babel src --optional runtime --out-dir lib",
-    "build": "rm -rf lib libtests ; babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps",
-    "test": "./node_modules/lab/bin/lab libtests/specs",
+    "prepublish": "rm -rf lib libtests ; babel src --optional runtime --out-dir lib",
+    "build": "eslint src tests && rm -rf lib libtests ; babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps",
+    "test": "eslint src tests && rm -rf lib libtests ; babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps && ./node_modules/lab/bin/lab libtests/specs -vSl",
     "lint": "eslint src tests",
     "watch-lint": "nodemon --exec 'eslint src tests' --watch src --watch tests",
     "watch-tests": "nodemon --exec './node_modules/lab/bin/lab libtests/specs -vl' --watch lib --watch libtests",
     "watch-babel-src": "babel src --watch --optional runtime --out-dir lib --source-maps",
     "watch-babel-tests": "babel tests --watch --optional runtime --out-dir libtests --source-maps",
-    "coverage": "./node_modules/lab/bin/lab -r html -o coverage.html libtests/specs ; open coverage.html"
+    "coverage": "./node_modules/lab/bin/lab -r html -o coverage.html libtests/specs"
   },
   "bin": {
     "eureka": "bin/eureka.sh"

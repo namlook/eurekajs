@@ -4,6 +4,10 @@ module.exports = {
         _owner: {
             type: 'string'
         },
+        _scope: {
+            type: 'string',
+            multi: true
+        },
         title: {
             type: 'string'
         },

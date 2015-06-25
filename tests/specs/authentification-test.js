@@ -17,6 +17,7 @@ import Bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 
+
 describe('Authentification', function() {
 
     /** load the server **/
@@ -35,6 +36,17 @@ describe('Authentification', function() {
             fixtures.genericDocuments(server, function() {
                 fixtures.userDocuments(server, done);
             });
+        });
+    });
+
+
+    it("should raise an error if server's config.auth is true and no User model registered", (done) => {
+        var schemas = config.database.schemas;
+        config.database.schemas = {};
+        eureka(config).compose((err) => {
+            expect(err).to.equal('config.auth is enabled but no User model has been registered');
+            config.database.schemas = schemas;
+            done();
         });
     });
 

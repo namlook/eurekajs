@@ -9,9 +9,16 @@ var checkPermission = function(plugin) {
         if (policies.length) {
             for(let index in policies) {
                 let policy = policies[index];
-                if (policy.user) {
-                    if (doc.get(policy.user) !== user.email) {
-                        return reply.unauthorized("you don't have the authorization to access this document");
+
+                if (doc) {
+                    if (policy.user) {
+                        if (doc.get(policy.user) !== user._id) {
+                            return reply.unauthorized("you don't have the authorization to access this document");
+                        }
+                    }
+                } else {
+                    if (policy.user) {
+                        request.pre.queryFilter[policy.user] = user._id;
                     }
                 }
             }

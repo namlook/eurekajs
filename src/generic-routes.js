@@ -111,6 +111,13 @@ var routes = {
     find: {
         method: 'GET',
         path: '/',
+        config: {
+            validate: {
+                query: {
+                    token: joi.number()
+                }
+            }
+        },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
             request.Model.find(queryFilter, queryOptions, function(err, data) {
