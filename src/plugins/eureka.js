@@ -229,7 +229,7 @@ var setAuthentification = function(plugin) {
  */
 var initPolicies = function(plugin) {
 
-    plugin.ext('onPreAuth', function (request, reply) {
+    plugin.ext('onPreAuth', function(request, reply) {
         var _scopes = _.get(request, 'route.settings.auth.scope');
 
         if (!_scopes) {
@@ -262,6 +262,35 @@ var initPolicies = function(plugin) {
         } else {
             delete request.route.settings.auth.scope;
         }
+        reply.continue();
+    });
+
+
+    /**
+     * Ensure that credentials.scope are an array
+     */
+    plugin.ext('onPostAuth', function(request, reply) {
+
+        /**
+         * if no credentials are found, skip the rest
+         */
+        if (!request.auth.credentials) {
+            return reply.continue();
+        }
+
+        /**
+         * process the scope
+         */
+        let scope = request.auth.credentials.scope;
+
+        scope = scope || [];
+
+        if (!_.isArray(scope)) {
+            scope = [scope];
+        }
+
+        request.auth.credentials.scope = _.flatten(scope);
+
         reply.continue();
     });
 

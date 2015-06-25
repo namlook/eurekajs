@@ -2,6 +2,7 @@
 import jwt from 'jsonwebtoken';
 import Bcrypt from 'bcrypt';
 import joi from 'joi';
+import _ from 'lodash';
 
 export default {
     auth: false,
@@ -179,6 +180,75 @@ export default {
             }
         },
 
+
+        /**
+         * Request admin access token from a sudo user
+         * (the returned token is valid for one hour)
+         */
+         {
+            method: 'POST',
+            path: '/sudo',
+            config: {
+                auth: {
+                    strategy: 'token',
+                    scope: ['sudo']
+                }
+            },
+            handler: function(request, reply) {
+                let secret = request.server.settings.app.secret;
+
+                let credentials = request.auth.credentials;
+
+                // add the admin scope to the user
+                credentials.scope.push('admin');
+
+                let token = jwt.sign(
+                    credentials,
+                    secret,
+                    {expiresInMinutes: 60}
+                );
+                reply.ok({token: token});
+            }
+         },
+
+         /*
+         * Request admin access token from a sudo user
+         * (the returned token is valid for one hour)
+         */
+         {
+            method: 'DELETE',
+            path: '/sudo',
+            config: {
+                auth: {
+                    strategy: 'token',
+                    scope: ['sudo', 'admin']
+                },
+                pre: [
+                    {assign: 'scopeCheck', method: function(request, reply) {
+                        let scope = request.auth.credentials.scope;
+                        if (scope.indexOf('sudo') === -1) {
+                            return reply.badRequest('only a sudo user can remove his access');
+                        }
+
+                        reply(true);
+                    }}
+                ]
+            },
+            handler: function(request, reply) {
+                let secret = request.server.settings.app.secret;
+
+                let credentials = request.auth.credentials;
+
+                // remove 'admin' from scope
+                credentials.scope = _.without(credentials.scope, 'admin');
+
+                let token = jwt.sign(
+                    credentials,
+                    secret
+                );
+                reply.ok({token: token});
+            }
+         },
 
         /**
          * Request a token to change the password

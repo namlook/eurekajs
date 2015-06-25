@@ -624,4 +624,159 @@ describe('Authorization', function() {
 
     });
 
+    describe('[sudo access]', function() {
+
+        it('should give admin access to a sudo user', (done) => {
+            var token = getToken({
+                _id: 'user1',
+                email: 'user1@test.com',
+                scope: ['sudo']
+            });
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/user-stuff',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(403);
+                expect(response.result.statusCode).to.equal(403);
+
+                let sudoOptions = {
+                    method: 'POST',
+                    url: '/api/1/auth/sudo',
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                };
+
+                server.inject(sudoOptions, function(sudoResponse) {
+                    expect(sudoResponse.statusCode).to.equal(200);
+                    expect(sudoResponse.result.statusCode).to.equal(200);
+                    let sudoToken = sudoResponse.result.results.token;
+
+                    let options2 = {
+                        method: 'GET',
+                        url: '/api/1/user-stuff',
+                        headers: {
+                            Authorization: `Bearer ${sudoToken}`
+                        }
+                    };
+
+                    server.inject(options2, function(response2) {
+                        expect(response2.statusCode).to.equal(200);
+                        expect(response2.result.statusCode).to.equal(200);
+                        expect(response2.result.results).to.be.an.array();
+
+                        done();
+                    });
+                });
+            });
+        });
+
+
+        it('should remove admin access to a sudo user', (done) => {
+            var token = getToken({
+                _id: 'user1',
+                email: 'user1@test.com',
+                scope: ['sudo', 'admin']
+            });
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/user-stuff',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.result.statusCode).to.equal(200);
+
+                let sudoOptions = {
+                    method: 'DELETE',
+                    url: '/api/1/auth/sudo',
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                };
+
+                server.inject(sudoOptions, function(sudoResponse) {
+                    expect(sudoResponse.statusCode).to.equal(200);
+                    expect(sudoResponse.result.statusCode).to.equal(200);
+                    let sudoToken = sudoResponse.result.results.token;
+
+                    let options2 = {
+                        method: 'GET',
+                        url: '/api/1/user-stuff',
+                        headers: {
+                            Authorization: `Bearer ${sudoToken}`
+                        }
+                    };
+
+                    server.inject(options2, function(response2) {
+                        expect(response2.statusCode).to.equal(403);
+                        expect(response2.result.statusCode).to.equal(403);
+                        done();
+                    });
+                });
+            });
+        });
+
+
+        it('should denied admin access to a non sudo user', (done) => {
+            var token = getToken({
+                _id: 'user1',
+                email: 'user1@test.com',
+                scope: ['non-sudo']
+            });
+
+
+            let options = {
+                method: 'POST',
+                url: '/api/1/auth/sudo',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(403);
+                expect(response.result.statusCode).to.equal(403);
+                done();
+            });
+        });
+
+
+        it('should return an error if the user is not sudo', (done) => {
+            var token = getToken({
+                _id: 'user1',
+                email: 'user1@test.com',
+                scope: 'admin'
+            });
+
+
+            let options = {
+                method: 'DELETE',
+                url: '/api/1/auth/sudo',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(400);
+                expect(response.result.statusCode).to.equal(400);
+                expect(response.result.error).to.equal('Bad Request');
+                expect(response.result.message).to.equal('only a sudo user can remove his access');
+                done();
+            });
+        });
+
+    });
+
 });
