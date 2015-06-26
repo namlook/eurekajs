@@ -2,6 +2,9 @@
 import genericRoutes from '../../../lib/generic-routes';
 
 export default {
-    auth: 'token', // overwrite admin scope
+    auth: {
+        strategy: 'token',
+        scope: 'user' // overwrite admin scope
+    },
     routes: genericRoutes.all
 };

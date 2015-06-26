@@ -218,8 +218,32 @@ var setAuthentification = function(plugin) {
 
     plugin.auth.strategy('token', 'jwt', {
         key: plugin.settings.app.secret,
-        validateFunc: function(decodedToken, callback) {
-            return callback(null, true, decodedToken);
+        validateFunc: function(credentials, callback) {
+
+
+            /**
+             * process the scope
+             */
+            let scope = credentials.scope;
+
+            scope = scope || [];
+
+            if (!_.isArray(scope)) {
+                scope = [scope];
+            }
+
+            scope = _.flatten(scope);
+
+            /**
+             * an authentificated user has the user scope by default
+             */
+            if (scope.indexOf('user') === -1) {
+                scope.push('user');
+            }
+
+            credentials.scope = scope;
+
+            return callback(null, true, credentials);
         }
     });
 };
@@ -265,34 +289,6 @@ var initPolicies = function(plugin) {
         reply.continue();
     });
 
-
-    /**
-     * Ensure that credentials.scope are an array
-     */
-    plugin.ext('onPostAuth', function(request, reply) {
-
-        /**
-         * if no credentials are found, skip the rest
-         */
-        if (!request.auth.credentials) {
-            return reply.continue();
-        }
-
-        /**
-         * process the scope
-         */
-        let scope = request.auth.credentials.scope;
-
-        scope = scope || [];
-
-        if (!_.isArray(scope)) {
-            scope = [scope];
-        }
-
-        request.auth.credentials.scope = _.flatten(scope);
-
-        reply.continue();
-    });
 
 
     plugin.ext('onPreHandler', function(request, reply) {

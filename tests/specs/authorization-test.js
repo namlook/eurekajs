@@ -46,7 +46,7 @@ describe('Authorization', function() {
     });
 
     describe('[general access]', function() {
-        it('should allow access to a resource protected by token', (done) => {
+        it('an authenticated user has the user scope by default', (done) => {
 
             let options = {
                 method: 'GET',
