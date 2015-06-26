@@ -96,17 +96,23 @@ export default {
 
         var users = [];
         for (let i = 0; i < 5; i++) {
-            users.push({
+            users.push(new database.User({
                 _id: `user${i}`,
                 _type: 'User',
                 login: `user${i}`,
                 email: `user${i}@test.com`,
                 password: Bcrypt.hashSync(`secret${i}`, 10)
-            });
+            }).toSerializableObject());
         }
-        users = users.map(function(pojo) {
-            return new database.User(pojo).toSerializableObject();
-        });
+
+        users.push(new database.User({
+            _id: 'userwithscope',
+            _type: 'User',
+            login: 'userwithscope',
+            email: 'userwithscope@test.com',
+            password: Bcrypt.hashSync(`secret`, 10),
+            scope: ['user-stuff-access']
+        }).toSerializableObject());
 
         users.push(new database.User({
             _id: 'admin',

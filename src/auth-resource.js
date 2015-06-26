@@ -163,6 +163,8 @@ export default {
             }
         },
 
+
+
         /**
          * Request an access token.
          * The user must be authenticated by a simple auth (username, password)
@@ -177,6 +179,117 @@ export default {
                 let secret = request.server.settings.app.secret;
                 let token = jwt.sign(request.auth.credentials, secret);
                 reply.ok({token: token});
+            }
+        },
+
+
+
+        /**
+         * Add a scope to a user
+         */
+        {
+            method: 'POST',
+            path: '/{userId}/scope/{scope}',
+            config: {
+                auth: {
+                    strategy: 'token',
+                    scope: 'admin'
+                },
+                validate: {
+                    params: {
+                        userId: joi.string().required(),
+                        scope: joi.string().required()
+                    }
+                },
+                pre: [
+                    {
+                        assign: 'user',
+                        method: function(request, reply) {
+                            let db = request.db;
+                            let userId = request.params.userId;
+
+                            db.User.first({_id: userId}, (err, user) => {
+                                if (err) {
+                                    return reply.badImplementation(err);
+                                }
+
+                                if (!user) {
+                                    return reply.notFound('user not found');
+                                }
+                                reply(user);
+                            });
+                        }
+                    }
+                ]
+            },
+            handler: function(request, reply) {
+                var scope = request.params.scope;
+                var user = request.pre.user;
+
+                user.push('scope', scope);
+
+                user.save(function(err) {
+                    if (err) {
+                        return reply.badImplementation(err);
+                    }
+
+                    reply.ok(`${scope} added to user`);
+                });
+            }
+        },
+
+
+        /**
+         * Add a scope to a user
+         */
+        {
+            method: 'DELETE',
+            path: '/{userId}/scope/{scope}',
+            config: {
+                auth: {
+                    strategy: 'token',
+                    scope: 'admin'
+                },
+                validate: {
+                    params: {
+                        userId: joi.string().required(),
+                        scope: joi.string().required()
+                    }
+                },
+                pre: [
+                    {
+                        assign: 'user',
+                        method: function(request, reply) {
+                            let db = request.db;
+                            let userId = request.params.userId;
+
+                            db.User.first({_id: userId}, (err, user) => {
+                                if (err) {
+                                    return reply.badImplementation(err);
+                                }
+
+                                if (!user) {
+                                    return reply.notFound('user not found');
+                                }
+                                reply(user);
+                            });
+                        }
+                    }
+                ]
+            },
+            handler: function(request, reply) {
+                var scope = request.params.scope;
+                var user = request.pre.user;
+
+                user.pull('scope', scope);
+
+                user.save(function(err) {
+                    if (err) {
+                        return reply.badImplementation(err);
+                    }
+
+                    reply.ok(`${scope} added to user`);
+                });
             }
         },
 

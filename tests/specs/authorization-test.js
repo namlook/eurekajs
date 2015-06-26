@@ -779,4 +779,211 @@ describe('Authorization', function() {
 
     });
 
+    describe('[scope management]', function() {
+
+        it('should add a scope to a user (admin access)', (done) => {
+            var db = server.plugins.eureka.database;
+
+            db.User.first({email: 'user2@test.com'}, (err, user2) => {
+                expect(err).to.not.exists();
+                expect(user2.get('scope')).to.not.exists();
+
+
+                let userStuffToken = getToken({
+                    _id: user2.get('_id'),
+                    email: user2.get('email'),
+                    scope: user2.get('scope')
+                });
+
+                let userStuffOptions = {
+                    method: 'get',
+                    url: '/api/1/user-stuff',
+                    headers: {
+                        Authorization: `Bearer ${userStuffToken}`
+                    }
+                };
+
+                server.inject(userStuffOptions, function(userStuffResponse) {
+                    expect(userStuffResponse.statusCode).to.equal(403);
+                    expect(userStuffResponse.result.statusCode).to.equal(403);
+
+
+                    let token = getToken({
+                        _id: 'admin',
+                        email: 'admin@test.com',
+                        scope: 'admin'
+                    });
+
+                    let options = {
+                        method: 'POST',
+                        url: '/api/1/auth/user2/scope/user-stuff-access',
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    };
+
+                    server.inject(options, function(response) {
+                        expect(response.statusCode).to.equal(200);
+                        expect(response.result.statusCode).to.equal(200);
+
+                        db.User.first({email: 'user2@test.com'}, (errBis, user2bis) => {
+                            expect(errBis).to.not.exists();
+                            expect(user2bis.get('scope')).to.only.include(['user-stuff-access']);
+
+
+                            let userStuffTokenBis = getToken({
+                                _id: user2bis.get('_id'),
+                                email: user2bis.get('email'),
+                                scope: user2bis.get('scope')
+                            });
+
+                            let userStuffOptionsBis = {
+                                method: 'get',
+                                url: '/api/1/user-stuff',
+                                headers: {
+                                    Authorization: `Bearer ${userStuffTokenBis}`
+                                }
+                            };
+
+                            server.inject(userStuffOptionsBis, function(userStuffResponseBis) {
+                                expect(userStuffResponseBis.statusCode).to.equal(200);
+                                expect(userStuffResponseBis.result.statusCode).to.equal(200);
+
+
+                                done();
+                            });
+                        });
+                    });
+                });
+
+            });
+
+        });
+
+        it('should return an error if a non admin try to add a scope to a user', (done) => {
+             let token = getToken({
+                _id: 'admin',
+                email: 'admin@test.com',
+                scope: 'non-admin'
+            });
+
+            let options = {
+                method: 'POST',
+                url: '/api/1/auth/user2/scope/user-stuff-access',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(403);
+                expect(response.result.statusCode).to.equal(403);
+                done();
+            });
+        });
+
+
+        it('should remove a scope from a user (admin access)', (done) => {
+            var db = server.plugins.eureka.database;
+
+            db.User.first({email: 'userwithscope@test.com'}, (err, user2) => {
+                expect(err).to.not.exists();
+                expect(user2.get('scope')).to.only.include('user-stuff-access');
+
+
+                let userStuffToken = getToken({
+                    _id: user2.get('_id'),
+                    email: user2.get('email'),
+                    scope: user2.get('scope')
+                });
+
+                let userStuffOptions = {
+                    method: 'get',
+                    url: '/api/1/user-stuff',
+                    headers: {
+                        Authorization: `Bearer ${userStuffToken}`
+                    }
+                };
+
+                server.inject(userStuffOptions, function(userStuffResponse) {
+                    expect(userStuffResponse.statusCode).to.equal(200);
+                    expect(userStuffResponse.result.statusCode).to.equal(200);
+
+
+                    let token = getToken({
+                        _id: 'admin',
+                        email: 'admin@test.com',
+                        scope: 'admin'
+                    });
+
+                    let options = {
+                        method: 'DELETE',
+                        url: '/api/1/auth/userwithscope/scope/user-stuff-access',
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    };
+
+                    server.inject(options, function(response) {
+                        expect(response.statusCode).to.equal(200);
+                        expect(response.result.statusCode).to.equal(200);
+
+                        db.User.first({email: 'userwithscope@test.com'}, (errBis, user2bis) => {
+                            expect(errBis).to.not.exists();
+                            expect(user2bis.get('scope')).to.not.exists();
+
+
+                            let userStuffTokenBis = getToken({
+                                _id: user2bis.get('_id'),
+                                email: user2bis.get('email'),
+                                scope: user2bis.get('scope')
+                            });
+
+                            let userStuffOptionsBis = {
+                                method: 'get',
+                                url: '/api/1/user-stuff',
+                                headers: {
+                                    Authorization: `Bearer ${userStuffTokenBis}`
+                                }
+                            };
+
+                            server.inject(userStuffOptionsBis, function(userStuffResponseBis) {
+                                expect(userStuffResponseBis.statusCode).to.equal(403);
+                                expect(userStuffResponseBis.result.statusCode).to.equal(403);
+
+
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
+
+        it('should return an error if a non admin try to remove a scope from a user', (done) => {
+             let token = getToken({
+                _id: 'admin',
+                email: 'admin@test.com',
+                scope: 'non-admin'
+            });
+
+            let options = {
+                method: 'DELETE',
+                url: '/api/1/auth/userwithscope/scope/user-stuff-access',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(403);
+                expect(response.result.statusCode).to.equal(403);
+                done();
+            });
+        });
+
+
+    });
+
 });
