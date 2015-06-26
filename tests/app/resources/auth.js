@@ -1,2 +1,8 @@
 
-export {default} from '../../../lib/auth-resource';
+import authRoutes from '../../../lib/auth-routes';
+
+export default {
+    auth: false,
+    prefix: '/auth',
+    routes: authRoutes.all
+};
