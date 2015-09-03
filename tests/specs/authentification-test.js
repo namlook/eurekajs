@@ -30,12 +30,16 @@ describe('Authentification', function() {
         });
     });
 
-    /** load the fixtures **/
+     /** load the fixtures **/
     beforeEach(function(done){
-        fixtures.clear(server, function() {
-            fixtures.genericDocuments(server, function() {
-                fixtures.userDocuments(server, done);
-            });
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            return fixtures.userDocuments(server);
+        }).then(() => {
+            done();
+        }).catch((error) => {
+            console.log(error);
         });
     });
 
@@ -109,8 +113,8 @@ describe('Authentification', function() {
             expect(response.result.results).to.equal('the password reset token has been send by email');
 
             var email = 'user1@test.com';
-            server.plugins.eureka.database.User.first({email: email}, (userErr, user) => {
-                expect(userErr).to.not.exists();
+            let db = server.plugins.eureka.database;
+            db.User.first({email: email}).then((user) => {
 
                 let token = jwt.sign(
                     {email: email, token: user.get('passwordResetToken')},
@@ -131,13 +135,12 @@ describe('Authentification', function() {
                     expect(resetResponse.statusCode).to.equal(200);
                     expect(resetResponse.result.statusCode).to.equal(200);
 
-                    let db = server.plugins.eureka.database;
-                    db.User.first({email: 'user1@test.com'}, (err, fetchedUser) => {
-                        expect(err).to.be.null();
-
+                    db.User.first({email: 'user1@test.com'}).then((fetchedUser) => {
                         let isValid = Bcrypt.compareSync('newpassword', fetchedUser.get('password'));
                         expect(isValid).to.be.true();
                         done();
+                    }).catch((error) => {
+                        console.log(error);
                     });
                 });
             });
@@ -256,8 +259,8 @@ describe('Authentification', function() {
                 expect(response.result.results).to.equal('the password reset token has been send by email');
 
                 var email = 'user1@test.com';
-                server.plugins.eureka.database.User.first({email: email}, (userErr, user) => {
-                    expect(userErr).to.not.exists();
+                let db = server.plugins.eureka.database;
+                db.User.first({email: email}).then((user) => {
 
                     let token = jwt.sign(
                         {email: email, token: user.get('passwordResetToken')},

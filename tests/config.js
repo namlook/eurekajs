@@ -13,12 +13,19 @@ export default {
         apiRootPrefix: '/api/1'
     },
     database: {
-        adapter: {
-            type: 'rdf',
-            dialect: 'virtuoso',
-            graphURI: 'http://test.org'
+        // adapter: {
+        //     type: 'rdf',
+        //     dialect: 'virtuoso',
+        //     graphURI: 'http://test.org'
+        // },
+        // host: '192.168.99.100',
+        config: {
+            graphUri: 'http://test.org',
+            // host: '192.168.99.100',
+            // port: 8890,
+            // endpoint: `http://192.168.99.100:8890/sparql` // virtuoso
+            endpoint: `http://192.168.99.100:9999/bigdata/sparql` // blazegraph's bigdata
         },
-        host: '192.168.99.100',
         schemas: requireDir('./app/schemas')
     },
     resources: requireDir('./app/resources'),

@@ -28,8 +28,12 @@ describe('Route [group-by]', function() {
 
      /** load the fixtures **/
     beforeEach(function(done){
-        fixtures.clear(server, function() {
-            fixtures.genericDocuments(server, done);
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            done();
+        }).catch((error) => {
+            console.log(error);
         });
     });
 
@@ -48,12 +52,12 @@ describe('Route [group-by]', function() {
             expect(data.length).to.equal(2);
             expect(data).to.be.deep.equal([
                 {
-                    'facet': false,
-                    'count': 5
+                    'label': 'false',
+                    'value': 5
                 },
                 {
-                    'facet': true,
-                    'count': 5
+                    'label': 'true',
+                    'value': 5
                 }
             ]);
 
@@ -78,12 +82,12 @@ describe('Route [group-by]', function() {
             expect(data.length).to.equal(2);
             expect(data).to.be.deep.equal([
                 {
-                    'facet': 'relation 0',
-                    'count': 5
+                    'label': 'relation 0',
+                    'value': 5
                 },
                 {
-                    'facet': 'relation 1',
-                    'count': 5
+                    'label': 'relation 1',
+                    'value': 5
                 }
             ]);
 
@@ -106,12 +110,12 @@ describe('Route [group-by]', function() {
             expect(data.length).to.equal(2);
             expect(data).to.be.deep.equal([
                 {
-                    'facet': false,
-                    'count': 4
+                    'label': 'false',
+                    'value': 4
                 },
                 {
-                    'facet': true,
-                    'count': 3
+                    'label': 'true',
+                    'value': 3
                 }
             ]);
 
@@ -131,7 +135,8 @@ describe('Route [group-by]', function() {
             expect(response.statusCode).to.equal(400);
             expect(response.result.statusCode).to.equal(400);
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown property "unknownField" for model Generic');
+            expect(response.result.message).to.equal('malformed aggregator');
+            expect(response.result.infos).to.equal('unknown property aggregator "unknownField" on model "Generic"');
 
 
             done();
@@ -151,7 +156,8 @@ describe('Route [group-by]', function() {
             expect(response.statusCode).to.equal(400);
             expect(response.result.statusCode).to.equal(400);
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown property "unknownField" for model Generic');
+            expect(response.result.message).to.equal('malformed query');
+            expect(response.result.infos).to.equal('unknown property "unknownField" on model "Generic"');
 
 
             done();

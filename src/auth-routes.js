@@ -26,16 +26,14 @@ var routes = {
                     method: function(request, reply) {
                         let {db, payload} = request;
 
-                        db.User.first({email: payload.email}, (err, fetchedUser) => {
-                            if (err) {
-                                return reply.badImplementation(err);
-                            }
-
+                        db.User.first({email: payload.email}).then((fetchedUser) => {
                             if (fetchedUser) {
                                 return reply.conflict('email is taken');
                             }
 
                             reply(true);
+                        }).catch((err) => {
+                            return reply.badImplementation(err);
                         });
                     }
                 }, {
@@ -43,16 +41,14 @@ var routes = {
                     method: function(request, reply) {
                         let {db, payload} = request;
 
-                        db.User.first({login: payload.login}, (err, fetchedUser) => {
-                            if (err) {
-                                return reply.badImplementation(err);
-                            }
-
+                        db.User.first({login: payload.login}).then((fetchedUser) => {
                             if (fetchedUser) {
                                 return reply.conflict('login is taken');
                             }
 
                             reply(true);
+                        }).catch((err) => {
+                            return reply.badImplementation(err);
                         });
                     }
                 }
@@ -61,19 +57,15 @@ var routes = {
         handler: function(request, reply) {
             let {db, payload} = request;
             let secret = request.server.settings.app.secret;
-            let user = new db.User(payload);
+            let user = db.User.create(payload);
             let encryptedPassword = Bcrypt.hashSync(user.get('password'), 10);
 
             user.set('password', encryptedPassword);
 
-            user.save((saveErr, savedUser) => {
-                if (saveErr) {
-                    return reply.badImplementation(saveErr);
-                }
+            user.save().then((savedUser) => {
 
-                let userPojo = savedUser.toJSONObject({
-                    fields: ['_id', '_type', 'login', 'email'] // TODO in archimedes
-                });
+                let userPojo = _.pick(savedUser.attrs(),
+                    ['_id', '_type', 'login', 'email']);
 
                 delete userPojo.password;
 
@@ -109,6 +101,8 @@ var routes = {
                     return reply.created(userPojo);
                 });
 
+            }).catch((saveErr) => {
+                return reply.badImplementation(saveErr);
             });
         }
     },
@@ -137,24 +131,18 @@ var routes = {
                     return reply.badRequest(err.message);
                 }
 
-                db.User.first({email: decoded.email}, (firstErr, user) => {
-                    if (firstErr) {
-                        return reply.badImplementation(firstErr);
-                    }
-
+                db.User.first({email: decoded.email}).then((user) => {
                     if (!user) {
                         return reply.badRequest('email not found in database');
                     }
 
                     user.set('emailVerified', true);
 
-                    user.save((saveErr) => {
-                        if (saveErr) {
-                            return reply.badImplementation(saveErr);
-                        }
-
-                        reply.ok('the email has been verified');
-                    });
+                    return user.save();
+                }).then(() => {
+                    return reply.ok('the email has been verified');
+                }).catch((error) => {
+                    return reply.badImplementation(error);
                 });
             });
         }
@@ -201,15 +189,13 @@ var routes = {
                         let db = request.db;
                         let userId = request.params.userId;
 
-                        db.User.first({_id: userId}, (err, user) => {
-                            if (err) {
-                                return reply.badImplementation(err);
-                            }
-
+                        db.User.first({_id: userId}).then((user) => {
                             if (!user) {
                                 return reply.notFound('user not found');
                             }
-                            reply(user);
+                            return reply(user);
+                        }).catch((err) => {
+                            return reply.badImplementation(err);
                         });
                     }
                 }
@@ -221,12 +207,10 @@ var routes = {
 
             user.push('scope', scope);
 
-            user.save(function(err) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
-
-                reply.ok(`${scope} added to user`);
+            user.save().then(() => {
+                return reply.ok(`${scope} added to user ${user._id}`);
+            }).catch((err) => {
+                return reply.badImplementation(err);
             });
         }
     },
@@ -257,15 +241,13 @@ var routes = {
                         let db = request.db;
                         let userId = request.params.userId;
 
-                        db.User.first({_id: userId}, (err, user) => {
-                            if (err) {
-                                return reply.badImplementation(err);
-                            }
-
+                        db.User.first({_id: userId}).then((user) => {
                             if (!user) {
                                 return reply.notFound('user not found');
                             }
-                            reply(user);
+                            return reply(user);
+                        }).catch((err) => {
+                            return reply.badImplementation(err);
                         });
                     }
                 }
@@ -277,12 +259,10 @@ var routes = {
 
             user.pull('scope', scope);
 
-            user.save(function(err) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
-
-                reply.ok(`${scope} added to user`);
+            user.save().then(() => {
+                return reply.ok(`${scope} removed from user ${user._id}`);
+            }).catch((err) => {
+                return reply.badImplementation(err);
             });
         }
     },
@@ -375,16 +355,14 @@ var routes = {
                     assign: 'user',
                     method: function(request, reply) {
                         let {db, payload} = request;
-                        db.User.first({email: payload.email}, function(err, user) {
-                            if (err) {
-                                return reply.badImplementation(err);
-                            }
-
+                        db.User.first({email: payload.email}).then((user) => {
                             if (!user) {
                                 return reply.notFound('email not found');
                             }
 
                             return reply(user);
+                        }).catch((err) => {
+                            return reply.badImplementation(err);
                         });
                     }
                 }, {
@@ -405,11 +383,7 @@ var routes = {
 
             user.set('passwordResetToken', resetToken);
 
-            user.save(function(err) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
-
+            user.save().then(() => {
                 let token = jwt.sign(
                     {email: email, token: resetToken},
                     secret,
@@ -442,6 +416,8 @@ var routes = {
                     reply.ok('the password reset token has been send by email');
                 });
 
+            }).catch((err) => {
+                return reply.badImplementation(err);
             });
         }
     },
@@ -479,15 +455,14 @@ var routes = {
                     assign: 'user',
                     method: function(request, reply) {
                         let {db} = request;
-                        db.User.first({passwordResetToken: request.pre.resetToken}, function(err, user) {
-                            if (err) {
-                                return reply.badImplementation(err);
-                            }
+                        db.User.first({passwordResetToken: request.pre.resetToken}).then((user) => {
                             if (!user) {
                                 return reply.badRequest('Cannot find a match. The token may have been used already.');
                             }
 
                             return reply(user);
+                        }).catch((err) => {
+                            return reply.badImplementation(err);
                         });
                     }
                 }
@@ -502,11 +477,10 @@ var routes = {
             user.set('password', encryptedPassword);
             user.unset('passwordResetToken');
 
-            user.save(function(err) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
+            user.save().then(() => {
                 return reply.ok('the password has been reset');
+            }).catch((err) => {
+                return reply.badImplementation(err);
             });
         }
     }

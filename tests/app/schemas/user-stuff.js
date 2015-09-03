@@ -5,8 +5,8 @@ module.exports = {
             type: 'string'
         },
         _scope: {
-            type: 'string',
-            multi: true
+            type: 'array',
+            items: 'string'
         },
         title: {
             type: 'string'

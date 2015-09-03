@@ -1,6 +1,6 @@
 
-import archimedes from 'archimedes';
-import ModelSchema from './model-schema';
+import {triplestore} from 'archimedes';
+// import ModelSchema from './model-schema';
 import {pascalCase} from '../utils';
 import _ from 'lodash';
 
@@ -18,43 +18,46 @@ var archimedesPlugin = function(plugin, options, next) {
         });
     }
 
-    let adapter = options.database.adapter;
-    let databaseConfig = options.database.config;
+    // let adapter = options.database.adapter;
+    // let databaseConfig = options.database.config;
     let schemas = options.schemas;
 
-    var Database = archimedes[adapter].Database;
-    var Model = archimedes[adapter].Model;
+    // var Database = archimedes[adapter].Database;
+    // var Model = archimedes[adapter].Model;
 
-    var models = {};
-    var db = new Database(databaseConfig);
+    let models = {};
+    // var db = new Database(databaseConfig);
+    let db = triplestore(options.database.config);
 
     _.forOwn(schemas, (modelInfos, modelName) => {
         var modelNamePascalCase = pascalCase(modelName);
+        models[modelNamePascalCase] = modelInfos;
 
-        if (modelName === 'Basic') {
-            throw "EurekaServer: 'Basic' is a reserved word and can not be used as model name";
-        }
+    //     if (modelName === 'Basic') {
+    //         throw "EurekaServer: 'Basic' is a reserved word and can not be used as model name";
+    //     }
 
-        if (!modelInfos.properties) {
-            plugin.log(['warn', 'database'], `${modelName} has no properties`);
-            modelInfos.properties = {};
-        }
+    //     if (!modelInfos.properties) {
+    //         plugin.log(['warn', 'database'], `${modelName} has no properties`);
+    //         modelInfos.properties = {};
+    //     }
 
         plugin.log(['info', 'database'], `register model ${modelNamePascalCase} (with ${Object.keys(modelInfos.properties).length} properties)`);
 
-        models[modelNamePascalCase] = Model.extend({
-            schema: modelInfos.properties
-        });
+        // models[modelNamePascalCase] = Model.extend({
+        //     schema: modelInfos.properties
+        // });
 
-        // TODO put the following line in archimedes ?
-        models[modelNamePascalCase].schema = new ModelSchema(modelNamePascalCase, modelInfos, db);
+    //     // TODO put the following line in archimedes ?
+    //     models[modelNamePascalCase].schema = new ModelSchema(modelNamePascalCase, modelInfos, db);
     });
 
-    db.registerModels(models);
-
-    plugin.expose('db', db);
-
-    next();
+    db.register(models).then(() => {
+        plugin.expose('db', db);
+        next();
+    }).catch((error) => {
+        console.log(error);
+    });
 };
 
 archimedesPlugin.attributes = {

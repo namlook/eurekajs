@@ -1,7 +1,6 @@
 
 import _ from 'lodash';
 import {pascalCase} from '../utils';
-import queryFilterValidator from './queryfilter-validator';
 import Boom from 'boom';
 
 import Resource from './resource';
@@ -12,9 +11,16 @@ import joi from 'joi';
 
 var queryOptionValidator = {
     limit: joi.number().min(1),
-    sortBy: joi.string(),
-    fields: joi.array(joi.string()),
-    populate: [joi.number(), joi.boolean()]
+    offset: joi.number().min(0),
+    sort: joi.alternatives().try(
+        joi.array().items(joi.string()),
+        joi.string()
+    ),
+    fields: joi.alternatives().try(
+        joi.array().items(joi.string()),
+        joi.string()
+    )
+    // populate: [joi.number(), joi.boolean()]
 };
 
 
@@ -82,10 +88,8 @@ var fillRequest = function(plugin) {
      */
     plugin.ext('onPostAuth', function(request, reply) {
         if (request.Model && request.params.id) {
-            request.Model.first({_id: request.params.id}, function(err, document) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
+
+            request.Model.first({_id: request.params.id}).then((document) => {
 
                 if (!document) {
                     return reply.notFound();
@@ -93,7 +97,11 @@ var fillRequest = function(plugin) {
 
                 request.pre.document = document;
                 return reply.continue();
+
+            }).catch((err) => {
+                return reply.badImplementation(err);
             });
+
         } else {
             return reply.continue();
         }
@@ -106,20 +114,20 @@ var fillRequest = function(plugin) {
      * the model properties and add it as `request.pre.queryFilter`
      */
     plugin.ext('onPostAuth', function(request, reply) {
-        let {db, query, Model} = request;
+        let {query, Model} = request;
 
         if (!Model) {
             return reply.continue();
         }
 
-        let queryFilter = query.filter || {};
-        let {value, errors} = queryFilterValidator(db, Model.schema, queryFilter);
+        request.pre.queryFilter = query.filter || {};
+        // let {value, errors} = queryFilterValidator(db, Model.schema, queryFilter);
 
-        if (errors.length) {
-            return reply.badRequest(errors[0]);
-        }
+        // if (errors.length) {
+        //     return reply.badRequest(errors[0]);
+        // }
 
-        request.pre.queryFilter = value;
+        // request.pre.queryFilter = value;
 
         // remove filter from query
         request.query = _.omit(request.query, 'filter');
@@ -140,40 +148,43 @@ var fillRequest = function(plugin) {
 
         let queryOptions = _.omit(query, 'filter');
 
-        let {value, error} = joi.validate(
+        let {value: validatedOptions, error} = joi.validate(
             queryOptions, queryOptionValidator, {stripUnknown: true});
 
         if (error) {
             return reply.badRequest(error);
         }
 
-        /** check if all sortBy properties are specified in model **/
-        if (value.sortBy) {
-            var sortByProperties = value.sortBy.split(',');
-            for (let index in sortByProperties) {
-                let propName = sortByProperties[index];
-                propName = _.trimLeft(propName, '-');
-                if (!Model.schema.getProperty(propName)) {
-                    return reply.badRequest(`sortBy: unknown property ${propName} for model ${Model.schema.name}`);
-                }
-            }
-        }
+        // /** check if all sortBy properties are specified in model **/
+        // if (validatedOptions.sortBy) {
+        //     var sortByProperties = validatedOptions.sortBy.split(',');
+        //     for (let index in sortByProperties) {
+        //         let propName = sortByProperties[index];
+        //         propName = _.trimLeft(propName, '-');
+        //         if (!Model.schema.getProperty(propName)) {
+        //             return reply.badRequest(`sort: unknown property ${propName} for model ${Model.schema.name}`);
+        //         }
+        //     }
+        // }
 
 
-        /** check if all fields properties are specified in model **/
-        if (value.fields) {
-            for (let index in value.fields) {
-                let propName = value.fields[index];
-                if (!Model.schema.getProperty(propName)) {
-                    return reply.badRequest(`fields: unknown property ${propName} for model ${Model.schema.name}`);
-                }
-            }
-        }
+        // /** check if all fields properties are specified in model **/
+        // if (validatedOptions.fields) {
+        //     for (let index in validatedOptions.fields) {
+        //         let propName = validatedOptions.fields[index];
+        //         if (!Model.schema.getProperty(propName)) {
+        //             return reply.badRequest(`fields: unknown property ${propName} for model ${Model.schema.name}`);
+        //         }
+        //     }
+        // }
 
-        request.pre.queryOptions = value;
+        // request.pre.queryOptions = {
+        //     sort: validatedOptions.sortBy
+        // };
+        request.pre.queryOptions = validatedOptions;
 
         // remove model specific options from query
-        request.query = _.omit(request.query, _.keys(value));
+        request.query = _.omit(request.query, _.keys(validatedOptions));
 
         reply.continue();
     });
@@ -197,19 +208,17 @@ var setAuthentification = function(plugin) {
 
         let query = {[usernameField]: username};
 
-        db[UserModel].first(query, (err, user) => {
-            if (err) {
-                return callback(err);
-            }
-
+        db[UserModel].first(query).then((user) => {
             if (!user) {
                 return callback(null, false);
             }
 
             Bcrypt.compare(password, user.get(passwordField), (compareErr, isValid) => {
-                return callback(null, isValid, user.toJSONObject());
+                return callback(null, isValid, user.attrs());
             });
 
+        }).catch((err) => {
+            return callback(err);
         });
     };
 

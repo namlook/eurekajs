@@ -4,7 +4,7 @@ import joi from 'joi';
 
 
 var sync = function(request, callback) {
-    let {payload, Model, db} = request;
+    let {payload, Model} = request;
 
     /**
      * if the payload is a string, try to parse it as a JSON
@@ -25,77 +25,28 @@ var sync = function(request, callback) {
      * if the payload is an array, performs a batch sync
      */
     if (_.isArray(payload)) {
-        var pojos = [];
-
-        /**
-         * for each item in payload, validate and convert it
-         * into an archimedes' Model object
-         */
-        for (let index in payload) {
-            let item = payload[index];
-            let {error, value} = Model.schema.validate(item);
-            if (error) {
-                return callback({
-                    type: 'ValidationError',
-                    error: error,
-                    infos: {failedDocument: item}
-                });
-            }
-
-            delete value._type; // TODO remove in the future ?
-
-            try {
-                pojos.push(new Model(value).toSerializableObject());
-            } catch (createModelError) {
-                return callback(createModelError);
-            }
-        }
-
-        /**
-         * process batch syncing
-         */
-        return db.batchSync(pojos, function(err, data) {
-            if (err) {
-                return callback(err);
-            }
-
-            let savedObj = data.map(function(item) {
-                item = item.result; // TODO clean this in archimedes
-                item._type = Model.schema.name;
-                return new Model(item).toJSONObject({
-                    dereference: true
-                });
+        Model.batchSync(payload).then((saved) => {
+            return callback(null, saved);
+        }).catch((err) => {
+            return callback({
+                type: 'ValidationError',
+                error: err.extra
+                // infos: {failedDocument: item}
             });
-
-            return callback(null, savedObj);
-          });
+        });
 
     /**
      * if the payload is an object, perform a regular save
      */
     } else {
-        let {error, value} = Model.schema.validate(payload);
-
-        if (error) {
+        Model.create(payload).save().then((savedObj) => {
+            return callback(null, savedObj.attrs());
+        }).catch((err) => {
             return callback({
-                type: 'ValidationError',
-                error: error,
+                type: err.name,
+                error: err.extra,
                 infos: {failedDocument: payload}
             });
-        }
-
-        try {
-            var obj = new Model(value);
-        } catch (createModelError2) {
-            return callback(createModelError2);
-        }
-
-        obj.save(function(err, savedObj) {
-            if (err) {
-                return callback(err);
-            }
-
-            return callback(null, savedObj.toJSONObject({dereference: true}));
         });
     }
 };
@@ -120,19 +71,22 @@ var routes = {
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
-            request.Model.find(queryFilter, queryOptions, function(err, data) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
-
-                var results = data.map(function(o) {
-                    return o.toJSONObject({
-                        populate: queryOptions.populate,
-                        dereference: true
-                    });
-                });
+            request.Model.find(queryFilter, queryOptions).then((data) => {
+                var results = data.map((o) => o.attrs());
+                //     return o.toJSONObject({
+                //         populate: queryOptions.populate,
+                //         dereference: true
+                //     });
+                // });
 
                 return reply.ok(results);
+
+            }).catch((err) => {
+                if (err.name === 'ValidationError') {
+                    return reply.badRequest(err, err.extra);
+                } else {
+                    return reply.badImplementation(err);
+                }
             });
         }
     },
@@ -142,10 +96,11 @@ var routes = {
         method: 'GET',
         path: `/{id}`,
         handler: function(request, reply) {
-            return reply.ok(request.pre.document.toJSONObject({
-                populate: false,
-                dereference: true
-            }));
+            return reply.ok(request.pre.document.attrs());
+            // return reply.ok(request.pre.document.toJSONObject({
+            //     populate: false,
+            //     dereference: true
+            // }));
         }
     },
 
@@ -155,12 +110,13 @@ var routes = {
         path: `/i/count`,
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
-            request.Model.count(queryFilter, queryOptions, function(err, total) {
-                if (err) {
-                    return reply.badImplementation();
-                }
-
+            request.Model.count(queryFilter, queryOptions).then((total) => {
                 return reply.ok(total);
+            }).catch((err) => {
+                if (err.name === 'ValidationError') {
+                    return reply.badRequest(err.extra);
+                }
+                return reply.badImplementation(err);
             });
         }
     },
@@ -176,7 +132,8 @@ var routes = {
                     if (err.type === 'ParseError') {
                         return reply.badRequest('The payload should be a valid JSON', {payload: err.payload, parseError: err.error});
                     } else if (err.type === 'ValidationError') {
-                        return reply.badRequest(err.error, err.infos);
+                        return reply.badRequest(
+                            `${err.type}: ${err.error}`, err.infos);
                     } else {
                         return reply.badImplementation(err);
                     }
@@ -192,7 +149,6 @@ var routes = {
         method: ['PUT', 'POST', 'PATCH'],
         path: `/{id}`,
         handler: function(request, reply) {
-
             sync(request, function(err, data) {
                 if (err) {
                     if (err.type === 'ParseError') {
@@ -214,12 +170,10 @@ var routes = {
         method: 'DELETE',
         path: `/{id}`,
         handler: function(request, reply) {
-            request.pre.document.delete(function(err) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
-
+            request.pre.document.delete().then(() => {
                 return reply.noContent();
+            }).catch((err) => {
+                return reply.badImplementation(err);
             });
         }
     },
@@ -231,28 +185,17 @@ var routes = {
         handler: function(request, reply) {
             let {Model} = request;
 
-            /** validate the property param **/
             let property = request.params.property;
-            if (!Model.schema.getProperty(property)) {
-                return reply.badRequest(`unknown property "${property}" for model ${Model.schema.name}`);
-            }
 
             let {queryFilter} = request.pre;
 
-            Model.facets(property, queryFilter, function(err, data) {
-                if (err) {
-                    return reply.badImplementation(err);
-                }
-
-                /** TODO put this hack into archimedes **/
-                if (Model.schema.getProperty(property).type === 'boolean') {
-                    data = data.map(o => {
-                        o.facet = Boolean(_.parseInt(o.facet));
-                        return o;
-                    });
-                }
-
+            Model.groupBy(property, queryFilter).then((data) => {
                 return reply.ok(data);
+            }).catch((err) => {
+                if (err.name === 'ValidationError') {
+                    return reply.badRequest(err.message, err.extra);
+                }
+                return reply.badImplementation(err);
             });
         }
     },

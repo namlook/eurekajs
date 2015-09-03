@@ -18,8 +18,8 @@ module.exports = {
             type: 'string'
         },
         scope: {
-            type: 'string',
-            multi: true
+            type: 'array',
+            items: 'string'
         }
     }
 };

@@ -30,8 +30,12 @@ describe('Route [update]', function() {
 
      /** load the fixtures **/
     beforeEach(function(done){
-        fixtures.clear(server, function() {
-            fixtures.genericDocuments(server, done);
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            done();
+        }).catch((error) => {
+            console.log(error);
         });
     });
 
@@ -41,7 +45,6 @@ describe('Route [update]', function() {
             method: 'GET',
             url: '/api/1/generic/generic3'
         };
-
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
 
@@ -89,7 +92,7 @@ describe('Route [update]', function() {
                 expect(response.statusCode).to.equal(400);
                 expect(response.result.statusCode).to.equal(400);
                 expect(response.result.error).to.equal('Bad Request');
-                expect(response.result.message).to.equal('ValidationError: "whatever" is not allowed');
+                expect(response.result.message).to.equal('"whatever" is not allowed');
                 done();
             });
     });

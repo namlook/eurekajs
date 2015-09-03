@@ -29,14 +29,20 @@ describe('User creation', function() {
         });
     });
 
-    /** load the fixtures **/
+
+     /** load the fixtures **/
     beforeEach(function(done){
-        fixtures.clear(server, function() {
-            fixtures.genericDocuments(server, function() {
-                fixtures.userDocuments(server, done);
-            });
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            return fixtures.userDocuments(server);
+        }).then(() => {
+            done();
+        }).catch((error) => {
+            console.log(error);
         });
     });
+
 
     describe('[sign in]', function() {
 
@@ -63,15 +69,13 @@ describe('User creation', function() {
                 expect(user.password).to.not.exists();
 
                 let db = server.plugins.eureka.database;
-                db.User.first({email: user.email}, (err, fetchedUser) => {
-                    expect(err).to.be.null();
+                db.User.first({email: user.email}).then((fetchedUser) => {
                     let fetchedPassword = fetchedUser.get('password');
                     expect(fetchedPassword).to.not.equal('secret');
                     let isValid = Bcrypt.compareSync('secret', fetchedPassword);
                     expect(isValid).to.be.true();
                     done();
                 });
-
             });
         });
 
@@ -251,8 +255,7 @@ describe('User creation', function() {
                     expect(verifyResponse.result.results).to.equal('the email has been verified');
 
                     let db = server.plugins.eureka.database;
-                    db.User.first({email: 'newuser@test.com'}, (err, user) => {
-                        expect(err).to.not.exists();
+                    db.User.first({email: 'newuser@test.com'}).then((user) => {
                         expect(user.get('emailVerified')).to.be.true();
                         done();
                     });

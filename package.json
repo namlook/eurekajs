@@ -5,15 +5,19 @@
   "main": "index.js",
   "repository": "https://github.com/namlook/eurekajs",
   "scripts": {
-    "prepublish": "rm -rf lib libtests ; babel src --optional runtime --out-dir lib",
-    "build": "rm -rf lib libtests ; eslint src tests ;  babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps",
-    "test": "rm -rf lib libtests ; eslint src tests 1>&2 &&  babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps && ./node_modules/lab/bin/lab libtests/specs -vSl",
+    "prepublish_old": "rm -rf lib libtests ; babel src --optional runtime --out-dir lib",
+    "build_old": "rm -rf lib libtests ; eslint src tests ;  babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps",
+    "test_old": "rm -rf lib libtests ; eslint src tests 1>&2 &&  babel src --optional runtime --out-dir lib --source-maps && babel tests --optional runtime --out-dir libtests --source-maps && ./node_modules/lab/bin/lab libtests/specs -vSl",
+    "watch-lint_old": "nodemon --exec 'eslint src tests' --watch src --watch tests",
+    "watch-tests_old": "nodemon --exec './node_modules/lab/bin/lab libtests/specs -vl' --watch lib --watch libtests",
+    "watch-babel-src_old": "babel src --watch --optional runtime --out-dir lib --source-maps",
+    "watch-babel-tests_old": "babel tests --watch --optional runtime --out-dir libtests --source-maps",
+    "coverage": "lab -T tests/transform.js -r html -o coverage.html tests",
+    "prepublish": "npm run build",
     "lint": "eslint src tests",
-    "watch-lint": "nodemon --exec 'eslint src tests' --watch src --watch tests",
-    "watch-tests": "nodemon --exec './node_modules/lab/bin/lab libtests/specs -vl' --watch lib --watch libtests",
-    "watch-babel-src": "babel src --watch --optional runtime --out-dir lib --source-maps",
-    "watch-babel-tests": "babel tests --watch --optional runtime --out-dir libtests --source-maps",
-    "coverage": "./node_modules/lab/bin/lab -r html -o coverage.html libtests/specs"
+    "build": "eslint src tests ;  babel src --optional runtime --out-dir lib --source-maps",
+    "watch": "babel src --watch --optional runtime --out-dir lib --source-maps",
+    "test": "eslint src tests && lab -T tests/transform.js tests -vSl"
   },
   "bin": {
     "eureka": "bin/eureka.sh"
@@ -32,8 +36,11 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
+    "babel-core": "^5.8.23",
+    "babel-runtime": "^5.8.20",
     "bcrypt": "^0.8.3",
     "boom": "^2.8.0",
+    "glue": "^2.0.0",
     "handlebars": "^3.0.3",
     "hapi": "^8.6.1",
     "hapi-auth-basic": "^2.0.0",
@@ -46,10 +53,8 @@
     "require-dir": "^0.3.0"
   },
   "devDependencies": {
-    "babel-runtime": "^5.4.7",
     "code": "^1.4.1",
     "eslint": "^0.22.1",
-    "glue": "^2.0.0",
     "lab": "^5.10.0",
     "source-map-support": "^0.3.1"
   }

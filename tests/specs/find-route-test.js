@@ -27,8 +27,12 @@ describe('Route [find]', function() {
 
      /** load the fixtures **/
     beforeEach(function(done){
-        fixtures.clear(server, function() {
-            fixtures.genericDocuments(server, done);
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            done();
+        }).catch((error) => {
+            console.log(error);
         });
     });
 
@@ -94,7 +98,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?sortBy=-integer`
+            url: `/api/1/generic?sort=-integer`
         };
 
         server.inject(options, function(response) {
@@ -142,7 +146,7 @@ describe('Route [find]', function() {
             let data = response.result.results;
             expect(data).to.be.an.array();
             data.forEach(function(item) {
-                expect(item).to.only.include(['integer', 'text', '_class', '_id', '_uri', '_type', '_ref']);
+                expect(item).to.only.include(['integer', 'text', '_id', '_type']);
             });
             done();
         });
@@ -250,7 +254,8 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown property "unknwonField" for model Generic');
+            expect(response.result.message).to.equal('ValidationError: malformed query');
+            expect(response.result.infos).to.equal('unknown property "unknwonField" on model "Generic"');
 
             done();
         });
@@ -270,7 +275,8 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown operator "$arf"');
+            expect(response.result.message).to.equal('ValidationError: malformed query');
+            expect(response.result.infos).to.equal('unknown operator "$arf"');
 
             done();
         });
@@ -288,7 +294,8 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('"integer" must be a number');
+            expect(response.result.message).to.equal('ValidationError: malformed query');
+            expect(response.result.infos).to.equal('"integer" must be a number');
 
             done();
         });
@@ -306,18 +313,19 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('"related" must be a boolean');
+            expect(response.result.message).to.equal('ValidationError: malformed query');
+            expect(response.result.infos).to.equal('"related" must be a boolean');
 
             done();
         });
 
     });
 
-    it('should return an error when specified a bad field', function(done){
+    it('should return an error when specified a bad property in array', function(done){
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?fields=["boolean","integ"]`
+            url: `/api/1/generic?fields=["boolean","unknownProperty"]`
         };
 
         server.inject(options, function(response) {
@@ -325,19 +333,18 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('fields: unknown property integ for model Generic');
+            expect(response.result.message).to.equal('ValidationError: malformed options');
+            expect(response.result.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
 
             done();
         });
-
     });
 
-
-    it('should return an error when specified a bad sortBy', function(done){
+    it('should return an error when specified a bad property as string', function(done){
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?sortBy=boolean,integ`
+            url: `/api/1/generic?fields=boolean,unknownProperty`
         };
 
         server.inject(options, function(response) {
@@ -345,12 +352,53 @@ describe('Route [find]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('sortBy: unknown property integ for model Generic');
+            expect(response.result.message).to.equal('ValidationError: malformed options');
+            expect(response.result.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
+
+            done();
+        });
+    });
+
+
+    it('should return an error when sorting with an unknown property as array', function(done){
+
+        let options = {
+            method: 'GET',
+            url: `/api/1/generic?sort=["boolean","unknownProperty"]`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('ValidationError: malformed options');
+            expect(response.result.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
 
             done();
         });
 
     });
 
+
+    it('should return an error when sorting with an unknown property as string', function(done){
+
+        let options = {
+            method: 'GET',
+            url: `/api/1/generic?sort=boolean,unknownProperty`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.result.statusCode).to.equal(400);
+
+            expect(response.result.error).to.equal('Bad Request');
+            expect(response.result.message).to.equal('ValidationError: malformed options');
+            expect(response.result.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
+
+            done();
+        });
+
+    });
 
 });

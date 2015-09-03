@@ -36,12 +36,16 @@ describe('Authorization', function() {
         });
     });
 
-    /** load the fixtures **/
+     /** load the fixtures **/
     beforeEach(function(done){
-        fixtures.clear(server, function() {
-            fixtures.genericDocuments(server, function() {
-                fixtures.userDocuments(server, done);
-            });
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            return fixtures.userDocuments(server);
+        }).then(() => {
+            done();
+        }).catch((error) => {
+            console.log(error);
         });
     });
 
@@ -784,8 +788,7 @@ describe('Authorization', function() {
         it('should add a scope to a user (admin access)', (done) => {
             var db = server.plugins.eureka.database;
 
-            db.User.first({email: 'user2@test.com'}, (err, user2) => {
-                expect(err).to.not.exists();
+            db.User.first({email: 'user2@test.com'}).then((user2) => {
                 expect(user2.get('scope')).to.not.exists();
 
 
@@ -826,8 +829,7 @@ describe('Authorization', function() {
                         expect(response.statusCode).to.equal(200);
                         expect(response.result.statusCode).to.equal(200);
 
-                        db.User.first({email: 'user2@test.com'}, (errBis, user2bis) => {
-                            expect(errBis).to.not.exists();
+                        db.User.first({email: 'user2@test.com'}).then((user2bis) => {
                             expect(user2bis.get('scope')).to.only.include(['user-stuff-access']);
 
 
@@ -848,7 +850,6 @@ describe('Authorization', function() {
                             server.inject(userStuffOptionsBis, function(userStuffResponseBis) {
                                 expect(userStuffResponseBis.statusCode).to.equal(200);
                                 expect(userStuffResponseBis.result.statusCode).to.equal(200);
-
 
                                 done();
                             });
@@ -886,15 +887,14 @@ describe('Authorization', function() {
         it('should remove a scope from a user (admin access)', (done) => {
             var db = server.plugins.eureka.database;
 
-            db.User.first({email: 'userwithscope@test.com'}, (err, user2) => {
-                expect(err).to.not.exists();
-                expect(user2.get('scope')).to.only.include('user-stuff-access');
+            db.User.first({email: 'userwithscope@test.com'}).then((user) => {
+                expect(user.get('scope')).to.only.include('user-stuff-access');
 
 
                 let userStuffToken = getToken({
-                    _id: user2.get('_id'),
-                    email: user2.get('email'),
-                    scope: user2.get('scope')
+                    _id: user.get('_id'),
+                    email: user.get('email'),
+                    scope: user.get('scope')
                 });
 
                 let userStuffOptions = {
@@ -927,16 +927,13 @@ describe('Authorization', function() {
                     server.inject(options, function(response) {
                         expect(response.statusCode).to.equal(200);
                         expect(response.result.statusCode).to.equal(200);
-
-                        db.User.first({email: 'userwithscope@test.com'}, (errBis, user2bis) => {
-                            expect(errBis).to.not.exists();
-                            expect(user2bis.get('scope')).to.not.exists();
-
+                        db.User.first({email: 'userwithscope@test.com'}).then((userBis) => {
+                            expect(userBis.get('scope')).to.not.exists();
 
                             let userStuffTokenBis = getToken({
-                                _id: user2bis.get('_id'),
-                                email: user2bis.get('email'),
-                                scope: user2bis.get('scope')
+                                _id: userBis.get('_id'),
+                                email: userBis.get('email'),
+                                scope: userBis.get('scope')
                             });
 
                             let userStuffOptionsBis = {
@@ -951,12 +948,15 @@ describe('Authorization', function() {
                                 expect(userStuffResponseBis.statusCode).to.equal(403);
                                 expect(userStuffResponseBis.result.statusCode).to.equal(403);
 
-
                                 done();
                             });
+                        }).catch((error) => {
+                            console.log(error);
                         });
                     });
                 });
+            }).catch((error) => {
+                console.log(error);
             });
         });
 

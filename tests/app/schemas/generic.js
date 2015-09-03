@@ -4,10 +4,11 @@ module.exports = {
             type: 'string'
         },
         integer: {
-            type: 'integer'
+            type: 'number'
         },
         float: {
-            type: 'float'
+            type: 'number',
+            validate: [{precision: 2}]
         },
         boolean: {
             type: 'boolean'
@@ -16,25 +17,26 @@ module.exports = {
             type: 'date'
         },
         datetime: {
-            type: 'datetime'
+            type: 'date'
         },
         array: {
-            type: 'string',
-            multi: {
-                validations: [{length: 3}]
+            type: 'array',
+            items: {
+                type: 'string'
+                // validations: [{length: 3}]
             }
         },
         attachement: {
-            type: 'string',
-            propagateDeletion: true
+            type: 'string'
+            // propagateDeletion: true
         },
         relation: {
-            type: 'GenericRelation',
-            propagateDeletion: true
+            type: 'GenericRelation'
+            // propagateDeletion: true
         },
         relations: {
-            type: 'GenericRelation',
-            multi: true
+            type: 'array',
+            items: 'GenericRelation'
         }
     }
 };

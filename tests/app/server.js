@@ -21,13 +21,14 @@ eurekaServer.start(function(err, server) {
         throw err;
     }
 
-    fixtures.clear(server, function() {
-        fixtures.genericDocuments(server, function() {
-            fixtures.userDocuments(server, function() {
-                server.log('info', `Server running at: http://${server.info.address}:${server.info.port}`);
-            });
-
-        });
+    fixtures.clear(server).then(() => {
+        return fixtures.genericDocuments(server);
+    }).then(() => {
+        fixtures.userDocuments(server);
+    }).then(() => {
+        server.log('info', `Server running at: http://${server.info.address}:${server.info.port}`);
+    }).catch((error) => {
+        console.log(error);
     });
 
 });

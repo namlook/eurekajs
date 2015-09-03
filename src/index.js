@@ -43,12 +43,13 @@ var eurekaConfigValidator = {
         clientRootUrl: joi.string().uri().required()
     }),
     database: joi.object().keys({
-        adapter: joi.object().keys({
-            type: joi.string().required(),
-            dialect: joi.string(),
-            graphURI: joi.string().uri().required()
+        config: joi.object().keys({
+            // type: joi.string().required(),
+            // dialect: joi.string(),
+            // host: joi.string().ip().default('localhost'),
+            graphUri: joi.string().uri().required(),
+            endpoint: joi.string().uri().required()
         }).required(),
-        host: joi.string().ip().default('localhost'),
         schemas: joi.object()
     }),
     resources: joi.object(),
@@ -65,7 +66,16 @@ export default function(eurekaConfig) {
 
     var manifest = {
         connections: [
-            {port: config.port}
+            {
+                port: config.port,
+                query: {
+                    /** the following line is necessary to allow
+                     * deep relation query (via dot notation) ex:
+                     *  `filter[relation.text]=foo`
+                     */
+                    qs: {allowDots: false}
+                }
+            }
         ],
         server: {
             app: config.app
@@ -107,12 +117,7 @@ export default function(eurekaConfig) {
                     var archimedesPluginConfig = {
                         log: config.log,
                         database: {
-                            adapter: config.database.adapter.type,
-                            config: {
-                                store: config.database.adapter.dialect,
-                                host: config.database.host,
-                                graphURI: config.database.adapter.graphURI
-                            }
+                            config: config.database.config
                         },
                         schemas: config.database.schemas
                     };
@@ -124,7 +129,6 @@ export default function(eurekaConfig) {
                         apiRootPrefix: config.app.apiRootPrefix,
                         serverConfig: config
                     };
-
 
                     /**
                      * register plugins

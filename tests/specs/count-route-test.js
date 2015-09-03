@@ -28,8 +28,12 @@ describe('Route [count]', function() {
 
      /** load the fixtures **/
     beforeEach(function(done){
-        fixtures.clear(server, function() {
-            fixtures.genericDocuments(server, done);
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            done();
+        }).catch((error) => {
+            console.log(error);
         });
     });
 
@@ -81,7 +85,7 @@ describe('Route [count]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown property "unknwonField" for model Generic');
+            expect(response.result.message).to.equal('unknown property "unknwonField" on model "Generic"');
 
             done();
         });
