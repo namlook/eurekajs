@@ -95,9 +95,12 @@ describe('Authorization', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(401);
-                    expect(response.result.statusCode).to.equal(401);
-                    expect(response.result.error).to.equal('Unauthorized');
-                    expect(response.result.message).to.equal('Bad username or password');
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(401);
+                    expect(error.title).to.equal('Unauthorized');
+                    expect(error.detail).to.equal('Bad username or password');
+
                     done();
                 });
             });
@@ -114,9 +117,12 @@ describe('Authorization', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
-                    expect(response.result.statusCode).to.equal(400);
-                    expect(response.result.error).to.equal('Bad Request');
-                    expect(response.result.message).to.equal('Bad HTTP authentication header format');
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(400);
+                    expect(error.title).to.equal('Bad Request');
+                    expect(error.detail).to.equal('Bad HTTP authentication header format');
+
                     done();
                 });
             });
@@ -133,9 +139,11 @@ describe('Authorization', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(401);
-                    expect(response.result.statusCode).to.equal(401);
-                    expect(response.result.error).to.equal('Unauthorized');
-                    expect(response.result.message).to.equal('Invalid signature received for JSON Web Token validation');
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(401);
+                    expect(error.title).to.equal('Unauthorized');
+                    expect(error.detail).to.equal('Invalid signature received for JSON Web Token validation');
                     done();
                 });
             });
@@ -228,7 +236,13 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(401);
-                done();
+                    expect(response.statusCode).to.equal(401);
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(401);
+                    expect(error.title).to.equal('Unauthorized');
+                    expect(error.detail).to.equal("you don't have the authorization to access this document");
+                    done();
             });
         });
 
@@ -250,6 +264,12 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(403);
+                expect(error.title).to.equal('Forbidden');
+                expect(error.detail).to.equal('Insufficient scope, expected any of: secret-keeper,admin');
+
                 done();
             });
         });
@@ -272,9 +292,12 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(401);
-                expect(response.result.statusCode).to.equal(401);
-                expect(response.result.error).to.equal('Unauthorized');
-                expect(response.result.message).to.equal("you don't have the authorization to access this document");
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(401);
+                expect(error.title).to.equal('Unauthorized');
+                expect(error.detail).to.equal("you don't have the authorization to access this document");
+
                 done();
             });
         });
@@ -297,6 +320,12 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(401);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(401);
+                expect(error.title).to.equal('Unauthorized');
+                expect(error.detail).to.equal("you don't have the authorization to access this document");
+
                 done();
             });
 
@@ -345,6 +374,12 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(403);
+                expect(error.title).to.equal('Forbidden');
+                expect(error.detail).to.equal('Insufficient scope, expected any of: secret-keeper,admin');
+
                 done();
             });
         });
@@ -533,7 +568,7 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result).to.equal(10);
+                expect(response.result.data).to.equal(10);
                 done();
             });
         });
@@ -745,10 +780,13 @@ describe('Authorization', function() {
             };
 
             server.inject(options, function(response) {
-                expect(response.statusCode).to.equal(400);
-                expect(response.result.statusCode).to.equal(400);
-                expect(response.result.error).to.equal('Bad Request');
-                expect(response.result.message).to.equal('only a sudo user can remove his access');
+                expect(response.statusCode).to.equal(403);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(403);
+                expect(error.title).to.equal('Forbidden');
+                expect(error.detail).to.equal('only a sudo user can remove his access');
+
                 done();
             });
         });

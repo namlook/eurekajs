@@ -48,9 +48,32 @@ var decoratePlugin = function(plugin) {
     });
 
     plugin.decorate('reply', 'noContent', function() {
-        return this.response({statusCode: 204}).code(204);
+        return this.response().code(204);
     });
 
+
+    plugin.ext('onPreResponse', function (request, reply) {
+
+        var response = request.response;
+        if (response.isBoom) {
+            let payload = response.output.payload;
+            var error = {
+                title: payload.error,
+                status: response.output.statusCode
+            };
+
+            if (payload.message) {
+                error.detail = payload.message;
+            }
+
+            if (payload.infos) {
+                error.meta = {infos: payload.infos};
+            }
+
+            response.output.payload = { errors: [error] };
+        }
+        return reply.continue();
+    });
 };
 
 var fillRequest = function(plugin) {

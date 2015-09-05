@@ -157,9 +157,11 @@ describe('Authentification', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(404);
-                expect(response.result.statusCode).to.equal(404);
-                expect(response.result.error).to.equal('Not Found');
-                expect(response.result.message).to.equal('email not found');
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(404);
+                expect(error.title).to.equal('Not Found');
+                expect(error.detail).to.equal('email not found');
 
                 done();
             });
@@ -177,9 +179,11 @@ describe('Authentification', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(400);
-                expect(response.result.statusCode).to.equal(400);
-                expect(response.result.error).to.equal('Bad Request');
-                expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('child "email" fails because ["email" must be a valid email]');
 
                 done();
             });
@@ -207,9 +211,12 @@ describe('Authentification', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
-                    expect(response.result.statusCode).to.equal(400);
-                    expect(response.result.error).to.equal('Bad Request');
-                    expect(response.result.message).to.equal('jwt expired');
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(400);
+                    expect(error.title).to.equal('Bad Request');
+                    expect(error.detail).to.equal('jwt expired');
+
                     done();
                 });
             }, 1500);
@@ -228,11 +235,14 @@ describe('Authentification', function() {
                 }
             };
 
-            server.inject(options, function(Response) {
-                expect(Response.statusCode).to.equal(400);
-                expect(Response.result.statusCode).to.equal(400);
-                expect(Response.result.error).to.equal('Bad Request');
-                expect(Response.result.message).to.equal('jwt malformed');
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(400);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('jwt malformed');
+
                 done();
             });
         });
@@ -287,9 +297,11 @@ describe('Authentification', function() {
 
                         server.inject(resetOptions2, function(resetResponse2) {
                             expect(resetResponse2.statusCode).to.equal(400);
-                            expect(resetResponse2.result.statusCode).to.equal(400);
-                            expect(resetResponse2.result.error).to.equal('Bad Request');
-                            expect(resetResponse2.result.message).to.equal('Cannot find a match. The token may have been used already.');
+
+                            let error = resetResponse2.result.errors[0];
+                            expect(error.status).to.equal(400);
+                            expect(error.title).to.equal('Bad Request');
+                            expect(error.detail).to.equal('Cannot find a match. The token may have been used already.');
                             done();
                         });
                     });

@@ -314,7 +314,7 @@ var routes = {
                 {assign: 'scopeCheck', method: function(request, reply) {
                     let scope = request.auth.credentials.scope;
                     if (scope.indexOf('sudo') === -1) {
-                        return reply.badRequest('only a sudo user can remove his access');
+                        return reply.forbidden('only a sudo user can remove his access');
                     }
 
                     reply(true);

@@ -80,11 +80,12 @@ describe('Route [count]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
 
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('ValidationError: malformed query');
-            expect(response.result.infos).to.equal('unknown property "unknwonField" on model "Generic"');
+            let error = response.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('ValidationError: malformed query');
+            expect(error.meta.infos).to.equal('unknown property "unknwonField" on model "Generic"');
 
             done();
         });
