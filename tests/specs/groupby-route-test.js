@@ -134,7 +134,7 @@ describe('Route [group-by]', function() {
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);
             expect(error.title).to.equal('Bad Request');
-            expect(error.detail).to.equal('ValidationError: malformed aggregator');
+            expect(error.detail).to.equal('malformed aggregator');
             expect(error.meta.infos).to.equal('unknown property aggregator "unknownField" on model "Generic"');
 
             done();
@@ -156,7 +156,7 @@ describe('Route [group-by]', function() {
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);
             expect(error.title).to.equal('Bad Request');
-            expect(error.detail).to.equal('ValidationError: malformed query');
+            expect(error.detail).to.equal('malformed query');
             expect(error.meta.infos).to.equal('unknown property "unknownField" on model "Generic"');
 
             done();
