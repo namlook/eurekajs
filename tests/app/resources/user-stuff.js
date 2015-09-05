@@ -17,7 +17,7 @@ var document4Me = {
     config: {
         auth: {
             strategy: 'token',
-            scope: 'userId:doc._owner'
+            scope: 'userId:doc._owner._id'
         }
     },
     handler: genericRoutes.fetch.handler
@@ -81,7 +81,7 @@ var collection4MeInDoc = {
     config: {
         auth: {
             strategy: 'token',
-            scope: ['userId:doc._owner']
+            scope: ['userId:doc._owner._id']
         }
     },
     handler: genericRoutes.find.handler

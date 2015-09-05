@@ -48,9 +48,8 @@ describe('Route [count]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.equal(10);
             done();
         });
@@ -65,9 +64,8 @@ describe('Route [count]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.equal(5);
             done();
         });
@@ -85,7 +83,8 @@ describe('Route [count]', function() {
             expect(response.result.statusCode).to.equal(400);
 
             expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('unknown property "unknwonField" on model "Generic"');
+            expect(response.result.message).to.equal('ValidationError: malformed query');
+            expect(response.result.infos).to.equal('unknown property "unknwonField" on model "Generic"');
 
             done();
         });

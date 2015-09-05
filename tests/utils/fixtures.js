@@ -136,7 +136,7 @@ export default {
             userStuff.push({
                 _id: `userstuff${i}`,
                 _type: 'UserStuff',
-                _owner: `user${i % 5}`,
+                _owner: {_id: `user${i % 5}`, _type: 'User'},
                 _scope: scopes[i % 5],
                 title: `the secret thing of user ${i % 5}`,
                 isSecret: Boolean(i % 5)

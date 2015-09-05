@@ -63,8 +63,7 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                var token = response.result.results.token;
+                var token = response.result.token;
 
                 let tokenOptions = {
                     method: 'GET',
@@ -76,7 +75,6 @@ describe('Authorization', function() {
 
                 server.inject(tokenOptions, function(tokenResponse) {
                     expect(tokenResponse.statusCode).to.equal(200);
-                    expect(tokenResponse.result.statusCode).to.equal(200);
                     done();
                 });
             });
@@ -162,7 +160,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
                 done();
             });
         });
@@ -185,7 +182,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
                 done();
             });
         });
@@ -208,9 +204,8 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                let doc = response.result.results;
-                expect(doc._scope).to.include(['secret-keeper']);
+                let result = response.result;
+                expect(result.data.attributes._scope).to.include(['secret-keeper']);
                 done();
             });
         });
@@ -233,7 +228,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(401);
-                expect(response.result.statusCode).to.equal(401);
                 done();
             });
         });
@@ -256,7 +250,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
-                expect(response.result.statusCode).to.equal(403);
                 done();
             });
         });
@@ -304,7 +297,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(401);
-                expect(response.result.statusCode).to.equal(401);
                 done();
             });
 
@@ -331,7 +323,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
                 done();
             });
         });
@@ -354,7 +345,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
-                expect(response.result.statusCode).to.equal(403);
                 done();
             });
         });
@@ -377,9 +367,8 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                let docs = response.result.results;
-                let owners = docs.map(o => o._owner);
+                let results = response.result;
+                let owners = results.data.map(o => o.relationships._owner.data.id);
                 expect(owners).to.only.include(['user1']);
                 expect(owners.length).to.equal(2);
                 done();
@@ -403,9 +392,8 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                let docs = response.result.results;
-                expect(docs.length).to.equal(0);
+                let results = response.result;
+                expect(results.data.length).to.equal(0);
                 done();
             });
         });
@@ -428,9 +416,8 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                let scopes = response.result.results.map(function(o) {
-                    return _.dropWhile(o._scope, (n) => n !== 'secret-keeper');
+                let scopes = response.result.data.map(function(o) {
+                    return _.dropWhile(o.attributes._scope, (n) => n !== 'secret-keeper');
                 });
                 expect(scopes.length).to.equal(4);
                 expect(_.flatten(scopes)).to.only.include(['secret-keeper']);
@@ -455,8 +442,7 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                expect(response.result.results.length).to.equal(0);
+                expect(response.result.data.length).to.equal(0);
                 done();
             });
         });
@@ -479,9 +465,8 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                let scopes = response.result.results.map(function(o) {
-                    return _.dropWhile(o._scope, function(n) {
+                let scopes = response.result.data.map(function(o) {
+                    return _.dropWhile(o.attributes._scope, function(n) {
                         return n !== 'secret-keeper' && n !== 'new-guy';
                     });
                 });
@@ -507,8 +492,7 @@ describe('Authorization', function() {
 
                 _server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(200);
-                    expect(response.result.statusCode).to.equal(200);
-                    expect(response.result.results).to.be.an.array();
+                    expect(response.result.data).to.be.an.array();
                     config.auth = true;
                     done();
                 });
@@ -527,7 +511,6 @@ describe('Authorization', function() {
 
                 _server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(401);
-                    expect(response.result.statusCode).to.equal(401);
                     done();
                 });
             });
@@ -550,8 +533,7 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                expect(response.result.results).to.equal(10);
+                expect(response.result).to.equal(10);
                 done();
             });
         });
@@ -573,7 +555,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
-                expect(response.result.statusCode).to.equal(403);
                 done();
             });
         });
@@ -598,7 +579,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
                 done();
             });
         });
@@ -620,8 +600,7 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
-                expect(response.result.results.length).to.equal(10);
+                expect(response.result.data.length).to.equal(10);
                 done();
             });
         });
@@ -647,7 +626,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
-                expect(response.result.statusCode).to.equal(403);
 
                 let sudoOptions = {
                     method: 'POST',
@@ -659,8 +637,7 @@ describe('Authorization', function() {
 
                 server.inject(sudoOptions, function(sudoResponse) {
                     expect(sudoResponse.statusCode).to.equal(200);
-                    expect(sudoResponse.result.statusCode).to.equal(200);
-                    let sudoToken = sudoResponse.result.results.token;
+                    let sudoToken = sudoResponse.result.token;
 
                     let options2 = {
                         method: 'GET',
@@ -672,8 +649,7 @@ describe('Authorization', function() {
 
                     server.inject(options2, function(response2) {
                         expect(response2.statusCode).to.equal(200);
-                        expect(response2.result.statusCode).to.equal(200);
-                        expect(response2.result.results).to.be.an.array();
+                        expect(response2.result.data).to.be.an.array();
 
                         done();
                     });
@@ -699,7 +675,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
 
                 let sudoOptions = {
                     method: 'DELETE',
@@ -711,8 +686,7 @@ describe('Authorization', function() {
 
                 server.inject(sudoOptions, function(sudoResponse) {
                     expect(sudoResponse.statusCode).to.equal(200);
-                    expect(sudoResponse.result.statusCode).to.equal(200);
-                    let sudoToken = sudoResponse.result.results.token;
+                    let sudoToken = sudoResponse.result.token;
 
                     let options2 = {
                         method: 'GET',
@@ -724,7 +698,6 @@ describe('Authorization', function() {
 
                     server.inject(options2, function(response2) {
                         expect(response2.statusCode).to.equal(403);
-                        expect(response2.result.statusCode).to.equal(403);
                         done();
                     });
                 });
@@ -750,7 +723,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
-                expect(response.result.statusCode).to.equal(403);
                 done();
             });
         });
@@ -808,7 +780,6 @@ describe('Authorization', function() {
 
                 server.inject(userStuffOptions, function(userStuffResponse) {
                     expect(userStuffResponse.statusCode).to.equal(403);
-                    expect(userStuffResponse.result.statusCode).to.equal(403);
 
 
                     let token = getToken({
@@ -827,7 +798,6 @@ describe('Authorization', function() {
 
                     server.inject(options, function(response) {
                         expect(response.statusCode).to.equal(200);
-                        expect(response.result.statusCode).to.equal(200);
 
                         db.User.first({email: 'user2@test.com'}).then((user2bis) => {
                             expect(user2bis.get('scope')).to.only.include(['user-stuff-access']);
@@ -849,7 +819,6 @@ describe('Authorization', function() {
 
                             server.inject(userStuffOptionsBis, function(userStuffResponseBis) {
                                 expect(userStuffResponseBis.statusCode).to.equal(200);
-                                expect(userStuffResponseBis.result.statusCode).to.equal(200);
 
                                 done();
                             });
@@ -878,7 +847,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
-                expect(response.result.statusCode).to.equal(403);
                 done();
             });
         });
@@ -907,7 +875,6 @@ describe('Authorization', function() {
 
                 server.inject(userStuffOptions, function(userStuffResponse) {
                     expect(userStuffResponse.statusCode).to.equal(200);
-                    expect(userStuffResponse.result.statusCode).to.equal(200);
 
 
                     let token = getToken({
@@ -926,7 +893,6 @@ describe('Authorization', function() {
 
                     server.inject(options, function(response) {
                         expect(response.statusCode).to.equal(200);
-                        expect(response.result.statusCode).to.equal(200);
                         db.User.first({email: 'userwithscope@test.com'}).then((userBis) => {
                             expect(userBis.get('scope')).to.not.exists();
 
@@ -946,7 +912,6 @@ describe('Authorization', function() {
 
                             server.inject(userStuffOptionsBis, function(userStuffResponseBis) {
                                 expect(userStuffResponseBis.statusCode).to.equal(403);
-                                expect(userStuffResponseBis.result.statusCode).to.equal(403);
 
                                 done();
                             });
@@ -978,7 +943,6 @@ describe('Authorization', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(403);
-                expect(response.result.statusCode).to.equal(403);
                 done();
             });
         });

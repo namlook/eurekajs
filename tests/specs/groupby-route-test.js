@@ -45,9 +45,8 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.equal(2);
             expect(data).to.be.deep.equal([
@@ -75,9 +74,8 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.equal(2);
             expect(data).to.be.deep.equal([
@@ -103,9 +101,8 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.equal(2);
             expect(data).to.be.deep.equal([

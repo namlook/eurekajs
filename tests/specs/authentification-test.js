@@ -68,8 +68,7 @@ describe('Authentification', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
-            expect(response.result.results.token).to.exist();
+            expect(response.result.token).to.exist();
             done();
         });
     });
@@ -88,8 +87,7 @@ describe('Authentification', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
-            expect(response.result.results).to.equal('the password reset token has been send by email');
+            expect(response.result).to.equal('the password reset token has been send by email');
 
             done();
         });
@@ -109,8 +107,7 @@ describe('Authentification', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
-            expect(response.result.results).to.equal('the password reset token has been send by email');
+            expect(response.result).to.equal('the password reset token has been send by email');
 
             var email = 'user1@test.com';
             let db = server.plugins.eureka.database;
@@ -133,7 +130,6 @@ describe('Authentification', function() {
 
                 server.inject(resetOptions, function(resetResponse) {
                     expect(resetResponse.statusCode).to.equal(200);
-                    expect(resetResponse.result.statusCode).to.equal(200);
 
                     db.User.first({email: 'user1@test.com'}).then((fetchedUser) => {
                         let isValid = Bcrypt.compareSync('newpassword', fetchedUser.get('password'));
@@ -254,9 +250,8 @@ describe('Authentification', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
-                expect(response.result.statusCode).to.equal(200);
 
-                expect(response.result.results).to.equal('the password reset token has been send by email');
+                expect(response.result).to.equal('the password reset token has been send by email');
 
                 var email = 'user1@test.com';
                 let db = server.plugins.eureka.database;
@@ -279,8 +274,7 @@ describe('Authentification', function() {
 
                     server.inject(resetOptions, function(resetResponse) {
                         expect(resetResponse.statusCode).to.equal(200);
-                        expect(resetResponse.result.statusCode).to.equal(200);
-                        expect(resetResponse.result.results).to.equal('the password has been reset');
+                        expect(resetResponse.result).to.equal('the password has been reset');
 
                         let resetOptions2 = {
                             method: 'POST',

@@ -46,7 +46,7 @@ describe('Route [find]', function() {
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
 
-            var data = response.result.results;
+            var data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(10);
 
@@ -67,14 +67,14 @@ describe('Route [find]', function() {
             expect(response.statusCode).to.equal(200);
 
             let result = response.result;
-            expect(result.results).to.be.an.object();
-            let doc = result.results;
+            expect(result.data).to.be.an.object();
+            let doc = result.data;
 
-            expect(doc.text).to.equal('hello world 1');
-            expect(doc.boolean).to.be.true();
-            expect(doc.integer).to.equal(1);
-            expect(doc.float).to.equal(1.14);
-            expect(new Date(doc.date).getTime()).to.equal(date.getTime());
+            expect(doc.attributes.text).to.equal('hello world 1');
+            expect(doc.attributes.boolean).to.be.true();
+            expect(doc.attributes.integer).to.equal(1);
+            expect(doc.attributes.float).to.equal(1.14);
+            expect(new Date(doc.attributes.date).getTime()).to.equal(date.getTime());
             done();
         });
     });
@@ -88,7 +88,6 @@ describe('Route [find]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(404);
-            expect(response.result.statusCode).to.equal(404);
             done();
         });
     });
@@ -103,13 +102,12 @@ describe('Route [find]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(10);
             expect(data.map((o) => {
-                return o.integer;
+                return o.attributes.integer;
             })).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
             done();
         });
@@ -124,9 +122,8 @@ describe('Route [find]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(5);
             done();
@@ -141,41 +138,39 @@ describe('Route [find]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            let data = response.result.results;
+            let data = response.result.data;
             expect(data).to.be.an.array();
             data.forEach(function(item) {
-                expect(item).to.only.include(['integer', 'text', '_id', '_type']);
+                expect(item.attributes).to.only.include(['integer', 'text']);
+                expect(item.relationships).to.not.exist();
             });
             done();
         });
     });
 
-    it('should populate all fields', function(done){
+    it('should include all relations of a collection', function(done){
 
         // TODO: replace by include
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?populate=1`
+            url: `/api/1/generic?include=1`
         };
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            var data = response.result.results;
-            expect(data).to.be.an.array();
-            data.forEach(function(item) {
-                expect(item.relation.text).to.be.match(/relation/);
-            });
+            var included = response.result.included;
+            expect(included).to.be.an.array();
+            expect(included.map((item) => item.id)).to.only.include([
+                'relation1', 'relation0']);
             done();
         });
     });
 
 
-    it.skip('should include a specified field', function(done){
+    it('should include a specified relation of a collection', function(done){
 
         let options = {
             method: 'GET',
@@ -184,17 +179,33 @@ describe('Route [find]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            var data = response.result.results;
-            expect(data).to.be.an.array();
-            data.forEach(function(item) {
-                expect(item.relation.text).to.be.match(/relation/);
-            });
-
+            var included = response.result.included;
+            expect(included).to.be.an.array();
+            expect(included.map((item) => item.id)).to.only.include([
+                'relation1', 'relation0']);
             done();
         });
     });
+
+    it('should include all relations of a document', function(done){
+
+        let options = {
+            method: 'GET',
+            url: `/api/1/generic/generic1?include=1`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+
+            var included = response.result.included;
+            expect(included).to.be.an.array();
+            expect(included.map((item) => item.id)).to.only.include([
+                'relation1']);
+            done();
+        });
+    });
+
 
     it('should allow $in operator', function(done){
 
@@ -205,13 +216,12 @@ describe('Route [find]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            var data = response.result.results;
+            var data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(3);
             data.forEach(function(item) {
-                expect(item.integer).to.satisfy((num) => [2, 4, 6].indexOf(num) > -1);
+                expect(item.attributes.integer).to.satisfy((num) => [2, 4, 6].indexOf(num) > -1);
             });
 
             done();
@@ -228,13 +238,12 @@ describe('Route [find]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-            expect(response.result.statusCode).to.equal(200);
 
-            var data = response.result.results;
+            var data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(5);
             data.forEach(function(item) {
-                expect(item.integer).to.satisfy((num) => [1, 3, 7, 5, 9].indexOf(num) > -1);
+                expect(item.attributes.integer).to.satisfy((num) => [1, 3, 7, 5, 9].indexOf(num) > -1);
             });
 
             done();
@@ -389,6 +398,7 @@ describe('Route [find]', function() {
         };
 
         server.inject(options, function(response) {
+            console.log(response.result);
             expect(response.statusCode).to.equal(400);
             expect(response.result.statusCode).to.equal(400);
 

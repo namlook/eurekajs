@@ -1,7 +1,7 @@
 
 import _ from 'lodash';
 import joi from 'joi';
-
+import JsonApiBuilder from './plugins/json-api-builder';
 
 var sync = function(request, callback) {
     let {payload, Model} = request;
@@ -52,6 +52,7 @@ var sync = function(request, callback) {
 };
 
 
+
 /**
  * to disable eureka magic on a route,
  * just set `config.plugins.eureka = false`
@@ -65,28 +66,46 @@ var routes = {
         config: {
             validate: {
                 query: {
-                    token: joi.number()
+                    token: joi.number(),
+                    include: joi.alternatives().try(
+                        joi.number(),
+                        joi.string()
+                    ).default(false)
                 }
             }
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
-            request.Model.find(queryFilter, queryOptions).then((data) => {
-                var results = data.map((o) => o.attrs());
-                //     return o.toJSONObject({
-                //         populate: queryOptions.populate,
-                //         dereference: true
-                //     });
-                // });
+
+            let builder = new JsonApiBuilder();
+            let modelName = _.kebabCase(request.Model.name);
+            let {db, apiBaseUri} = request;
+
+            request.Model.find(queryFilter, queryOptions).then((collection) => {
+
+                return builder.build(db, apiBaseUri, collection, {
+                    include: request.query.include});
+
+            }).then(({data, included}) => {
+
+                let results = {
+                    data: data,
+                    links: {
+                        self: `${apiBaseUri}/${modelName}`
+                    }
+                };
+
+                if (included && included.length) {
+                    results.included = included;
+                }
 
                 return reply.ok(results);
 
-            }).catch((err) => {
-                if (err.name === 'ValidationError') {
-                    return reply.badRequest(err, err.extra);
-                } else {
-                    return reply.badImplementation(err);
+            }).catch((error) => {
+                if (error.name === 'ValidationError') {
+                    return reply.badRequest(error, error.extra);
                 }
+                return reply.badImplementation(error);
             });
         }
     },
@@ -95,12 +114,45 @@ var routes = {
     fetch: {
         method: 'GET',
         path: `/{id}`,
+        config: {
+            validate: {
+                query: {
+                    include: joi.alternatives().try(
+                        joi.number(),
+                        joi.string()
+                    ).default(false)
+                }
+            }
+        },
         handler: function(request, reply) {
-            return reply.ok(request.pre.document.attrs());
-            // return reply.ok(request.pre.document.toJSONObject({
-            //     populate: false,
-            //     dereference: true
-            // }));
+            let builder = new JsonApiBuilder();
+
+            let {db, apiBaseUri} = request;
+
+            builder.build(db, apiBaseUri, request.pre.document, {
+                include: request.query.include
+            }).then(({data, included}) => {
+
+                let links = data.links;
+                delete data.links;
+
+                let results = {
+                    data: data,
+                    links: links
+                };
+
+                if (included && included.length) {
+                    results.included = included;
+                }
+
+                return reply.ok(results);
+
+            }).catch((error) => {
+                if (error.name === 'ValidationError') {
+                    return reply.badRequest(error, error.extra);
+                }
+                return reply.badImplementation(error);
+            });
         }
     },
 
@@ -111,10 +163,10 @@ var routes = {
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
             request.Model.count(queryFilter, queryOptions).then((total) => {
-                return reply.ok(total);
+                return reply.ok({data: total});
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
-                    return reply.badRequest(err.extra);
+                    return reply.badRequest(err, err.extra);
                 }
                 return reply.badImplementation(err);
             });
@@ -190,7 +242,7 @@ var routes = {
             let {queryFilter} = request.pre;
 
             Model.groupBy(property, queryFilter).then((data) => {
-                return reply.ok(data);
+                return reply.ok({data: data});
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
                     return reply.badRequest(err.message, err.extra);

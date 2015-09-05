@@ -40,7 +40,7 @@ var decoratePlugin = function(plugin) {
     });
 
     plugin.decorate('reply', 'ok', function (results) {
-        return this.response({ statusCode: 200, results: results });
+        return this.response(results);
     });
 
     plugin.decorate('reply', 'created', function (results) {
@@ -72,6 +72,7 @@ var fillRequest = function(plugin) {
 
         request.resourceName = resourceName;
         request.db = db;
+        request.apiBaseUri = `http://${request.info.host}${plugin.settings.app.apiRootPrefix}`;
         // request.pre.arf = 'foo';
         // console.log(request.route);
         // console.log(request.server.table()[0].table[2].settings);

@@ -2,7 +2,7 @@
 module.exports = {
     properties: {
         _owner: {
-            type: 'string'
+            type: 'User'
         },
         _scope: {
             type: 'array',
