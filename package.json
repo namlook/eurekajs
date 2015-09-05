@@ -17,7 +17,7 @@
     "lint": "eslint src tests",
     "build": "eslint src tests ;  babel src --optional runtime --out-dir lib --source-maps",
     "watch": "babel src --watch --optional runtime --out-dir lib --source-maps",
-    "test": "eslint src tests && lab -T tests/transform.js tests -vSl"
+    "test": "eslint src tests && lab -T tests/transform.js tests/**/*-test.js -vSl"
   },
   "bin": {
     "eureka": "bin/eureka.sh"
