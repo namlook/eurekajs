@@ -1,6 +1,6 @@
 
 import _ from 'lodash';
-import {pascalCase} from '../utils';
+import {pascalCase} from '../../utils';
 import Boom from 'boom';
 
 import Resource from './resource';
@@ -44,7 +44,7 @@ var decoratePlugin = function(plugin) {
     });
 
     plugin.decorate('reply', 'created', function (results) {
-        return this.response({ statusCode: 201, results: results }).code(201);
+        return this.response(results).code(201);
     });
 
     plugin.decorate('reply', 'noContent', function() {

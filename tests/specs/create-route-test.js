@@ -45,31 +45,37 @@ describe('Route [create]', function() {
             method: 'POST',
             url: `/api/1/generic`,
             payload: {
-                text: 'hello world',
-                boolean: true,
-                integer: 42,
-                float: 3.14,
-                date: new Date(1984, 7, 3)
-
+                data: {
+                    type: 'Generic',
+                    attributes: {
+                        text: 'hello world',
+                        boolean: true,
+                        integer: 42,
+                        float: 3.14,
+                        date: new Date(1984, 7, 3)
+                    }
+                }
             }
         };
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(201);
-            expect(response.result.statusCode).to.equal(201);
 
-            let doc = response.result.results;
-            expect(doc._id).to.not.be.null();
-            expect(doc.text).to.equal('hello world');
-            expect(doc.boolean).to.be.true();
-            expect(doc.integer).to.equal(42);
-            expect(doc.float).to.equal(3.14);
-            let fetchedDate = new Date(doc.date);
+            let doc = response.result.data;
+            expect(doc.id).to.not.be.null();
+            expect(doc.type).to.equal('Generic');
+            expect(doc.attributes.text).to.equal('hello world');
+            expect(doc.attributes.boolean).to.be.true();
+            expect(doc.attributes.integer).to.equal(42);
+            expect(doc.attributes.float).to.equal(3.14);
+            let fetchedDate = new Date(doc.attributes.date);
             expect(fetchedDate.getTime()).to.be.equal(date.getTime());
 
+            expect(doc.links.self).to.contains(`/generic/${doc.id}`);
             done();
         });
     });
+
 
     it('should throw an error if the payload has unknown properties', function(done){
 
@@ -77,20 +83,27 @@ describe('Route [create]', function() {
             method: 'POST',
             url: `/api/1/generic`,
             payload: {
-                unknownField: 'hello world',
-                boolean: true,
-                integer: 42,
-                float: 3.14,
-                date: new Date(1984, 7, 3)
+                data: {
+                    type: 'Generic',
+                    attributes: {
+                        unknownField: 'hello world',
+                        boolean: true,
+                        integer: 42,
+                        float: 3.14,
+                        date: new Date(1984, 7, 3)
+                    }
+                }
 
             }
         };
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('ValidationError: "unknownField" is not allowed');
+
+            let error = response.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('ValidationError: "unknownField" is not allowed');
 
             done();
         });
@@ -102,20 +115,26 @@ describe('Route [create]', function() {
             method: 'POST',
             url: `/api/1/generic`,
             payload: {
-                text: 'hello world',
-                boolean: 'arf',
-                integer: 42,
-                float: 3.14,
-                date: new Date(1984, 7, 3)
-
+                data: {
+                    type: 'Generic',
+                    attributes: {
+                        text: 'hello world',
+                        boolean: 'arf',
+                        integer: 42,
+                        float: 3.14,
+                        date: new Date(1984, 7, 3)
+                    }
+                }
             }
         };
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
-            expect(response.result.statusCode).to.equal(400);
-            expect(response.result.error).to.equal('Bad Request');
-            expect(response.result.message).to.equal('ValidationError: "boolean" must be a boolean');
+
+            let error = response.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('ValidationError: "boolean" must be a boolean');
 
             done();
         });
@@ -126,18 +145,23 @@ describe('Route [create]', function() {
         var generics = [];
         for (var i = 1; i < 11; i++) {
             generics.push({
-                text: `hello world ${i}`,
-                boolean: Boolean(i % 2),
-                integer: i,
-                float: i + 0.14,
-                date: new Date(1984, 7, i)
+                type: 'Generic',
+                attributes: {
+                    text: `hello world ${i}`,
+                    boolean: Boolean(i % 2),
+                    integer: i,
+                    float: i + 0.14,
+                    date: new Date(1984, 7, i)
+                }
             });
         }
 
         let options = {
             method: 'POST',
             url: `/api/1/generic`,
-            payload: generics
+            payload: {
+                data: generics
+            }
         };
 
         server.inject(options, function(response) {

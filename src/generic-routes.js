@@ -1,54 +1,73 @@
 
 import _ from 'lodash';
 import joi from 'joi';
-import JsonApiBuilder from './plugins/json-api-builder';
+import JsonApiBuilder from './plugins/eureka/json-api-builder';
 
-var sync = function(request, callback) {
+var sync = function(request) {
     let {payload, Model} = request;
 
-    /**
-     * if the payload is a string, try to parse it as a JSON
-     */
-    if (typeof payload === 'string') {
-        try {
-            payload = JSON.parse(payload);
-        } catch (parseError) {
-            return callback({
-                type: 'ParseError',
-                payload: payload,
-                error: parseError
+    return new Promise((resolve, reject) => {
+        /**
+         * if the payload is a string, try to parse it as a JSON
+         */
+        if (typeof payload === 'string') {
+            try {
+                payload = JSON.parse(payload);
+            } catch (parseError) {
+                return reject({
+                    type: 'ParseError',
+                    payload: payload,
+                    error: parseError
+                });
+            }
+        }
+
+        /**
+         * if the payload is an array, performs a batch sync
+         */
+        if (_.isArray(payload)) {
+            Model.batchSync(payload).then((saved) => {
+                return resolve(saved);
+            }).catch((err) => {
+                return reject({
+                    type: 'ValidationError',
+                    error: err.extra
+                    // infos: {failedDocument: item}
+                });
+            });
+
+        /**
+         * if the payload is an object, perform a regular save
+         */
+        } else {
+            let doc = {
+                _type: payload.data.type
+            };
+
+            if (payload.id) {
+                doc._id = payload.id;
+            }
+
+            if (payload.data.attributes) {
+                doc = _.assign(doc, payload.data.attributes);
+            }
+
+            if (payload.data.relationships) {
+                doc = _.assign(doc, payload.data.relationships);
+            }
+
+            Model.create(doc).save().then((savedObj) => {
+                return resolve(savedObj);
+            }).catch((err) => {
+                return reject({
+                    type: err.name,
+                    error: err.extra,
+                    infos: {failedDocument: payload}
+                });
             });
         }
-    }
+    });
 
-    /**
-     * if the payload is an array, performs a batch sync
-     */
-    if (_.isArray(payload)) {
-        Model.batchSync(payload).then((saved) => {
-            return callback(null, saved);
-        }).catch((err) => {
-            return callback({
-                type: 'ValidationError',
-                error: err.extra
-                // infos: {failedDocument: item}
-            });
-        });
-
-    /**
-     * if the payload is an object, perform a regular save
-     */
-    } else {
-        Model.create(payload).save().then((savedObj) => {
-            return callback(null, savedObj.attrs());
-        }).catch((err) => {
-            return callback({
-                type: err.name,
-                error: err.extra,
-                infos: {failedDocument: payload}
-            });
-        });
-    }
 };
 
 
@@ -178,21 +197,29 @@ var routes = {
         method: 'POST',
         path: '/',
         handler: function(request, reply) {
+            let builder = new JsonApiBuilder();
 
-            sync(request, function(err, data) {
-                if (err) {
-                    if (err.type === 'ParseError') {
-                        return reply.badRequest('The payload should be a valid JSON', {payload: err.payload, parseError: err.error});
-                    } else if (err.type === 'ValidationError') {
-                        return reply.badRequest(
-                            `${err.type}: ${err.error}`, err.infos);
-                    } else {
-                        return reply.badImplementation(err);
-                    }
-                }
+
+            sync(request).then((data) => {
+
+                let {db, apiBaseUri} = request;
+                return builder.build(db, apiBaseUri, data);
+
+            }).then((data) => {
                 return reply.created(data);
-            });
 
+            }).catch((err) => {
+
+                if (err.type === 'ParseError') {
+                    return reply.badRequest('The payload should be a valid JSON', {payload: err.payload, parseError: err.error});
+                } else if (err.type === 'ValidationError') {
+                    return reply.badRequest(
+                        `${err.type}: ${err.error}`, err.infos);
+                } else {
+                    return reply.badImplementation(err);
+                }
+
+            });
         }
     },
 

@@ -95,9 +95,11 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(409);
-                    expect(response.result.statusCode).to.equal(409);
-                    expect(response.result.error).to.equal('Conflict');
-                    expect(response.result.message).to.equal('email is taken');
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(409);
+                    expect(error.title).to.equal('Conflict');
+                    expect(error.detail).to.equal('email is taken');
 
                     done();
                 });
@@ -118,9 +120,11 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
-                    expect(response.result.statusCode).to.equal(400);
-                    expect(response.result.error).to.equal('Bad Request');
-                    expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(400);
+                    expect(error.title).to.equal('Bad Request');
+                    expect(error.detail).to.equal('child "email" fails because ["email" must be a valid email]');
 
                     done();
                 });
@@ -141,9 +145,12 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
-                    expect(response.result.statusCode).to.equal(400);
-                    expect(response.result.error).to.equal('Bad Request');
-                    expect(response.result.message).to.equal('child "email" fails because ["email" is required]');
+
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(400);
+                    expect(error.title).to.equal('Bad Request');
+                    expect(error.detail).to.equal('child "email" fails because ["email" is required]');
 
                     done();
                 });
@@ -164,9 +171,12 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
-                    expect(response.result.statusCode).to.equal(400);
-                    expect(response.result.error).to.equal('Bad Request');
-                    expect(response.result.message).to.equal('child "login" fails because ["login" is required]');
+
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(400);
+                    expect(error.title).to.equal('Bad Request');
+                    expect(error.detail).to.equal('child "login" fails because ["login" is required]');
 
                     done();
                 });
@@ -186,9 +196,12 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
-                    expect(response.result.statusCode).to.equal(400);
-                    expect(response.result.error).to.equal('Bad Request');
-                    expect(response.result.message).to.equal('child "password" fails because ["password" is required]');
+
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(400);
+                    expect(error.title).to.equal('Bad Request');
+                    expect(error.detail).to.equal('child "password" fails because ["password" is required]');
 
                     done();
                 });
@@ -208,9 +221,11 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(409);
-                    expect(response.result.statusCode).to.equal(409);
-                    expect(response.result.error).to.equal('Conflict');
-                    expect(response.result.message).to.equal('login is taken');
+
+                    let error = response.result.errors[0];
+                    expect(error.status).to.equal(409);
+                    expect(error.title).to.equal('Conflict');
+                    expect(error.detail).to.equal('login is taken');
 
                     done();
                 });
@@ -251,8 +266,7 @@ describe('User creation', function() {
 
                 server.inject(verifyOptions, function(verifyResponse) {
                     expect(verifyResponse.statusCode).to.equal(200);
-                    expect(verifyResponse.result.statusCode).to.equal(200);
-                    expect(verifyResponse.result.results).to.equal('the email has been verified');
+                    expect(verifyResponse.result).to.equal('the email has been verified');
 
                     let db = server.plugins.eureka.database;
                     db.User.first({email: 'newuser@test.com'}).then((user) => {
@@ -279,9 +293,12 @@ describe('User creation', function() {
 
                 server.inject(verifyOptions, function(verifyResponse) {
                     expect(verifyResponse.statusCode).to.equal(400);
-                    expect(verifyResponse.result.statusCode).to.equal(400);
-                    expect(verifyResponse.result.error).to.equal('Bad Request');
-                    expect(verifyResponse.result.message).to.equal('jwt expired');
+
+                    let error = verifyResponse.result.errors[0];
+                    expect(error.status).to.equal(400);
+                    expect(error.title).to.equal('Bad Request');
+                    expect(error.detail).to.equal('jwt expired');
+
                     done();
                 });
             }, 1500);
@@ -296,9 +313,12 @@ describe('User creation', function() {
 
             server.inject(verifyOptions, function(verifyResponse) {
                 expect(verifyResponse.statusCode).to.equal(400);
-                expect(verifyResponse.result.statusCode).to.equal(400);
-                expect(verifyResponse.result.error).to.equal('Bad Request');
-                expect(verifyResponse.result.message).to.equal('jwt malformed');
+
+                let error = verifyResponse.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('jwt malformed');
+
                 done();
             });
         });
@@ -317,9 +337,12 @@ describe('User creation', function() {
 
             server.inject(verifyOptions, function(verifyResponse) {
                 expect(verifyResponse.statusCode).to.equal(400);
-                expect(verifyResponse.result.statusCode).to.equal(400);
-                expect(verifyResponse.result.error).to.equal('Bad Request');
-                expect(verifyResponse.result.message).to.equal('email not found in database');
+
+                let error = verifyResponse.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('email not found in database');
+
                 done();
             });
         });
