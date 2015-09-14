@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import Bcrypt from 'bcrypt';
 import joi from 'joi';
 import _ from 'lodash';
+import JsonApiBuilder from './plugins/eureka/json-api-builder';
 
 
 var routes = {
@@ -98,7 +99,13 @@ var routes = {
                     if (mailError) {
                         return reply.badImplementation(mailError);
                     }
-                    return reply.created(userPojo);
+
+                    let {apiBaseUri} = request;
+                    let builder = new JsonApiBuilder();
+                    return builder.build(db, apiBaseUri, savedUser).then((data) => {
+                        delete data.data.attributes.password;
+                        return reply.created(data);
+                    });
                 });
 
             }).catch((saveErr) => {

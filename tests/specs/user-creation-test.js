@@ -60,16 +60,15 @@ describe('User creation', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(201);
-                expect(response.result.statusCode).to.equal(201);
 
-                let user = response.result.results;
-                expect(user._id).to.exists();
-                expect(user._type).to.exists();
-                expect(user.email).to.equal('newuser@test.com');
-                expect(user.password).to.not.exists();
+                let user = response.result.data;
+                expect(user.id).to.exists();
+                expect(user.type).to.exists();
+                expect(user.attributes.email).to.equal('newuser@test.com');
+                expect(user.attributes.password).to.not.exists();
 
                 let db = server.plugins.eureka.database;
-                db.User.first({email: user.email}).then((fetchedUser) => {
+                db.User.first({email: user.attributes.email}).then((fetchedUser) => {
                     let fetchedPassword = fetchedUser.get('password');
                     expect(fetchedPassword).to.not.equal('secret');
                     let isValid = Bcrypt.compareSync('secret', fetchedPassword);
@@ -251,7 +250,6 @@ describe('User creation', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(201);
-                expect(response.result.statusCode).to.equal(201);
 
                 let token = jwt.sign(
                     {email: 'newuser@test.com'},

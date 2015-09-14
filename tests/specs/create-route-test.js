@@ -77,6 +77,59 @@ describe('Route [create]', function() {
     });
 
 
+    it('should throw an error if the id is already taken', function(done){
+
+        let options = {
+            method: 'POST',
+            url: `/api/1/generic`,
+            payload: {
+                data: {
+                    id: 'foo',
+                    type: 'Generic',
+                    attributes: {
+                        text: 'hello world',
+                        boolean: true,
+                        integer: 42,
+                        float: 3.14,
+                        date: new Date(1984, 7, 3)
+                    }
+                }
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(201);
+
+            let doc = response.result.data;
+            expect(doc.id).to.not.be.null();
+
+            let options2 = {
+                method: 'POST',
+                url: `/api/1/generic`,
+                payload: {
+                    data: {
+                        id: 'foo',
+                        type: 'Generic',
+                        attributes: {
+                            text: 'hello world'
+                        }
+                    }
+                }
+            };
+
+            server.inject(options2, function(response2) {
+                expect(response2.statusCode).to.equal(409);
+
+                let error = response2.result.errors[0];
+                expect(error.status).to.equal(409);
+                expect(error.title).to.equal('Conflict');
+
+                done();
+            });
+        });
+    });
+
+
     it('should throw an error if the payload has unknown properties', function(done){
 
         let options = {

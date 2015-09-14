@@ -8,7 +8,7 @@ var before = lab.before;
 var expect = Code.expect;
 
 import eureka from '../../lib';
-import JsonApiBuilder from '../../lib/plugins/json-api-builder';
+import JsonApiBuilder from '../../lib/plugins/eureka/json-api-builder';
 import config from '../config';
 import fixtures from '../utils/fixtures';
 
@@ -31,6 +31,35 @@ describe('JsonApiBuilder', function() {
             }).catch((error) => {
                 console.log(error);
             });
+        });
+    });
+
+    describe('#parse()', function() {
+        it('should parse a json api data into a simpler pojo', function(done) {
+            let jsonApiData = {
+                id: 'foo',
+                type: 'Test',
+                attributes: {
+                    bla: '234',
+                    toto: 123
+                },
+                relationships: {
+                    arf: {id: '23', type: 'Item'},
+                    bar: [
+                        {id: '34', type: 'Item'},
+                        {id: '42', type: 'Item'}
+                    ]
+                }
+            };
+            let builder = new JsonApiBuilder();
+            let doc = builder.parse(jsonApiData);
+            expect(doc._id).to.equal('foo');
+            expect(doc._type).to.equal('Test');
+            expect(doc.bla).to.equal('234');
+            expect(doc.toto).to.equal(123);
+            expect(doc.arf.id).to.equal('23');
+            expect(doc.bar[0].id).to.equal('34');
+            done();
         });
     });
 

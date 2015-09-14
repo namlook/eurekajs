@@ -47,31 +47,28 @@ describe('Route [update]', function() {
         };
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
-
-            var generic3 = response.result.results;
-            expect(generic3._id).to.equal('generic3');
+            var generic3 = response.result.data;
+            expect(generic3.id).to.equal('generic3');
 
             var newGeneric3 = _.clone(generic3);
-            newGeneric3.text = 'yes baby';
-            newGeneric3.integer = 42;
+            newGeneric3.attributes.text = 'yes baby';
+            newGeneric3.attributes.integer = 42;
 
             let postOptions = {
-                method: 'POST',
+                method: 'PATCH',
                 url: `/api/1/generic/generic3`,
-                payload: newGeneric3
+                payload: {data: newGeneric3}
             };
 
             server.inject(postOptions, function(postResponse) {
                 expect(postResponse.statusCode).to.equal(200);
-                expect(postResponse.result.statusCode).to.equal(200);
-
-                let data = postResponse.result.results;
-                expect(data._id).to.equal('generic3');
-                expect(data.text).to.equal(newGeneric3.text);
-                expect(data.boolean).to.equal(generic3.boolean);
-                expect(data.integer).to.equal(42);
-                expect(data.float).to.equal(generic3.float);
-                expect(data.date.toString()).to.equal(generic3.date.toString());
+                let data = postResponse.result.data;
+                expect(data.id).to.equal('generic3');
+                expect(data.attributes.text).to.equal(newGeneric3.attributes.text);
+                expect(data.attributes.boolean).to.equal(generic3.attributes.boolean);
+                expect(data.attributes.integer).to.equal(42);
+                expect(data.attributes.float).to.equal(generic3.attributes.float);
+                expect(data.attributes.date.toString()).to.equal(generic3.attributes.date.toString());
 
                 done();
             });
@@ -79,9 +76,9 @@ describe('Route [update]', function() {
     });
 
 
-    it('should throw an error if the payload specify unknown properties', function(done) {
+    it('should throw an error when passing bad payload', function(done) {
             let options = {
-                method: 'POST',
+                method: 'PATCH',
                 url: `/api/1/generic/generic3`,
                 payload: {
                     whatever: 'payload'
@@ -90,9 +87,39 @@ describe('Route [update]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(400);
-                expect(response.result.statusCode).to.equal(400);
-                expect(response.result.error).to.equal('Bad Request');
-                expect(response.result.message).to.equal('"whatever" is not allowed');
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('malformed payload');
+
+                done();
+            });
+    });
+
+
+    it('should throw an error when updating an unknown property', function(done) {
+            let options = {
+                method: 'PATCH',
+                url: `/api/1/generic/generic3`,
+                payload: {
+                    data: {
+                        id: 'generic3',
+                        type: 'Generic',
+                        attributes: {
+                            unknownProperty: 'arf'
+                        }
+                    }
+                }
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(400);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('ValidationError: unknown property \"unknownProperty\" on model \"Generic\"');
                 done();
             });
     });
@@ -109,7 +136,6 @@ describe('Route [update]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(404);
-                expect(response.result.statusCode).to.equal(404);
                 done();
             });
     });

@@ -3,77 +3,9 @@ import _ from 'lodash';
 import joi from 'joi';
 import JsonApiBuilder from './plugins/eureka/json-api-builder';
 
-var sync = function(request) {
-    let {payload, Model} = request;
-
-    return new Promise((resolve, reject) => {
-        /**
-         * if the payload is a string, try to parse it as a JSON
-         */
-        if (typeof payload === 'string') {
-            try {
-                payload = JSON.parse(payload);
-            } catch (parseError) {
-                return reject({
-                    type: 'ParseError',
-                    payload: payload,
-                    error: parseError
-                });
-            }
-        }
-
-        /**
-         * if the payload is an array, performs a batch sync
-         */
-        if (_.isArray(payload)) {
-            Model.batchSync(payload).then((saved) => {
-                return resolve(saved);
-            }).catch((err) => {
-                return reject({
-                    type: 'ValidationError',
-                    error: err.extra
-                    // infos: {failedDocument: item}
-                });
-            });
-
-        /**
-         * if the payload is an object, perform a regular save
-         */
-        } else {
-            let doc = {
-                _type: payload.data.type
-            };
-
-            if (payload.id) {
-                doc._id = payload.id;
-            }
-
-            if (payload.data.attributes) {
-                doc = _.assign(doc, payload.data.attributes);
-            }
-
-            if (payload.data.relationships) {
-                doc = _.assign(doc, payload.data.relationships);
-            }
-
-            Model.create(doc).save().then((savedObj) => {
-                return resolve(savedObj);
-            }).catch((err) => {
-                return reject({
-                    type: err.name,
-                    error: err.extra,
-                    infos: {failedDocument: payload}
-                });
-            });
-        }
-    });
-
-};
-
-
 
 /**
- * to disable eureka magic on a route,
+ * to disable eureka's magic on a route,
  * just set `config.plugins.eureka = false`
  */
 
@@ -197,50 +129,135 @@ var routes = {
         method: 'POST',
         path: '/',
         handler: function(request, reply) {
+            let {payload, Model} = request;
+
+            if (typeof payload === 'string') {
+                try {
+                    payload = JSON.parse(payload);
+                } catch (parseError) {
+                    return reply.badRequest('The payload should be a valid JSON', {payload: payload, parseError: parseError});
+                }
+            }
+
+            /** validate the jsonapi payload
+             */
             let builder = new JsonApiBuilder();
+            let {error: validationError} = builder.validate(payload);
+            if (validationError) {
+                return reply.badRequest('ValidationError', validationError);
+            }
 
 
-            sync(request).then((data) => {
+            /** build archimedes pojo from jsonapi data
+             */
+            let jsonApiData = payload.data;
 
+            let doc = {
+                _type: jsonApiData.type
+            };
+
+            if (jsonApiData.id) {
+                doc._id = jsonApiData.id;
+            }
+
+            if (jsonApiData.attributes) {
+                doc = _.assign(doc, jsonApiData.attributes);
+            }
+
+            if (jsonApiData.relationships) {
+                doc = _.assign(doc, jsonApiData.relationships);
+            }
+
+            /** build a promise that will check the instance existance
+             * if needed
+             */
+            let checkExistancePromise = new Promise((resolve) => {
+                if (doc._id) {
+                    Model.fetch(doc._id).then((docExists) => {
+                        if (docExists) {
+                            return reply.conflict(`${doc._id} already exists`);
+                        }
+                        return resolve();
+                    });
+                } else {
+                    return resolve();
+                }
+            });
+
+            /** fire the engine !
+             */
+            checkExistancePromise.then(() => {
+                return Model.create(doc).save();
+            }).then((data) => {
                 let {db, apiBaseUri} = request;
                 return builder.build(db, apiBaseUri, data);
-
             }).then((data) => {
                 return reply.created(data);
-
             }).catch((err) => {
-
-                if (err.type === 'ParseError') {
-                    return reply.badRequest('The payload should be a valid JSON', {payload: err.payload, parseError: err.error});
-                } else if (err.type === 'ValidationError') {
+                if (err.name === 'ValidationError') {
                     return reply.badRequest(
-                        `${err.type}: ${err.error}`, err.infos);
+                        `${err.name}: ${err.extra}`, {failedDocument: payload});
                 } else {
                     return reply.badImplementation(err);
                 }
-
             });
         }
     },
 
 
     update: {
-        method: ['PUT', 'POST', 'PATCH'],
+        method: ['PATCH'],
         path: `/{id}`,
         handler: function(request, reply) {
-            sync(request, function(err, data) {
-                if (err) {
-                    if (err.type === 'ParseError') {
-                        return reply.badRequest('The payload should be a valid JSON', {payload: err.payload, parseError: err.error});
-                    } else if (err.type === 'ValidationError') {
-                        return reply.badRequest(err.error, err.infos);
-                    } else {
-                        return reply.badImplementation(err);
-                    }
-                }
-                return reply.ok(data);
-            });
+            let {payload, Model} = request;
 
+            if (typeof payload === 'string') {
+                try {
+                    payload = JSON.parse(payload);
+                } catch (parseError) {
+                    return reply.badRequest('The payload should be a valid JSON', {payload: payload, parseError: parseError});
+                }
+            }
+
+            let builder = new JsonApiBuilder();
+            let {error: validationError} = builder.validate(payload);
+            if (validationError) {
+                return reply.badRequest('malformed payload', validationError);
+            }
+
+            let jsonApiData = payload.data;
+
+            Model.fetch(payload.data.id).then((instance) => {
+                if (!instance) {
+                    return reply.notFound();
+                }
+
+                if (jsonApiData.attributes) {
+                    _.forEach(jsonApiData.attributes, (value, propertyName) => {
+                        instance.set(propertyName, value);
+                    });
+                }
+
+                // if (jsonApiData.relationships) {
+                //     _.forEach(jsonApiData.relationships, (value, propertyName) => {
+                //         instance.set(propertyName, value.data);
+                //     });
+                // }
+
+                return instance.save();
+            }).then((savedDoc) => {
+                let {db, apiBaseUri} = request;
+                return builder.build(db, apiBaseUri, savedDoc);
+            }).then((data) => {
+                return reply.ok(data);
+            }).catch((error) => {
+                if (error.name === 'ValidationError') {
+                    return reply.badRequest(
+                        `${error.name}: ${error.extra}`, {failedDocument: payload});
+                } else {
+                    return reply.badImplementation(error);
+                }
+            });
         }
     },
 

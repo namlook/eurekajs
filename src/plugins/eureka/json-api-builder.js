@@ -2,6 +2,15 @@
 import joi from 'joi';
 import _ from 'lodash';
 
+let jsonApiSchema = {
+    data: joi.object().keys({
+        id: joi.string(),
+        type: joi.string().required(),
+        attributes: joi.object(),
+        relationships: joi.object()
+    })
+};
+
 export default class JsonApiBuilder {
 
     build(database, apiBaseUri, instance, options) {
@@ -49,6 +58,9 @@ export default class JsonApiBuilder {
         });
     }
 
+    validate(payload) {
+        return joi.validate(payload, jsonApiSchema);
+    }
 
     _buildData(instance) {
 
