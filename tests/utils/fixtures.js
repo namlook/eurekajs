@@ -1,5 +1,6 @@
 
 import Bcrypt from 'bcrypt';
+import _ from 'lodash';
 
 export default {
 
@@ -12,29 +13,18 @@ export default {
     genericDocuments: function(server) {
         var database = server.plugins.eureka.database;
 
-        var relations = [
-            {
-                _id: 'relation0',
+
+        var relations = _.range(15).map((index) => {
+            return {
+                _id: `relation${index}`,
                 _type: 'GenericRelation',
-                text: 'relation 0'
-            },
-            {
-                _id: 'relation1',
-                _type: 'GenericRelation',
-                text: 'relation 1'
-            }
-        ];
-
-        // relations = relations.map(function(pojo) {
-        //     return database.GenericRelation.wrap(pojo).attrs();
-        // });
-
-        // console.dir(relations, {depth: 10});
+                text: `relation ${index}`
+            };
+        });
 
 
-        var generics = [];
-        for (let i = 1; i < 11; i++) {
-            generics.push({
+        var generics = _.range(1, 11).map((i) => {
+            return {
                 _id: `generic${i}`,
                 _type: 'Generic',
                 text: `hello world ${i}`,
@@ -42,13 +32,17 @@ export default {
                 integer: i,
                 float: i + 0.14,
                 date: new Date(1984, 7, i),
-                relation: {_id: relations[i % 2]._id, _type: 'GenericRelation'}
-            });
-        }
+                relation: {_id: relations[i % 2]._id, _type: 'GenericRelation'},
+                relations: _.range(4).map((item) => {
+                    let index = item - i;
+                    if (index < 0) {
+                        index = index * -1;
+                    }
+                    return {_id: relations[index % 5]._id, _type: 'GenericRelation'};
+                })
+            };
+        });
 
-        // generics = generics.map(function(pojo) {
-        //     return new database.Generic(pojo).toSerializableObject();
-        // });
 
         var publicStuff = [];
         for (let i = 0; i < 10; i++) {
@@ -93,16 +87,15 @@ export default {
     userDocuments: function(server) {
         var database = server.plugins.eureka.database;
 
-        var users = [];
-        for (let i = 0; i < 5; i++) {
-            users.push({
+        var users = _.range(5).map((i) => {
+            return {
                 _id: `user${i}`,
                 _type: 'User',
                 login: `user${i}`,
                 email: `user${i}@test.com`,
                 password: Bcrypt.hashSync(`secret${i}`, 10)
-            });
-        }
+            };
+        });
 
         users.push({
             _id: 'userwithscope',
@@ -131,17 +124,16 @@ export default {
             4: ['admin']
         };
 
-        var userStuff = [];
-        for (let i = 0; i < 10; i++) {
-            userStuff.push({
+        var userStuff = _.range(10).map((i) => {
+            return {
                 _id: `userstuff${i}`,
                 _type: 'UserStuff',
                 _owner: {_id: `user${i % 5}`, _type: 'User'},
                 _scope: scopes[i % 5],
                 title: `the secret thing of user ${i % 5}`,
                 isSecret: Boolean(i % 5)
-            });
-        }
+            };
+        });
 
         return Promise.all([
             database.User.batchSync(users),
