@@ -155,8 +155,6 @@ describe('Route [find]', function() {
 
     it('should include all relations of a collection', function(done){
 
-        // TODO: replace by include
-
         let options = {
             method: 'GET',
             url: `/api/1/generic?include=1`

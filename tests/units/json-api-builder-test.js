@@ -34,35 +34,6 @@ describe('JsonApiBuilder', function() {
         });
     });
 
-    describe('#parse()', function() {
-        it('should parse a json api data into a simpler pojo', function(done) {
-            let jsonApiData = {
-                id: 'foo',
-                type: 'Test',
-                attributes: {
-                    bla: '234',
-                    toto: 123
-                },
-                relationships: {
-                    arf: {id: '23', type: 'Item'},
-                    bar: [
-                        {id: '34', type: 'Item'},
-                        {id: '42', type: 'Item'}
-                    ]
-                }
-            };
-            let builder = new JsonApiBuilder();
-            let doc = builder.parse(jsonApiData);
-            expect(doc._id).to.equal('foo');
-            expect(doc._type).to.equal('Test');
-            expect(doc.bla).to.equal('234');
-            expect(doc.toto).to.equal(123);
-            expect(doc.arf.id).to.equal('23');
-            expect(doc.bar[0].id).to.equal('34');
-            done();
-        });
-    });
-
     describe('#build()', function() {
 
         it('should build jsonapi from an archimedes instance', (done) => {
