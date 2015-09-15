@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import Bcrypt from 'bcrypt';
 import joi from 'joi';
 import _ from 'lodash';
-import JsonApiBuilder from './plugins/eureka/json-api-builder';
+import {resourceObjectLink} from './utils';
 
 
 var routes = {
@@ -56,7 +56,7 @@ var routes = {
             ]
         },
         handler: function(request, reply) {
-            let {db, payload} = request;
+            let {db, payload, apiBaseUri} = request;
             let secret = request.server.settings.app.secret;
             let user = db.User.create(payload);
             let encryptedPassword = Bcrypt.hashSync(user.get('password'), 10);
@@ -100,12 +100,11 @@ var routes = {
                         return reply.badImplementation(mailError);
                     }
 
-                    let {apiBaseUri} = request;
-                    let builder = new JsonApiBuilder();
-                    return builder.build(db, apiBaseUri, savedUser).then((data) => {
-                        delete data.data.attributes.password;
-                        return reply.created(data);
-                    });
+                    let jsonApiData = savedUser.toJsonApi(resourceObjectLink(apiBaseUri, savedUser));
+
+                    delete jsonApiData.data.attributes.password;
+
+                    return reply.created(jsonApiData);
                 });
 
             }).catch((saveErr) => {

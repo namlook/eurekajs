@@ -31,7 +31,8 @@ module.exports = {
             // propagateDeletion: true
         },
         relation: {
-            type: 'GenericRelation'
+            type: 'GenericRelation',
+            reverse: 'genericsRelation'
             // propagateDeletion: true
         },
         relations: {

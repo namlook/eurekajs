@@ -1,8 +1,17 @@
 
 import _ from 'lodash';
 import joi from 'joi';
-import JsonApiBuilder from './plugins/eureka/json-api-builder';
+// import JsonApi from './plugins/eureka/json-api-builder';
+import {resourceObjectLink} from './utils';
 
+let jsonApiSchema = {
+    data: joi.object().keys({
+        id: joi.string(),
+        type: joi.string().required(),
+        attributes: joi.object(),
+        relationships: joi.object()
+    })
+};
 
 /**
  * to disable eureka's magic on a route,
@@ -27,31 +36,46 @@ var routes = {
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
+            let {db, apiBaseUri, Model} = request;
 
-            let builder = new JsonApiBuilder();
+            let include;
+            if (request.query.include) {
+                include = {properties: request.query.include, included: []};
+            }
+
             let kebabModelName = _.kebabCase(request.Model.name);
-            let {db, apiBaseUri} = request;
+            let results = {
+                links: {
+                    self: `${apiBaseUri}/${kebabModelName}`
+                }
+            };
 
-            request.Model.find(queryFilter, queryOptions).then((collection) => {
+            Model.find(queryFilter, queryOptions).then((collection) => {
+                let jsonApiData = collection.map((instance) => {
+                    return instance.toJsonApi(resourceObjectLink(apiBaseUri, instance), include);
+                });
 
-                return builder.build(db, apiBaseUri, collection, {
-                    include: request.query.include});
+                results.data = jsonApiData.map((o) => o.data);
 
-            }).then(({data, included}) => {
+                /**
+                 * fetch included if needed
+                 */
+                let includedPromises = [];
+                if (include && include.included.length) {
+                    includedPromises = include.included.map((doc) => {
+                        return db[doc.type].fetch(doc.id);
+                    });
+                }
 
-                let results = {
-                    data: data,
-                    links: {
-                        self: `${apiBaseUri}/${kebabModelName}`
-                    }
-                };
-
-                if (included && included.length) {
-                    results.included = included;
+                return Promise.all(includedPromises);
+            }).then((docs) => {
+                if (docs.length) {
+                    results.included = docs.map((o) => {
+                        return o.toJsonApi(resourceObjectLink(apiBaseUri, o)).data;
+                    });
                 }
 
                 return reply.ok(results);
-
             }).catch((error) => {
                 if (error.name === 'ValidationError') {
                     return reply.badRequest(error, error.extra);
@@ -61,10 +85,36 @@ var routes = {
         }
     },
 
+    fetchRelationships: {
+        method: 'GET',
+        path: '/{id}/relationships/{propertyName}',
+        handler: function(request, reply) {
+            let instance = request.pre.document;
+            let propertyName = request.params.propertyName;
+            let apiBaseUri = request.apiBaseUri;
+
+
+            let resourceLink = resourceObjectLink(apiBaseUri, instance);
+            let jsonApiData = instance.toJsonApi(resourceLink);
+
+            let results;
+
+            if (jsonApiData.data.relationships) {
+                results = jsonApiData.data.relationships[propertyName];
+            }
+
+            if (!results) {
+                return reply.notFound();
+            }
+
+            reply.ok(results);
+        }
+    },
+
 
     fetch: {
         method: 'GET',
-        path: `/{id}`,
+        path: '/{id}/{relation?}',
         config: {
             validate: {
                 query: {
@@ -76,32 +126,47 @@ var routes = {
             }
         },
         handler: function(request, reply) {
-            let builder = new JsonApiBuilder();
-
+            let instance = request.pre.document;
+            let propertyName = request.params.relation;
             let {db, apiBaseUri} = request;
 
-            builder.build(db, apiBaseUri, request.pre.document, {
-                include: request.query.include
-            }).then(({data, included}) => {
+            /** if a relation is specified in url,
+             * then redirect and fetch this relation instead
+             */
+            if (propertyName) {
+                // let value = instance.get(propertyName);
+                // return routes.fetch.handler(request, reply);
+                return reply.notImplemented();
+            }
 
-                let links = data.links;
-                delete data.links;
+            let include;
+            if (request.query.include) {
+                include = {properties: request.query.include, included: []};
+            }
 
-                let results = {
-                    data: data,
-                    links: links
-                };
 
-                if (included && included.length) {
-                    results.included = included;
+            let results = instance.toJsonApi(resourceObjectLink(apiBaseUri, instance), include);
+
+            /**
+             * fetch included if needed
+             */
+
+            let includedPromises = [];
+            if (include && include.included.length) {
+                includedPromises = include.included.map((doc) => {
+                    return db[doc.type].fetch(doc.id);
+                });
+            }
+
+            Promise.all(includedPromises).then((docs) => {
+                if (docs.length) {
+                    results.included = docs.map((o) => {
+                        return o.toJsonApi(resourceObjectLink(apiBaseUri, o)).data;
+                    });
                 }
 
                 return reply.ok(results);
-
             }).catch((error) => {
-                if (error.name === 'ValidationError') {
-                    return reply.badRequest(error, error.extra);
-                }
                 return reply.badImplementation(error);
             });
         }
@@ -129,7 +194,7 @@ var routes = {
         method: 'POST',
         path: '/',
         handler: function(request, reply) {
-            let {payload, Model} = request;
+            let {payload, Model, apiBaseUri} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -141,8 +206,8 @@ var routes = {
 
             /** validate the jsonapi payload
              */
-            let builder = new JsonApiBuilder();
-            let {error: validationError} = builder.validate(payload);
+            // let builder = new JsonApiBuilder();
+            let {error: validationError} = joi.validate(payload, jsonApiSchema);
             if (validationError) {
                 return reply.badRequest('ValidationError', validationError);
             }
@@ -189,7 +254,8 @@ var routes = {
             checkExistancePromise.then(() => {
                 return Model.create(doc).save();
             }).then((data) => {
-                let results = data.toJsonApi(`${request.resourceUri}/${data._id}`);
+                let resourceLink = resourceObjectLink(apiBaseUri, data);
+                let results = data.toJsonApi(resourceLink);
                 return reply.created(results);
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
@@ -207,7 +273,7 @@ var routes = {
         method: ['PATCH'],
         path: `/{id}`,
         handler: function(request, reply) {
-            let {payload, Model} = request;
+            let {payload, apiBaseUri} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -217,39 +283,83 @@ var routes = {
                 }
             }
 
-            let builder = new JsonApiBuilder();
-            let {error: validationError} = builder.validate(payload);
+            // let jsonApi = new JsonApiBuilder();
+            let {error: validationError} = joi.validate(payload, jsonApiSchema);
             if (validationError) {
                 return reply.badRequest('malformed payload', validationError);
             }
 
             let jsonApiData = payload.data;
+            let instance = request.pre.document;
 
-            Model.fetch(payload.data.id).then((instance) => {
-                if (!instance) {
-                    return reply.notFound();
-                }
+            if (jsonApiData.attributes) {
+                _.forEach(jsonApiData.attributes, (value, propertyName) => {
+                    instance.set(propertyName, value);
+                });
+            }
 
-                if (jsonApiData.attributes) {
-                    _.forEach(jsonApiData.attributes, (value, propertyName) => {
-                        instance.set(propertyName, value);
-                    });
-                }
+            if (jsonApiData.relationships) {
+                _.forEach(jsonApiData.relationships, (value, propertyName) => {
+                    if (_.isArray(value.data)) {
+                        value = value.data.map((item) => {
+                            return {_id: item.id, _type: item.type};
+                        });
+                    } else {
+                        value = {_id: value.data.id, _type: value.data.type};
+                    }
+                    instance.set(propertyName, value);
+                });
+            }
 
-                // if (jsonApiData.relationships) {
-                //     _.forEach(jsonApiData.relationships, (value, propertyName) => {
-                //         instance.set(propertyName, value.data);
-                //     });
-                // }
-
-                return instance.save();
-            }).then((savedDoc) => {
-                let results = savedDoc.toJsonApi(`${request.resourceUri}/${savedDoc._id}`);
+            instance.save().then((savedDoc) => {
+                let resourceLink = resourceObjectLink(apiBaseUri, savedDoc);
+                let results = savedDoc.toJsonApi(resourceLink);
                 return reply.ok(results);
             }).catch((error) => {
                 if (error.name === 'ValidationError') {
                     return reply.badRequest(
                         `${error.name}: ${error.extra}`, {failedDocument: payload});
+                } else {
+                    return reply.badImplementation(error);
+                }
+            });
+        }
+    },
+
+
+    updateRelationships: {
+        method: 'PATCH',
+        path: '/{id}/relationships/{propertyName}',
+        handler: function(request, reply) {
+            let instance = request.pre.document;
+            let propertyName = request.params.propertyName;
+
+            let {payload} = request;
+
+            if (typeof payload === 'string') {
+                try {
+                    payload = JSON.parse(payload);
+                } catch (parseError) {
+                    return reply.badRequest('The payload should be a valid JSON', {payload: payload, parseError: parseError});
+                }
+            }
+
+            let value;
+            if (_.isArray(payload.data)) {
+                value = payload.data.map((item) => {
+                    return {_id: item.id, _type: item.type};
+                });
+            } else {
+                value = {_id: payload.data.id, _type: payload.data.type};
+            }
+            instance.set(propertyName, value);
+
+            instance.save().then(() => {
+                return reply.noContent();
+            }).catch((error) => {
+                if (error.name === 'ValidationError') {
+                    return reply.badRequest(
+                        `${error.name}: ${error.extra}`);
                 } else {
                     return reply.badImplementation(error);
                 }

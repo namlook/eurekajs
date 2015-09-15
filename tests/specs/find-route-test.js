@@ -54,31 +54,6 @@ describe('Route [find]', function() {
         });
     });
 
-    it('should return a document by its id', function(done){
-        var documentId = 'generic1';
-        var date = new Date(1984, 7, 1);
-
-        let options = {
-            method: 'GET',
-            url: `/api/1/generic/${documentId}`
-        };
-
-        server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(200);
-
-            let result = response.result;
-            expect(result.data).to.be.an.object();
-            let doc = result.data;
-
-            expect(doc.attributes.text).to.equal('hello world 1');
-            expect(doc.attributes.boolean).to.be.true();
-            expect(doc.attributes.integer).to.equal(1);
-            expect(doc.attributes.float).to.equal(1.14);
-            expect(new Date(doc.attributes.date).getTime()).to.equal(date.getTime());
-            done();
-        });
-    });
-
 
     it('should return 404 if no document is found', function(done){
         let options = {
@@ -165,8 +140,14 @@ describe('Route [find]', function() {
 
             var included = response.result.included;
             expect(included).to.be.an.array();
+            expect(included.length).to.equal(5);
             expect(included.map((item) => item.id)).to.only.include([
-                'relation1', 'relation0']);
+                'relation0',
+                'relation1',
+                'relation2',
+                'relation3',
+                'relation4'
+            ]);
             done();
         });
     });
@@ -184,8 +165,9 @@ describe('Route [find]', function() {
 
             var included = response.result.included;
             expect(included).to.be.an.array();
+            expect(included.length).to.equal(2);
             expect(included.map((item) => item.id)).to.only.include([
-                'relation1', 'relation0']);
+                'relation0', 'relation1']);
             done();
         });
     });
@@ -203,7 +185,7 @@ describe('Route [find]', function() {
             var included = response.result.included;
             expect(included).to.be.an.array();
             expect(included.map((item) => item.id)).to.only.include([
-                'relation1']);
+                'relation0', 'relation1', 'relation2']);
             done();
         });
     });

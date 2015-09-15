@@ -95,8 +95,7 @@ var fillRequest = function(plugin) {
 
         request.resourceName = resourceName;
         request.db = db;
-        request.apiBaseUri = `http://${request.info.host}${plugin.settings.app.apiRootPrefix}`;
-        request.resourceUri = `${request.apiBaseUri}/${resourceName}`;
+        request.apiBaseUri = `${plugin.settings.app.apiRootPrefix}`;
         // request.pre.arf = 'foo';
         // console.log(request.route);
         // console.log(request.server.table()[0].table[2].settings);
