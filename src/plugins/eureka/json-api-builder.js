@@ -18,7 +18,9 @@ export default class JsonApiBuilder {
         this.apiBaseUri = apiBaseUri;
         this.instance = instance;
         this.options = options || {};
-        this._docsToInclude = [];
+        if (this.options.include) {
+            this._docsToInclude = [];
+        }
 
         return new Promise((resolve, reject) => {
 
@@ -42,9 +44,13 @@ export default class JsonApiBuilder {
                 return reject(new Error('JsonApiBuilder: an archimedes model instance is required'));
             }
 
-            let results = {
-                data: this.data
-            };
+            let results = this.data;
+
+            if (_.isArray(this.instance)) {
+                results = {
+                    data: results
+                };
+            }
 
             if (this.options.include) {
                 this.loadIncluded().then((included) => {
@@ -71,90 +77,10 @@ export default class JsonApiBuilder {
         let instanceId = instance._id;
         let instanceType = instance._type;
         let kebabInstanceType = _.kebabCase(instanceType);
-        let include = this.options.include;
-
-        let results = {
-            id: instanceId,
-            type: instanceType,
-            links: {
-                self: `${this.apiBaseUri}/${kebabInstanceType}/${instanceId}`
-            }
-        };
-
-        let attributes = {};
-        let relationships = {};
-        let included = [];
-
-        instance.Model.schema.properties.forEach((property) => {
-            let value = instance.get(property.name);
-
-            if (property.isRelation()) {
-
-                if (property.isArray()) {
-                    if (value && !_.isEmpty(value)) {
-                        value = value.map((o) => {
-                            let rel = {id: o._id, type: o._type};
-
-                            if (typeof include === 'string') {
-                                if (include === property.name) {
-                                    included.push(rel);
-                                }
-                            } else if (include) {
-                                included.push(rel);
-                            }
-
-                            return rel;
-                        });
-                    } else {
-                        value = null;
-                    }
-                } else {
-                    if (value) {
-                        value = {id: value._id, type: value._type};
-
-                        if (typeof include === 'string') {
-                            if (include === property.name) {
-                                included.push(value);
-                            }
-                        } else if (include) {
-                            included.push(value);
-                        }
-                    }
-                }
-
-                if (value != null) {
-                    relationships[property.name] = {
-                        data: value,
-                        links: {
-                            self: `${this.apiBaseUri}/${kebabInstanceType}/${instanceId}/relationships/${property.name}`,
-                            related: `${this.apiBaseUri}/${kebabInstanceType}/${instanceId}/${property.name}`
-                        }
-                    };
-                }
-
-            } else {
-                if (value != null) {
-                    attributes[property.name] = value;
-                }
-            }
-
-        });
-
-        if (!_.isEmpty(attributes)) {
-            results.attributes = attributes;
-        }
-
-        if (!_.isEmpty(relationships)) {
-            results.relationships = relationships;
-        }
+        let resourceUri = `${this.apiBaseUri}/${kebabInstanceType}/${instanceId}`;
 
 
-        if (included.length) {
-            included = _.uniq(included, (o) => `${o.type}/${o.id}`);
-            this._docsToInclude = this._docsToInclude.concat(included);
-        }
-
-        return results;
+        return instance.toJsonApi(resourceUri, this._docsToInclude);
     }
 
 
@@ -164,7 +90,7 @@ export default class JsonApiBuilder {
         }
 
         if (_.isArray(this.instance)) {
-            return this.instance.map((o) => this._buildData(o));
+            return this.instance.map((o) => this._buildData(o).data);
         } else {
             return this._buildData(this.instance);
         }
@@ -176,14 +102,12 @@ export default class JsonApiBuilder {
                 return resolve([]);
             }
 
-            this._docsToInclude = _.uniq(this._docsToInclude, (o) => `${o.type}/${o.id}`);
-
             let includedPromises = this._docsToInclude.map((doc) => {
                 return this.database[doc.type].fetch(doc.id);
             });
 
             Promise.all(includedPromises).then((docs) => {
-                let results = docs.map((o) => this._buildData(o));
+                let results = docs.map((o) => this._buildData(o).data);
                 return resolve(results);
             }).catch((error) => {
                 reject(error);

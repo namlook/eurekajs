@@ -29,7 +29,7 @@ var routes = {
             let {queryFilter, queryOptions} = request.pre;
 
             let builder = new JsonApiBuilder();
-            let modelName = _.kebabCase(request.Model.name);
+            let kebabModelName = _.kebabCase(request.Model.name);
             let {db, apiBaseUri} = request;
 
             request.Model.find(queryFilter, queryOptions).then((collection) => {
@@ -42,7 +42,7 @@ var routes = {
                 let results = {
                     data: data,
                     links: {
-                        self: `${apiBaseUri}/${modelName}`
+                        self: `${apiBaseUri}/${kebabModelName}`
                     }
                 };
 
@@ -189,10 +189,8 @@ var routes = {
             checkExistancePromise.then(() => {
                 return Model.create(doc).save();
             }).then((data) => {
-                let {db, apiBaseUri} = request;
-                return builder.build(db, apiBaseUri, data);
-            }).then((data) => {
-                return reply.created(data);
+                let results = data.toJsonApi(`${request.resourceUri}/${data._id}`);
+                return reply.created(results);
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
                     return reply.badRequest(
@@ -246,10 +244,8 @@ var routes = {
 
                 return instance.save();
             }).then((savedDoc) => {
-                let {db, apiBaseUri} = request;
-                return builder.build(db, apiBaseUri, savedDoc);
-            }).then((data) => {
-                return reply.ok(data);
+                let results = savedDoc.toJsonApi(`${request.resourceUri}/${savedDoc._id}`);
+                return reply.ok(results);
             }).catch((error) => {
                 if (error.name === 'ValidationError') {
                     return reply.badRequest(
