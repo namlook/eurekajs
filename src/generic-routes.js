@@ -134,9 +134,23 @@ var routes = {
              * then redirect and fetch this relation instead
              */
             if (propertyName) {
-                // let value = instance.get(propertyName);
-                // return routes.fetch.handler(request, reply);
-                return reply.notImplemented();
+                let property = instance.Model.schema.getProperty(propertyName);
+                if (property) {
+                    let reversedProperty = property.reversedProperty();
+                    if (reversedProperty) {
+                        let kebabRelationType = _.kebabCase(property.type);
+                        let url = `${apiBaseUri}/${kebabRelationType}`;//
+                        if (property.isArray()) {
+                            let filter = encodeURIComponent(`filter[${reversedProperty.name}._id]`);
+                            url += `?${filter}=${instance._id}`;
+                        } else {
+                            let relationId = instance.get(propertyName)._id;
+                            url += `/${relationId}`;
+                        }
+                        return reply.redirect(url);
+                    }
+                }
+                return reply.notFound();
             }
 
             let include;

@@ -140,12 +140,26 @@ describe('Route [fetch]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(302);
-            expect(response.headers.location).to.equal('/api/1/generic-relation/relation1');
+            expect(response.headers.location).to.equal('/api/1/generic-relation?filter%5BgenericsRelations._id%5D=generic1');
             done();
         });
     });
 
     it('should throw a 404 error if the relation is unknown', function(done){
+
+        let options = {
+            method: 'GET',
+            url: '/api/1/generic/generic1/unknownRelation'
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(404);
+
+            done();
+        });
+    });
+
+    it('should throw a 404 error if the relationships is unknown', function(done){
 
         let options = {
             method: 'GET',

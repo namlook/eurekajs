@@ -37,7 +37,8 @@ module.exports = {
         },
         relations: {
             type: 'array',
-            items: 'GenericRelation'
+            items: 'GenericRelation',
+            reverse: 'genericsRelations'
         }
     }
 };
