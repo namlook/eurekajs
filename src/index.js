@@ -161,26 +161,31 @@ export default function(eurekaConfig) {
 
         /**
          * compose, register plugins and start the server
+         *
+         * @returns a promise which resolve into the started server
          */
-        start: function(callback) {
-
-            var that = this;
-
-            that.compose(function(composeErr, server) {
-                if (composeErr) {
-                    return callback(composeErr);
-                }
-
-                that.beforeStart(server, function(onPreStartErr) {
-                    if (onPreStartErr) {
-                        return callback(onPreStartErr);
+        start: function() {
+            return new Promise((resolve, reject) => {
+                this.compose((composeErr, server) => {
+                    if (composeErr) {
+                        return reject(composeErr);
                     }
 
-                    server.start(function(startErr) {
-                        return callback(startErr, server);
+                    this.beforeStart(server, (onPreStartErr) => {
+                        if (onPreStartErr) {
+                            return reject(onPreStartErr);
+                        }
+
+                        server.start((startErr) => {
+                            if (startErr) {
+                                return reject(startErr);
+                            }
+                            return resolve(server);
+                        });
                     });
                 });
             });
+
         }
     };
 }

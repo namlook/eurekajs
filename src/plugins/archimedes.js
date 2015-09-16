@@ -56,7 +56,7 @@ var archimedesPlugin = function(plugin, options, next) {
         plugin.expose('db', db);
         next();
     }).catch((error) => {
-        console.log(error);
+        next(error);
     });
 };
 
