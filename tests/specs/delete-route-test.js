@@ -47,10 +47,9 @@ describe('Route [delete]', function() {
 
         server.inject(getOptions, function(getResponse) {
             expect(getResponse.statusCode).to.equal(200);
-            expect(getResponse.result.statusCode).to.equal(200);
 
-            let data = getResponse.result.results;
-            expect(data._id).to.be.equal('generic3');
+            let doc = getResponse.result.data;
+            expect(doc.id).to.be.equal('generic3');
 
 
            let deleteOptions = {
@@ -68,7 +67,6 @@ describe('Route [delete]', function() {
 
                 server.inject(getOptions2, function(getResponse2) {
                     expect(getResponse2.statusCode).to.equal(404);
-                    expect(getResponse2.result.statusCode).to.equal(404);
                     done();
                 });
             });
@@ -76,7 +74,59 @@ describe('Route [delete]', function() {
     });
 
 
-    it('should throw an error if the document is not in the database', function(done) {
+    it('should delete a relation', function(done) {
+       let deleteOptions = {
+            method: 'DELETE',
+            url: `/api/1/generic/generic3/relationships/relation`
+        };
+
+        server.inject(deleteOptions, function(deleteResponse) {
+            expect(deleteResponse.statusCode).to.equal(204);
+
+           let getOptions = {
+                method: 'GET',
+                url: `/api/1/generic/generic3`
+            };
+
+            server.inject(getOptions, function(getResponse) {
+                expect(getResponse.statusCode).to.equal(200);
+                let doc = getResponse.result.data;
+
+                expect(doc.relationships.relation).to.not.exist();
+                expect(doc.relationships.relations).to.exist();
+                done();
+            });
+        });
+    });
+
+
+    it('should delete relations', function(done) {
+       let deleteOptions = {
+            method: 'DELETE',
+            url: `/api/1/generic/generic3/relationships/relations`
+        };
+
+        server.inject(deleteOptions, function(deleteResponse) {
+            expect(deleteResponse.statusCode).to.equal(204);
+
+           let getOptions = {
+                method: 'GET',
+                url: `/api/1/generic/generic3`
+            };
+
+            server.inject(getOptions, function(getResponse) {
+                expect(getResponse.statusCode).to.equal(200);
+                let doc = getResponse.result.data;
+
+                expect(doc.relationships.relation).to.exist();
+                expect(doc.relationships.relations).to.not.exist();
+                done();
+            });
+        });
+    });
+
+
+    it('should throw a 404 error if the document is not in the database', function(done) {
 
        let deleteOptions = {
             method: 'DELETE',
@@ -100,6 +150,18 @@ describe('Route [delete]', function() {
         });
     });
 
+    it('should throw a 404 error if the relationships is unknown', function(done) {
+       let deleteOptions = {
+            method: 'DELETE',
+            url: `/api/1/generic/generic3/relationships/unknownProperty`
+        };
+
+        server.inject(deleteOptions, function(deleteResponse) {
+            expect(deleteResponse.statusCode).to.equal(404);
+
+            done();
+        });
+    });
 
 
     it('should delete cascade relations of the documents', function(done) {

@@ -394,6 +394,29 @@ var routes = {
         }
     },
 
+    deleteRelationships: {
+        method: 'DELETE',
+        path: '/{id}/relationships/{propertyName}',
+        handler: function(request, reply) {
+            let instance = request.pre.document;
+            let propertyName = request.params.propertyName;
+
+            let property = instance.Model.schema.getProperty(propertyName);
+
+            if (!property) {
+                return reply.notFound();
+            }
+
+            instance.unset(propertyName);
+
+            instance.save().then(() => {
+                return reply.noContent();
+            }).catch((error) => {
+                return reply.badImplementation(error);
+            });
+        }
+    },
+
 
     groupBy: {
         method: 'GET',
