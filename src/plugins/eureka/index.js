@@ -144,7 +144,12 @@ var fillRequest = function(plugin) {
             return reply.continue();
         }
 
-        request.pre.queryFilter = query.filter || {};
+        let queryFilter = query.filter || {};
+        if (queryFilter.id) {
+            queryFilter._id = queryFilter.id;
+            delete queryFilter.id;
+        }
+        request.pre.queryFilter = queryFilter;
         // let {value, errors} = queryFilterValidator(db, Model.schema, queryFilter);
 
         // if (errors.length) {

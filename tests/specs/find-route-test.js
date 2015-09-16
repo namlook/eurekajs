@@ -54,23 +54,43 @@ describe('Route [find]', function() {
         });
     });
 
-
-    it('should return 404 if no document is found', function(done){
+    it('should filter by id', function(done){
         let options = {
             method: 'GET',
-            url: `/api/1/generic/arf`
+            url: '/api/1/generic?filter[id]=generic3'
         };
 
         server.inject(options, function(response) {
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).to.equal(200);
 
-            let error = response.result.errors[0];
-            expect(error.status).to.equal(404);
-            expect(error.title).to.equal('Not Found');
+            var data = response.result.data;
+            expect(data).to.be.an.array();
+            expect(data.length).to.be.equal(1);
+            expect(data[0].id).to.equal('generic3');
+            expect(data[0].attributes).to.exist();
             done();
         });
     });
 
+    it('should filter by ids', function(done){
+        let options = {
+            method: 'GET',
+            url: '/api/1/generic?filter[id][$in]=["generic3","generic2"]'
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+
+            var data = response.result.data;
+            expect(data).to.be.an.array();
+            expect(data.length).to.be.equal(2);
+            expect(data[0].id).to.equal('generic3');
+            expect(data[0].attributes).to.exist();
+            expect(data[1].id).to.equal('generic2');
+            expect(data[1].attributes).to.exist();
+            done();
+        });
+    });
 
     it('should sort the documents', function(done){
 

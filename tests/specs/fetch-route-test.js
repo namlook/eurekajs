@@ -159,6 +159,22 @@ describe('Route [fetch]', function() {
         });
     });
 
+    it('should return 404 if no document is found', function(done){
+        let options = {
+            method: 'GET',
+            url: `/api/1/generic/arf`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(404);
+
+            let error = response.result.errors[0];
+            expect(error.status).to.equal(404);
+            expect(error.title).to.equal('Not Found');
+            done();
+        });
+    });
+
     it('should throw a 404 error if the relationships is unknown', function(done){
 
         let options = {
