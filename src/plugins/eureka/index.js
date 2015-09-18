@@ -12,15 +12,8 @@ import joi from 'joi';
 var queryOptionValidator = {
     limit: joi.number().min(1),
     offset: joi.number().min(0),
-    sort: joi.alternatives().try(
-        joi.array().items(joi.string()),
-        joi.string()
-    ),
-    fields: joi.alternatives().try(
-        joi.array().items(joi.string()),
-        joi.string()
-    )
-    // populate: [joi.number(), joi.boolean()]
+    sort: joi.array().items(joi.string()),
+    fields: joi.array().items(joi.string())
 };
 
 
@@ -181,7 +174,25 @@ var fillRequest = function(plugin) {
             queryOptions, queryOptionValidator, {stripUnknown: true});
 
         if (error) {
-            return reply.badRequest(error);
+            let paths = error.details.map((i) => i.path);
+            if (_.intersection(paths, ['fields', 'sort']).length) {
+                if (queryOptions.fields && !_.isArray(queryOptions.fields)) {
+                    queryOptions.fields = queryOptions.fields.split(',');
+                }
+
+                if (queryOptions.sort && !_.isArray(queryOptions.sort)) {
+                    queryOptions.sort = queryOptions.sort.split(',');
+                }
+
+                let {value: validatedOptions2, error: error2} = joi.validate(
+                    queryOptions, queryOptionValidator, {stripUnknown: true});
+
+                if (error2) {
+                    return reply.badRequest(error2);
+                } else {
+                    validatedOptions = validatedOptions2;
+                }
+            }
         }
 
         // /** check if all sortBy properties are specified in model **/
@@ -207,9 +218,6 @@ var fillRequest = function(plugin) {
         //     }
         // }
 
-        // request.pre.queryOptions = {
-        //     sort: validatedOptions.sortBy
-        // };
         request.pre.queryOptions = validatedOptions;
 
         // remove model specific options from query

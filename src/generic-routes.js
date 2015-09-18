@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import joi from 'joi';
 // import JsonApi from './plugins/eureka/json-api-builder';
-import {resourceObjectLink, streamJsonApi} from './utils';
+import {resourceObjectLink, streamJsonApi, streamCsv} from './utils';
 
 let jsonApiSchema = {
     data: joi.object().keys({
@@ -449,23 +449,29 @@ var routes = {
             validate: {
                 params: {
                     format: joi.string().only('json', 'csv', 'tsv').label('format')
-                }
-                // query: {
+                },
+                query: {
                     // asJsonArray: joi.boolean()
-                // }
+                    delimiter: joi.string().default(',')
+                }
             }
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
             let {Model, apiBaseUri} = request;
-
-            if (request.query.include) {
-                return reply.forbidden("stream doesn't support include option");
-            }
+            let {delimiter} = request.query;
 
             Model.count(queryFilter).then((total) => {
+                let {format} = request.params;
 
-                let contentStream = streamJsonApi(Model, total, queryFilter, queryOptions, apiBaseUri);
+                let contentStream;
+                if (format === 'json') {
+                    contentStream = streamJsonApi(Model, total, queryFilter, queryOptions, apiBaseUri);
+                } else if (format === 'csv') {
+                    contentStream = streamCsv(Model, total, queryFilter, queryOptions, delimiter);
+                } else if (format === 'tsv') {
+                    contentStream = streamCsv(Model, total, queryFilter, queryOptions, '\t');
+                }
 
                 return reply.ok(contentStream);
 

@@ -5,6 +5,7 @@ import es from 'event-stream';
 import through2 from 'through2';
 import streamStream from 'stream-stream';
 
+
 export var pascalCase = function(string) {
     return _.capitalize(_.camelCase(string));
 };
@@ -13,7 +14,7 @@ export var resourceObjectLink = function(apiBaseUri, instance) {
     return `${apiBaseUri}/${_.kebabCase(instance._type)}/${instance._id}`;
 };
 
-let _stream = function(total, query, options, startStream, endStream, throughTransform) {
+let _stream = function(total, query, options, headerStream, footerStream, throughTransform) {
     let pagination = 100;
     let nbTrip = Math.ceil(total / pagination);
 
@@ -32,16 +33,24 @@ let _stream = function(total, query, options, startStream, endStream, throughTra
       .pipe(through2(throughTransform(total, nbProceed)));
 
     let combinedStream = streamStream();
-    combinedStream.write(startStream);
+
+    if (headerStream) {
+        combinedStream.write(headerStream);
+    }
+
     combinedStream.write(contentStream);
-    combinedStream.write(endStream);
+
+    if (footerStream) {
+        combinedStream.write(footerStream);
+    }
+
     combinedStream.end();
 
     return combinedStream;
 };
 
 export var streamJsonApi = function(Model, total, query, options, apiBaseUri) {
-    let startStream = (function() {
+    let headerStream = (function() {
         let rs = readableStream();
         rs.push(`{"data":[`);
         rs.push(null);
@@ -50,7 +59,7 @@ export var streamJsonApi = function(Model, total, query, options, apiBaseUri) {
 
 
     let kebabModelName = _.kebabCase(Model.name);
-    let endStream = (function() {
+    let footerStream = (function() {
         let rs = readableStream();
         rs.push(`],"links":{"self": "${apiBaseUri}/${kebabModelName}"}}`);
         rs.push(null);
@@ -76,6 +85,40 @@ export var streamJsonApi = function(Model, total, query, options, apiBaseUri) {
         };
     };
 
-    return _stream(total, query, options, startStream, endStream, throughTransform);
+    return _stream(total, query, options, headerStream, footerStream, throughTransform);
+};
+
+
+export var streamCsv = function(Model, total, query, options, delimiter) {
+    // header of the CSV
+    let startStream = (function() {
+        let rs = readableStream();
+        let csvOptions = {fields: options.fields, delimiter: delimiter};
+        rs.push(Model.csvHeader(csvOptions) + '\n');
+        rs.push(null);
+        return rs;
+    })();
+
+
+    // no need for footer
+    let footerStream = null;
+
+    let throughTransform = function() {
+        return function(chunk, enc, callback) {
+            let arg = JSON.parse(chunk);
+            Model.find(arg.query, arg.options).then((array) => {
+                let promises = array.map((instance) => {
+                    return instance.toCsv({fields: options.fields, delimiter: delimiter});
+                });
+
+                Promise.all(promises).then((raw) => {
+                    this.push(raw.join('\n'));
+                    callback();
+                });
+            });
+        };
+    };
+
+    return _stream(total, query, options, startStream, footerStream, throughTransform);
 };
 
