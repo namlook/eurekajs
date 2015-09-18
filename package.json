@@ -40,6 +40,7 @@
     "babel-runtime": "^5.8.20",
     "bcrypt": "^0.8.3",
     "boom": "^2.8.0",
+    "event-stream": "^3.3.1",
     "glue": "^2.0.0",
     "handlebars": "^3.0.3",
     "hapi": "^8.6.1",
@@ -50,7 +51,9 @@
     "jsonwebtoken": "^5.0.2",
     "lodash": "^3.9.3",
     "nodemailer-stub-transport": "^1.0.0",
-    "require-dir": "^0.3.0"
+    "require-dir": "^0.3.0",
+    "stream-stream": "^1.2.6",
+    "through2": "^2.0.0"
   },
   "devDependencies": {
     "code": "^1.4.1",
