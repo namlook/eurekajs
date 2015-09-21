@@ -67,7 +67,7 @@ describe('Route [stream]', function() {
             });
         });
 
-        it.skip('should limit the number of documents', function(done){
+        it('should limit the number of documents', function(done){
             let options = {
                 method: 'GET',
                 url: '/api/1/generic/i/stream/json?limit=3'
@@ -182,7 +182,7 @@ describe('Route [stream]', function() {
             });
         });
 
-        it.skip('should limit the number of documents', function(done){
+        it('should limit the number of documents', function(done){
             let options = {
                 method: 'GET',
                 url: '/api/1/generic/i/stream/csv?limit=3'

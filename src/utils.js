@@ -15,14 +15,27 @@ export var resourceObjectLink = function(apiBaseUri, instance) {
 };
 
 let _stream = function(total, query, options, headerStream, footerStream, throughTransform) {
-    let pagination = 100;
+    let pagination = 2;
+
+    if (options.limit) {
+        if (total > options.limit) {
+            total = options.limit;
+        }
+    }
     let nbTrip = Math.ceil(total / pagination);
 
     let offset = 0;
     let args = _.range(0, nbTrip).map(() => {
+
         let _options = _.clone(options);
         _options.offset = offset;
-        _options.limit = pagination;
+
+        if (offset + pagination > options.limit) {
+            _options.limit = (offset + pagination) - options.limit;
+        } else {
+            _options.limit = pagination;
+        }
+
         let arg = JSON.stringify({query: query, options: _options});
         offset += pagination;
         return arg;
@@ -103,7 +116,7 @@ export var streamCsv = function(Model, total, query, options, delimiter) {
     // no need for footer
     let footerStream = null;
 
-    let throughTransform = function() {
+    let throughTransform = function(_total, _nbProceed) {
         return function(chunk, enc, callback) {
             let arg = JSON.parse(chunk);
             Model.find(arg.query, arg.options).then((array) => {
@@ -111,8 +124,15 @@ export var streamCsv = function(Model, total, query, options, delimiter) {
                     return instance.toCsv({fields: options.fields, delimiter: delimiter});
                 });
 
-                Promise.all(promises).then((raw) => {
-                    this.push(raw.join('\n'));
+                Promise.all(promises).then((rows) => {
+                    this.push(rows.join('\n'));
+
+                    _nbProceed = _nbProceed + rows.length;
+
+                    if (_nbProceed < _total) {
+                        this.push('\n');
+                    }
+
                     callback();
                 });
             });
