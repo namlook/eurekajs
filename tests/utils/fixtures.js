@@ -2,7 +2,10 @@
 import Bcrypt from 'bcrypt';
 import _ from 'lodash';
 
-export default {
+import eureka from '../../lib';
+import config from '../config';
+
+let fixtures = {
 
     clear: function(server) {
         var database = server.plugins.eureka.database;
@@ -141,3 +144,24 @@ export default {
         ]);
     }
 };
+
+export default fixtures;
+
+if (require.main === module) {
+    /** load the server **/
+    eureka(config).compose(function(err, server) {
+        if (err) {
+            throw err;
+        }
+
+        fixtures.clear(server).then(() => {
+            return fixtures.genericDocuments(server);
+        }).then(() => {
+            return fixtures.userDocuments(server);
+        }).catch((error) => {
+            console.log(error);
+        });
+
+    });
+
+}
