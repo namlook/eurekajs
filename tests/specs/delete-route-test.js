@@ -182,17 +182,16 @@ describe('Route [delete]', function() {
             server.inject(getRel0Options, function(getRel0Response) {
                 expect(getRel0Response.statusCode).to.equal(200);
 
-                let doc = getRel0Response.result.results;
-                expect(doc._id).to.equal('relation0');
+                let doc = getRel0Response.result.data;
+                expect(doc.id).to.equal('relation0');
 
                let getRel1Options = {
                     method: 'GET',
-                    url: `/api/1/generic-relation/generic1`
+                    url: `/api/1/generic-relation/relation1`
                 };
 
                 server.inject(getRel1Options, function(getRel1Response) {
                     expect(getRel1Response.statusCode).to.equal(404);
-                    expect(getRel1Response.result.statusCode).to.equal(404);
                     done();
                 });
             });
