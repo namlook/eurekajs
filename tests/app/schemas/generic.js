@@ -32,13 +32,11 @@ module.exports = {
         },
         relation: {
             type: 'GenericRelation',
-            reverse: 'genericsRelation'
-            // propagateDeletion: true
+            propagateDeletion: true
         },
         relations: {
             type: 'array',
-            items: 'GenericRelation',
-            reverse: 'genericsRelations'
+            items: 'GenericRelation'
         }
     }
 };

@@ -21,5 +21,12 @@ module.exports = {
             type: 'array',
             items: 'string'
         }
+    },
+    inverseRelationships: {
+        stuff: {
+            type: 'UserStuff',
+            property: '_owner',
+            propagateDeletion: true
+        }
     }
 };
