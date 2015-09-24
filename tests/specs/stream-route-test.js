@@ -130,6 +130,27 @@ describe('Route [stream]', function() {
                 done();
             });
         });
+
+        it('should sort by a specified property', function(done){
+
+            let options = {
+                method: 'GET',
+                url: `/api/1/generic/i/stream/json?sort=-integer`
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+
+                let results = JSON.parse(response.result);
+                var data = results.data;
+
+                expect(data).to.be.an.array();
+                expect(data.length).to.be.equal(10);
+                expect(data.map((o) => o.attributes.integer)).to.deep.equal(
+                    [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+                done();
+            });
+        });
     });
 
 
@@ -303,6 +324,27 @@ describe('Route [stream]', function() {
                         'Generic',
                         '1'
                     ]);
+                    done();
+                });
+            });
+        });
+
+        it('should sort by a specified property', function(done){
+
+            let options = {
+                method: 'GET',
+                url: `/api/1/generic/i/stream/csv?sort=-integer&fields=integer`
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+
+                csv.parse(response.result, {}, (err, output) => {
+                    expect(err).to.not.exist();
+                    output.shift();
+                    expect(output.length).to.equal(10);
+                    expect(output.map((o) => o[2])).to.deep.equal([
+                        '10', '9', '8', '7', '6', '5', '4', '3', '2', '1']);
                     done();
                 });
             });
