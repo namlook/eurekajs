@@ -459,7 +459,14 @@ var routes = {
             let {Model, apiBaseUri} = request;
             let {delimiter} = request.query;
 
+            // const TOO_MANY_RESULTS = 100000;
+
             Model.count(queryFilter).then((total) => {
+
+                // if (total >= TOO_MANY_RESULTS) {
+                //     return reply.entityTooLarge(`The response has to many results (>${TOO_MANY_RESULTS}). Try to narrow down your query`);
+                // }
+
                 let {format} = request.params;
 
                 let contentStream;
