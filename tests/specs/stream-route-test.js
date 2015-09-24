@@ -15,6 +15,11 @@ import fixtures from '../utils/fixtures';
 
 import csv from 'csv';
 
+const jsonApiMime = 'application/vnd.api+json';
+const csvMime = 'text/csv';
+const tsvMime = 'text/tab-separated-values';
+
+
 describe('Route [stream]', function() {
 
     /** load the server **/
@@ -51,6 +56,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
 
                 let results = JSON.parse(response.result);
                 var data = results.data;
@@ -75,6 +81,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
 
                 let results = JSON.parse(response.result);
                 var data = results.data;
@@ -93,6 +100,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
 
                 let results = JSON.parse(response.result);
                 var data = results.data;
@@ -115,6 +123,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
 
                 let results = JSON.parse(response.result);
                 var data = results.data;
@@ -140,6 +149,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
 
                 let results = JSON.parse(response.result);
                 var data = results.data;
@@ -164,6 +174,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(csvMime);
 
                 csv.parse(response.result, {}, (err, output) => {
                     expect(err).to.not.exist();
@@ -211,6 +222,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(csvMime);
 
                 csv.parse(response.result, {}, (err, output) => {
                     expect(err).to.not.exist();
@@ -230,6 +242,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(csvMime);
 
                 csv.parse(response.result, {delimiter: '|'}, (err, output) => {
                     expect(err).to.not.exist();
@@ -278,6 +291,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(csvMime);
 
                 csv.parse(response.result, {}, (err, output) => {
                     expect(err).to.not.exist();
@@ -309,6 +323,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(csvMime);
 
                 csv.parse(response.result, {}, (err, output) => {
                     expect(err).to.not.exist();
@@ -338,6 +353,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(csvMime);
 
                 csv.parse(response.result, {}, (err, output) => {
                     expect(err).to.not.exist();
@@ -361,6 +377,7 @@ describe('Route [stream]', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(tsvMime);
 
                 csv.parse(response.result, {delimiter: '\t'}, (err, output) => {
                     expect(err).to.not.exist();
@@ -409,6 +426,7 @@ describe('Route [stream]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);
@@ -427,6 +445,7 @@ describe('Route [stream]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);

@@ -13,6 +13,9 @@ import eureka from '../../lib';
 import config from '../config';
 import fixtures from '../utils/fixtures';
 
+const jsonApiMime = 'application/vnd.api+json';
+
+
 describe('Route [delete]', function() {
 
     /** load the server **/
@@ -47,6 +50,7 @@ describe('Route [delete]', function() {
 
         server.inject(getOptions, function(getResponse) {
             expect(getResponse.statusCode).to.equal(200);
+            expect(getResponse.headers['content-type']).to.include(jsonApiMime);
 
             let doc = getResponse.result.data;
             expect(doc.id).to.be.equal('generic3');
@@ -59,6 +63,7 @@ describe('Route [delete]', function() {
 
             server.inject(deleteOptions, function(deleteResponse) {
                 expect(deleteResponse.statusCode).to.equal(204);
+                expect(deleteResponse.headers['content-type']).to.not.exist();
 
                let getOptions2 = {
                     method: 'GET',
@@ -67,6 +72,7 @@ describe('Route [delete]', function() {
 
                 server.inject(getOptions2, function(getResponse2) {
                     expect(getResponse2.statusCode).to.equal(404);
+                    expect(getResponse2.headers['content-type']).to.include(jsonApiMime);
                     done();
                 });
             });
@@ -82,6 +88,7 @@ describe('Route [delete]', function() {
 
         server.inject(deleteOptions, function(deleteResponse) {
             expect(deleteResponse.statusCode).to.equal(204);
+            expect(deleteResponse.headers['content-type']).to.not.exist();
 
            let getOptions = {
                 method: 'GET',
@@ -90,6 +97,8 @@ describe('Route [delete]', function() {
 
             server.inject(getOptions, function(getResponse) {
                 expect(getResponse.statusCode).to.equal(200);
+                expect(getResponse.headers['content-type']).to.include(jsonApiMime);
+
                 let doc = getResponse.result.data;
 
                 expect(doc.relationships.relation).to.not.exist();
@@ -108,6 +117,7 @@ describe('Route [delete]', function() {
 
         server.inject(deleteOptions, function(deleteResponse) {
             expect(deleteResponse.statusCode).to.equal(204);
+            expect(deleteResponse.headers['content-type']).to.not.exist();
 
            let getOptions = {
                 method: 'GET',
@@ -116,6 +126,8 @@ describe('Route [delete]', function() {
 
             server.inject(getOptions, function(getResponse) {
                 expect(getResponse.statusCode).to.equal(200);
+                expect(getResponse.headers['content-type']).to.include(jsonApiMime);
+
                 let doc = getResponse.result.data;
 
                 expect(doc.relationships.relation).to.exist();
@@ -135,7 +147,7 @@ describe('Route [delete]', function() {
 
         server.inject(deleteOptions, function(deleteResponse) {
             expect(deleteResponse.statusCode).to.equal(204);
-
+            expect(deleteResponse.headers['content-type']).to.not.exist();
 
            let deleteOptions2 = {
                 method: 'DELETE',
@@ -144,6 +156,7 @@ describe('Route [delete]', function() {
 
             server.inject(deleteOptions2, function(deleteResponse2) {
                 expect(deleteResponse2.statusCode).to.equal(404);
+                expect(deleteResponse2.headers['content-type']).to.include(jsonApiMime);
 
                 done();
             });
@@ -158,6 +171,7 @@ describe('Route [delete]', function() {
 
         server.inject(deleteOptions, function(deleteResponse) {
             expect(deleteResponse.statusCode).to.equal(404);
+            expect(deleteResponse.headers['content-type']).to.include(jsonApiMime);
 
             done();
         });
@@ -173,6 +187,7 @@ describe('Route [delete]', function() {
 
         server.inject(deleteOptions, function(getResponse) {
             expect(getResponse.statusCode).to.equal(204);
+            expect(getResponse.headers['content-type']).to.not.exist();
 
            let getRel0Options = {
                 method: 'GET',
@@ -181,6 +196,7 @@ describe('Route [delete]', function() {
 
             server.inject(getRel0Options, function(getRel0Response) {
                 expect(getRel0Response.statusCode).to.equal(200);
+                expect(getRel0Response.headers['content-type']).to.include(jsonApiMime);
 
                 let doc = getRel0Response.result.data;
                 expect(doc.id).to.equal('relation0');
@@ -192,6 +208,8 @@ describe('Route [delete]', function() {
 
                 server.inject(getRel1Options, function(getRel1Response) {
                     expect(getRel1Response.statusCode).to.equal(404);
+                    expect(getRel1Response.headers['content-type']).to.include(jsonApiMime);
+
                     done();
                 });
             });

@@ -44,6 +44,12 @@ var decoratePlugin = function(plugin) {
         return this.response().code(204);
     });
 
+    plugin.decorate('reply', 'jsonApi', function(results) {
+        let {data, links, included} = results;
+        return this.response({data, links, included})
+                   .type('application/vnd.api+json');
+    });
+
 
     plugin.ext('onPreResponse', function (request, reply) {
 
@@ -64,6 +70,7 @@ var decoratePlugin = function(plugin) {
             }
 
             response.output.payload = { errors: [error] };
+            response.output.headers['content-type'] = 'application/vnd.api+json; charset=utf-8';
         }
         return reply.continue();
     });

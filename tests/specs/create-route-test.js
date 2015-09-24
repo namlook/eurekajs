@@ -13,6 +13,9 @@ import eureka from '../../lib';
 import config from '../config';
 import fixtures from '../utils/fixtures';
 
+const jsonApiMime = 'application/vnd.api+json';
+
+
 describe('Route [create]', function() {
 
     /** load the server **/
@@ -60,6 +63,8 @@ describe('Route [create]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(201);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+
             let doc = response.result.data;
             expect(doc.id).to.not.be.null();
             expect(doc.type).to.equal('Generic');
@@ -67,6 +72,7 @@ describe('Route [create]', function() {
             expect(doc.attributes.boolean).to.be.true();
             expect(doc.attributes.integer).to.equal(42);
             expect(doc.attributes.float).to.equal(3.14);
+
             let fetchedDate = new Date(doc.attributes.date);
             expect(fetchedDate.getTime()).to.be.equal(date.getTime());
             expect(doc.links).to.be.an.object();
@@ -85,6 +91,7 @@ describe('Route [create]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);
@@ -99,6 +106,7 @@ describe('Route [create]', function() {
 
             server.inject(options2, function(response2) {
                 expect(response2.statusCode).to.equal(400);
+                expect(response2.headers['content-type']).to.include(jsonApiMime);
 
                 let error2 = response2.result.errors[0];
                 expect(error2.status).to.equal(400);
@@ -133,6 +141,7 @@ describe('Route [create]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(201);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let doc = response.result.data;
             expect(doc.id).to.not.be.null();
@@ -153,6 +162,7 @@ describe('Route [create]', function() {
 
             server.inject(options2, function(response2) {
                 expect(response2.statusCode).to.equal(409);
+                expect(response2.headers['content-type']).to.include(jsonApiMime);
 
                 let error = response2.result.errors[0];
                 expect(error.status).to.equal(409);
@@ -186,6 +196,7 @@ describe('Route [create]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);
@@ -217,6 +228,7 @@ describe('Route [create]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);

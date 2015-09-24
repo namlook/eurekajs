@@ -76,7 +76,7 @@ var routes = {
                     });
                 }
 
-                return reply.ok(results);
+                return reply.jsonApi(results);
             }).catch((error) => {
                 if (error.name === 'ValidationError') {
                     return reply.badRequest(error, error.extra);
@@ -108,7 +108,7 @@ var routes = {
                 return reply.notFound();
             }
 
-            reply.ok(results);
+            reply.jsonApi(results);
         }
     },
 
@@ -180,7 +180,7 @@ var routes = {
                     });
                 }
 
-                return reply.ok(results);
+                return reply.jsonApi(results);
             }).catch((error) => {
                 return reply.badImplementation(error);
             });
@@ -194,7 +194,7 @@ var routes = {
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
             request.Model.count(queryFilter, queryOptions).then((total) => {
-                return reply.ok({data: total});
+                return reply.jsonApi({data: total});
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
                     return reply.badRequest(err, err.extra);
@@ -270,7 +270,7 @@ var routes = {
             }).then((data) => {
                 let resourceLink = resourceObjectLink(apiBaseUri, data);
                 let results = data.toJsonApi(resourceLink);
-                return reply.created(results);
+                return reply.created(results).type('application/vnd.api+json');
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
                     return reply.badRequest(
@@ -328,7 +328,7 @@ var routes = {
             instance.save().then((savedDoc) => {
                 let resourceLink = resourceObjectLink(apiBaseUri, savedDoc);
                 let results = savedDoc.toJsonApi(resourceLink);
-                return reply.ok(results);
+                return reply.jsonApi(results);
             }).catch((error) => {
                 if (error.name === 'ValidationError') {
                     return reply.badRequest(
@@ -429,7 +429,7 @@ var routes = {
             let {queryFilter} = request.pre;
 
             Model.groupBy(property, queryFilter).then((data) => {
-                return reply.ok({data: data});
+                return reply.jsonApi({data: data});
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
                     return reply.badRequest(err.message, err.extra);
@@ -463,15 +463,19 @@ var routes = {
                 let {format} = request.params;
 
                 let contentStream;
+                let contentType = 'text/plain';
                 if (format === 'json') {
+                    contentType = 'application/vnd.api+json';
                     contentStream = streamJsonApi(Model, total, queryFilter, queryOptions, apiBaseUri);
                 } else if (format === 'csv') {
+                    contentType = 'text/csv';
                     contentStream = streamCsv(Model, total, queryFilter, queryOptions, delimiter);
                 } else if (format === 'tsv') {
+                    contentType = 'text/tab-separated-values';
                     contentStream = streamCsv(Model, total, queryFilter, queryOptions, '\t');
                 }
 
-                return reply.ok(contentStream);
+                return reply.ok(contentStream).type(contentType);
 
             });
         }

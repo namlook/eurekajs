@@ -16,6 +16,8 @@ import fixtures from '../utils/fixtures';
 import Bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+const jsonApiMime = 'application/vnd.api+json';
+
 
 describe('User creation', function() {
 
@@ -60,6 +62,7 @@ describe('User creation', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(201);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
 
                 let user = response.result.data;
                 expect(user.id).to.exists();
@@ -94,6 +97,7 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(409);
+                    expect(response.headers['content-type']).to.include(jsonApiMime);
 
                     let error = response.result.errors[0];
                     expect(error.status).to.equal(409);
@@ -119,6 +123,7 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
+                    expect(response.headers['content-type']).to.include(jsonApiMime);
 
                     let error = response.result.errors[0];
                     expect(error.status).to.equal(400);
@@ -144,6 +149,7 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
+                    expect(response.headers['content-type']).to.include(jsonApiMime);
 
 
                     let error = response.result.errors[0];
@@ -170,6 +176,7 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
+                    expect(response.headers['content-type']).to.include(jsonApiMime);
 
 
                     let error = response.result.errors[0];
@@ -195,6 +202,7 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(400);
+                    expect(response.headers['content-type']).to.include(jsonApiMime);
 
 
                     let error = response.result.errors[0];
@@ -220,6 +228,7 @@ describe('User creation', function() {
 
                 server.inject(options, function(response) {
                     expect(response.statusCode).to.equal(409);
+                    expect(response.headers['content-type']).to.include(jsonApiMime);
 
                     let error = response.result.errors[0];
                     expect(error.status).to.equal(409);
@@ -250,6 +259,7 @@ describe('User creation', function() {
 
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(201);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
 
                 let token = jwt.sign(
                     {email: 'newuser@test.com'},
@@ -264,6 +274,8 @@ describe('User creation', function() {
 
                 server.inject(verifyOptions, function(verifyResponse) {
                     expect(verifyResponse.statusCode).to.equal(200);
+                    expect(verifyResponse.headers['content-type']).to.include('text/html');
+
                     expect(verifyResponse.result).to.equal('the email has been verified');
 
                     let db = server.plugins.eureka.database;
@@ -291,6 +303,7 @@ describe('User creation', function() {
 
                 server.inject(verifyOptions, function(verifyResponse) {
                     expect(verifyResponse.statusCode).to.equal(400);
+                    expect(verifyResponse.headers['content-type']).to.include(jsonApiMime);
 
                     let error = verifyResponse.result.errors[0];
                     expect(error.status).to.equal(400);
@@ -311,6 +324,7 @@ describe('User creation', function() {
 
             server.inject(verifyOptions, function(verifyResponse) {
                 expect(verifyResponse.statusCode).to.equal(400);
+                expect(verifyResponse.headers['content-type']).to.include(jsonApiMime);
 
                 let error = verifyResponse.result.errors[0];
                 expect(error.status).to.equal(400);
@@ -335,6 +349,7 @@ describe('User creation', function() {
 
             server.inject(verifyOptions, function(verifyResponse) {
                 expect(verifyResponse.statusCode).to.equal(400);
+                expect(verifyResponse.headers['content-type']).to.include(jsonApiMime);
 
                 let error = verifyResponse.result.errors[0];
                 expect(error.status).to.equal(400);

@@ -13,6 +13,9 @@ import eureka from '../../lib';
 import config from '../config';
 import fixtures from '../utils/fixtures';
 
+const jsonApiMime = 'application/vnd.api+json';
+
+
 describe('Route [group-by]', function() {
 
     /** load the server **/
@@ -45,6 +48,7 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let data = response.result.data;
             expect(data).to.be.an.array();
@@ -74,6 +78,7 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let data = response.result.data;
             expect(data).to.be.an.array();
@@ -101,6 +106,7 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let data = response.result.data;
             expect(data).to.be.an.array();
@@ -130,6 +136,7 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);
@@ -152,6 +159,7 @@ describe('Route [group-by]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);

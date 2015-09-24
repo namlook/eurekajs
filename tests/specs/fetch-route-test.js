@@ -12,6 +12,8 @@ import eureka from '../../lib';
 import config from '../config';
 import fixtures from '../utils/fixtures';
 
+const jsonApiMime = 'application/vnd.api+json';
+
 
 describe('Route [fetch]', function() {
 
@@ -48,6 +50,7 @@ describe('Route [fetch]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let result = response.result;
             expect(result.data).to.be.an.object();
@@ -71,6 +74,7 @@ describe('Route [fetch]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let result = response.result;
             expect(result.data).to.be.an.object();
@@ -92,6 +96,7 @@ describe('Route [fetch]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let result = response.result;
             expect(result.data).to.be.an.array();
@@ -154,6 +159,7 @@ describe('Route [fetch]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(404);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             done();
         });
@@ -167,6 +173,7 @@ describe('Route [fetch]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(404);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             let error = response.result.errors[0];
             expect(error.status).to.equal(404);
@@ -184,6 +191,7 @@ describe('Route [fetch]', function() {
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(404);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
 
             done();
         });

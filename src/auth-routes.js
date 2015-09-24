@@ -104,7 +104,7 @@ var routes = {
 
                     delete jsonApiData.data.attributes.password;
 
-                    return reply.created(jsonApiData);
+                    return reply.created(jsonApiData).type('application/vnd.api+json');
                 });
 
             }).catch((saveErr) => {
