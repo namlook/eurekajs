@@ -56,10 +56,10 @@
     "through2": "^2.0.0"
   },
   "devDependencies": {
-    "code": "^1.4.1",
+    "code": "^1.5.0",
     "csv": "^0.4.6",
-    "eslint": "^0.22.1",
-    "lab": "^5.10.0",
+    "eslint": "^1.5.1",
+    "lab": "^5.18.1",
     "source-map-support": "^0.3.1"
   }
 }
