@@ -1,7 +1,6 @@
 
 import _ from 'lodash';
 import joi from 'joi';
-// import JsonApi from './plugins/eureka/json-api-builder';
 import {resourceObjectLink, streamJsonApi, streamCsv} from './utils';
 
 let jsonApiSchema = {
