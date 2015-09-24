@@ -76,6 +76,41 @@ describe('Route [create]', function() {
     });
 
 
+    it('should throw a 400 error when passing an empty payload', function(done){
+
+        let options = {
+            method: 'POST',
+            url: `/api/1/generic`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+
+            let error = response.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('ValidationError');
+
+            let options2 = {
+                method: 'POST',
+                url: `/api/1/generic`,
+                payload: ''
+            };
+
+            server.inject(options2, function(response2) {
+                expect(response2.statusCode).to.equal(400);
+
+                let error2 = response2.result.errors[0];
+                expect(error2.status).to.equal(400);
+                expect(error2.title).to.equal('Bad Request');
+                expect(error2.detail).to.equal('ValidationError');
+
+                done();
+            });
+        });
+    });
+
+
     it('should throw an error if the id is already taken', function(done){
 
         let options = {

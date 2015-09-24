@@ -10,7 +10,7 @@ let jsonApiSchema = {
         type: joi.string().required(),
         attributes: joi.object(),
         relationships: joi.object()
-    })
+    }).required()
 };
 
 /**
@@ -227,7 +227,6 @@ var routes = {
             if (validationError) {
                 return reply.badRequest('ValidationError', validationError);
             }
-
 
             /** build archimedes pojo from jsonapi data
              */
