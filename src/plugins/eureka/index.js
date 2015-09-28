@@ -492,7 +492,6 @@ var eurekaPlugin = function(plugin, options, next) {
     }
 
 
-
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
         let resource = new Resource(resourceName, resourceConfig, options.serverConfig);
 

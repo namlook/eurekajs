@@ -16,6 +16,8 @@ eurekaServer.beforeRegister = function(_server, next) {
     next(null);
 };
 
+
+
 let server;
 eurekaServer.start().then((startedServer) => {
     server = startedServer;

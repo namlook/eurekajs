@@ -29,6 +29,10 @@ export default {
         schemas: requireDir('./app/schemas')
     },
     resources: requireDir('./app/resources'),
+    fileUploads: {
+        uploadDirectory: '/tmp',
+        maxBytes: 50 // 50 MB
+    },
     mailer: {
         transport: nodemailerStubTransport()
         // views: {

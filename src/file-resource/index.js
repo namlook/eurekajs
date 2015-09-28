@@ -4,5 +4,7 @@ import {thumbnailize} from './methods';
 
 export default {
     methods: {thumbnailize},
-    routes: routes.all
+    routes: function(options) {
+        return routes(options).all;
+    }
 };

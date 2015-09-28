@@ -52,6 +52,10 @@ var eurekaConfigValidator = {
         }).required(),
         schemas: joi.object()
     }),
+    fileUploads: joi.object().keys({
+        maxBytes: joi.number().integer().default(50 * Math.pow(1024, 2)),
+        uploadDirectory: joi.string().default()
+    }),
     resources: joi.object(),
     mailer: joi.object()
 };
@@ -61,6 +65,7 @@ export default function(eurekaConfig) {
     var {error, value: config} = joi.validate(eurekaConfig, eurekaConfigValidator);
 
     if (error) {
+        console.log(error);
         throw error.details;
     }
 

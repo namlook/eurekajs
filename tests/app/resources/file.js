@@ -1,7 +1,7 @@
 
-import fileResource from '../../../lib/file-resource';
+import resource from '../../../lib/file-resource';
 
 /** everyone can upload an download a file **/
-fileResource.auth = false;
+resource.auth = false;
 
-export default fileResource;
+export default resource;

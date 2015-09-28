@@ -19,6 +19,10 @@ export default class Resource {
     get methods() {
         let methods = this.config.methods || [];
 
+        if (typeof methods === 'function') {
+            methods = methods(this.serverConfig);
+        }
+
         let results = methods;
         if (methods && _.isObject(methods)) {
             results = [];
@@ -38,6 +42,11 @@ export default class Resource {
         var resourceConfig = this.config;
         var serverConfig = this.serverConfig;
         var routes = this.config.routes || [];
+
+        if (typeof routes === 'function') {
+            routes = routes(this.serverConfig);
+        }
+
         return routes.map((route) => {
             let {path, method, handler, config: routeConfig} = route;
 
