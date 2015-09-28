@@ -12,6 +12,8 @@ let jsonApiSchema = {
     }).required()
 };
 
+
+
 /**
  * to disable eureka's magic on a route,
  * just set `config.plugins.eureka = false`

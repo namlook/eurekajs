@@ -495,6 +495,10 @@ var eurekaPlugin = function(plugin, options, next) {
 
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
         let resource = new Resource(resourceName, resourceConfig, options.serverConfig);
+
+        /**
+         * Mounts routes
+         */
         let routes = resource.routes;
         try {
             plugin.route(routes);
@@ -502,6 +506,20 @@ var eurekaPlugin = function(plugin, options, next) {
         } catch (e) {
             throw `error while mounting ${resourceName}. Reason: ${e}`;
         }
+
+        /**
+         * Loads methods
+         */
+        if (!_.isEmpty(resource.methods)) {
+            try {
+                plugin.method(resource.methods);
+                plugin.log(['info', 'eureka'], `loading ${resourceName}'s methods`);
+            } catch (e) {
+                throw `error while loading ${resourceName}'s methods. Reason: ${e}`;
+            }
+        }
+
+
     });
 
 

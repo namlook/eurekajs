@@ -16,6 +16,24 @@ export default class Resource {
         return this.serverConfig.app.apiRootPrefix || '';
     }
 
+    get methods() {
+        let methods = this.config.methods || [];
+
+        let results = methods;
+        if (methods && _.isObject(methods)) {
+            results = [];
+            _.forOwn(methods, (methodConfig, methodName) => {
+                results.push({
+                    name: methodName,
+                    method: methodConfig.method,
+                    options: methodConfig.options
+                });
+            });
+        }
+
+        return results;
+    }
+
     get routes() {
         var resourceConfig = this.config;
         var serverConfig = this.serverConfig;
