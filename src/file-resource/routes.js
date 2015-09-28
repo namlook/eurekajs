@@ -51,6 +51,8 @@ export default function(options) {
                     }
 
                     return reply(fs.createReadStream(filepath));
+                        // .header('Content-Disposition', `attachment; filename="${filename}"`);
+
                 });
             }
         },

@@ -484,7 +484,9 @@ var routes = {
                     contentStream = streamCsv(Model, total, queryFilter, queryOptions, '\t');
                 }
 
-                return reply.ok(contentStream).type(contentType);
+                return reply.ok(contentStream)
+                   .type(contentType)
+                   .header('Content-Disposition', `attachment; filename="${Model.name}.${format}"`);
 
             });
         }
