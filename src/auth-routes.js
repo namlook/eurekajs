@@ -492,6 +492,5 @@ var routes = {
     }
 };
 
-routes.all = _.values(routes);
 export default routes;
 

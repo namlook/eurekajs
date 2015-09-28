@@ -101,6 +101,5 @@ export default function(options) {
         }
     };
 
-    routes.all = _.values(routes);
     return routes;
 }

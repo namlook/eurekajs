@@ -47,6 +47,10 @@ export default class Resource {
             routes = routes(this.serverConfig);
         }
 
+        if (routes && _.isObject(routes)) {
+            routes = _.values(routes);
+        }
+
         return routes.map((route) => {
             let {path, method, handler, config: routeConfig} = route;
 

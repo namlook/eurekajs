@@ -1,7 +1,7 @@
 
 import genericRoutes from '../../../lib/generic-routes';
 
-var document4Auth = {
+genericRoutes.document4Auth = {
     method: 'GET',
     path: '/{id}/only-auth',
     config: {
@@ -11,7 +11,7 @@ var document4Auth = {
 };
 
 
-var document4Me = {
+genericRoutes.document4Me = {
     method: 'GET',
     path: '/{id}/only-for-me',
     config: {
@@ -24,7 +24,7 @@ var document4Me = {
 };
 
 
-var document4Role = {
+genericRoutes.document4Role = {
     method: 'GET',
     path: '/{id}/only-for-secretkeeper',
     config: {
@@ -36,7 +36,7 @@ var document4Role = {
     handler: genericRoutes.fetch.handler
 };
 
-var document4RoleInDoc = {
+genericRoutes.document4RoleInDoc = {
     method: 'GET',
     path: '/{id}/only-for-my-roles',
     config: {
@@ -49,7 +49,7 @@ var document4RoleInDoc = {
 };
 
 
-var documentWithBadScope = {
+genericRoutes.documentWithBadScope = {
     method: 'GET',
     path: '/{id}/bad-scope',
     config: {
@@ -63,7 +63,7 @@ var documentWithBadScope = {
 
 
 
-var collection4Role = {
+genericRoutes.collection4Role = {
     method: 'GET',
     path: '/i/only-for-secretkeeper',
     config: {
@@ -75,7 +75,7 @@ var collection4Role = {
     handler: genericRoutes.find.handler
 };
 
-var collection4MeInDoc = {
+genericRoutes.collection4MeInDoc = {
     method: 'GET',
     path: '/i/only-my-stuff',
     config: {
@@ -89,7 +89,7 @@ var collection4MeInDoc = {
 
 
 
-var collection4MyRoleInDoc = {
+genericRoutes.collection4MyRoleInDoc = {
     method: 'GET',
     path: '/i/only-secretkeeper-documents',
     config: {
@@ -107,15 +107,5 @@ export default {
         strategy: 'token',
         scope: ['user-stuff-access']
     },
-    routes: genericRoutes.all.concat([
-        document4Auth,
-        document4Me,
-        document4Role,
-        document4RoleInDoc,
-        documentWithBadScope,
-
-        collection4Role,
-        collection4MeInDoc,
-        collection4MyRoleInDoc
-    ])
+    routes: genericRoutes
 };
