@@ -72,6 +72,12 @@ var routes = {
             let {width, height} = request.params;
             let mimeType = request.server.mime.path(filepath).type;
 
+            if (!_.startsWith(mimeType, 'image')) {
+                return reply.notAcceptable(
+                    `Thumbnail can be generated only from an image. Not "${mimeType}"`);
+            }
+
+
             fs.stat(filepath, function(statError, info) {
                 if (statError) {
                     return reply.notFound();
