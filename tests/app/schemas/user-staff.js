@@ -1,5 +1,10 @@
 
 module.exports = {
+    meta: {
+        names: {
+            plural: 'user-stuff'
+        }
+    },
     properties: {
         _owner: {
             type: 'User'

@@ -44,10 +44,9 @@ var routes = {
                 include = {properties: request.query.include, included: []};
             }
 
-            let kebabModelName = _.kebabCase(request.Model.name);
             let results = {
                 links: {
-                    self: `${apiBaseUri}/${kebabModelName}`
+                    self: `${apiBaseUri}/${Model.meta.names.plural}`
                 }
             };
 
@@ -58,7 +57,7 @@ var routes = {
                     return res.data;
                 });
 
-                results.data = jsonApiData;//.map((o) => o.data);
+                results.data = jsonApiData;
 
                 /**
                  * fetch included if needed
@@ -66,7 +65,7 @@ var routes = {
                 let includedPromises = [];
                 if (include && include.included.length) {
                     includedPromises = include.included.map((doc) => {
-                        return db[doc.type].fetch(doc.id);
+                        return db.getModelFromPlural(doc.type).fetch(doc.id);
                     });
                 }
 
@@ -141,8 +140,8 @@ var routes = {
                 if (property) {
                     let reversedProperty = property.reversedProperty();
                     if (reversedProperty) {
-                        let kebabRelationType = _.kebabCase(property.type);
-                        let url = `${apiBaseUri}/${kebabRelationType}`;//
+                        let relationType = db[property.type].meta.names.plural;//_.kebabCase(property.type);
+                        let url = `${apiBaseUri}/${relationType}`;//
                         if (property.isArray()) {
                             let filter = encodeURIComponent(`filter[${reversedProperty.name}._id]`);
                             url += `?${filter}=${instance._id}`;
@@ -171,7 +170,7 @@ var routes = {
             let includedPromises = [];
             if (include && include.included.length) {
                 includedPromises = include.included.map((doc) => {
-                    return db[doc.type].fetch(doc.id);
+                    return db.getModelFromPlural(doc.type).fetch(doc.id);
                 });
             }
 
@@ -211,7 +210,7 @@ var routes = {
         method: 'POST',
         path: '/',
         handler: function(request, reply) {
-            let {payload, Model, apiBaseUri} = request;
+            let {payload, Model, apiBaseUri, db} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -234,7 +233,7 @@ var routes = {
             let jsonApiData = payload.data;
 
             let doc = {
-                _type: jsonApiData.type
+                _type: Model.name
             };
 
             if (jsonApiData.id) {
@@ -246,7 +245,22 @@ var routes = {
             }
 
             if (jsonApiData.relationships) {
-                doc = _.assign(doc, jsonApiData.relationships);
+                _.forOwn(jsonApiData.relationships, (relationData, relationName) => {
+                    if (_.isArray(relationData.data)) {
+                        relationData = relationData.data.map((o) => {
+                            return {
+                                _id: o.id,
+                                _type: db.getModelFromPlural(o.type).name
+                            };
+                        });
+                    } else {
+                        relationData = {
+                            _id: relationData.data.id,
+                            _type: db.getModelFromPlural(relationData.data.type).name
+                        };
+                    }
+                    doc[relationName] = relationData;
+                });
             }
 
             /** build a promise that will check the instance existance
@@ -289,7 +303,7 @@ var routes = {
         method: ['PATCH'],
         path: `/{id}`,
         handler: function(request, reply) {
-            let {payload, apiBaseUri} = request;
+            let {payload, apiBaseUri, db} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -299,7 +313,6 @@ var routes = {
                 }
             }
 
-            // let jsonApi = new JsonApiBuilder();
             let {error: validationError} = joi.validate(payload, jsonApiSchema);
             if (validationError) {
                 return reply.badRequest('malformed payload', validationError);
@@ -318,10 +331,16 @@ var routes = {
                 _.forEach(jsonApiData.relationships, (value, propertyName) => {
                     if (_.isArray(value.data)) {
                         value = value.data.map((item) => {
-                            return {_id: item.id, _type: item.type};
+                            return {
+                                _id: item.id,
+                                _type: db.getModelFromPlural(item.type).name
+                            };
                         });
                     } else {
-                        value = {_id: value.data.id, _type: value.data.type};
+                        value = {
+                            _id: value.data.id,
+                            _type: db.getModelFromPlural(value.data.type).name
+                        };
                     }
                     instance.set(propertyName, value);
                 });
@@ -350,7 +369,7 @@ var routes = {
             let instance = request.pre.document;
             let propertyName = request.params.propertyName;
 
-            let {payload} = request;
+            let {payload, db} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -363,10 +382,10 @@ var routes = {
             let value;
             if (_.isArray(payload.data)) {
                 value = payload.data.map((item) => {
-                    return {_id: item.id, _type: item.type};
+                    return {_id: item.id, _type: db.getModelFromPlural(item.type).name};
                 });
             } else {
-                value = {_id: payload.data.id, _type: payload.data.type};
+                value = {_id: payload.data.id, _type: db.getModelFromPlural(payload.data.type).name};
             }
             instance.set(propertyName, value);
 

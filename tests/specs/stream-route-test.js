@@ -51,7 +51,7 @@ describe('Route [stream]', function() {
         it('should return all documents', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/json'
+                url: '/api/1/generics/i/stream/json'
             };
 
             server.inject(options, function(response) {
@@ -64,11 +64,11 @@ describe('Route [stream]', function() {
                 expect(data).to.be.an.array();
                 expect(data.length).to.be.equal(10);
                 expect(data[0].id).to.equal('generic1');
-                expect(data[0].type).to.equal('Generic');
+                expect(data[0].type).to.equal('generics');
                 expect(data[0].attributes).to.be.an.object();
                 expect(data[0].relationships).to.be.an.object();
 
-                expect(results.links.self).to.equal('/api/1/generic');
+                expect(results.links.self).to.equal('/api/1/generics');
                 done();
             });
         });
@@ -76,7 +76,7 @@ describe('Route [stream]', function() {
         it('should limit the number of documents', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/json?limit=3'
+                url: '/api/1/generics/i/stream/json?limit=3'
             };
 
             server.inject(options, function(response) {
@@ -95,7 +95,7 @@ describe('Route [stream]', function() {
         it('should filter documents', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/json?filter[integer]=9'
+                url: '/api/1/generics/i/stream/json?filter[integer]=9'
             };
 
             server.inject(options, function(response) {
@@ -110,7 +110,7 @@ describe('Route [stream]', function() {
                 expect(data[0].id).to.equal('generic9');
                 expect(data[0].attributes.integer).to.equal(9);
 
-                expect(results.links.self).to.equal('/api/1/generic');
+                expect(results.links.self).to.equal('/api/1/generics');
                 done();
             });
         });
@@ -118,7 +118,7 @@ describe('Route [stream]', function() {
         it('should only return specified fields', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/json?fields=integer'
+                url: '/api/1/generics/i/stream/json?fields=integer'
             };
 
             server.inject(options, function(response) {
@@ -135,7 +135,7 @@ describe('Route [stream]', function() {
                 expect(data[0].relationships).to.not.exist();
                 expect(data[0].attributes.text).to.not.exist();
 
-                expect(results.links.self).to.equal('/api/1/generic');
+                expect(results.links.self).to.equal('/api/1/generics');
                 done();
             });
         });
@@ -144,7 +144,7 @@ describe('Route [stream]', function() {
 
             let options = {
                 method: 'GET',
-                url: `/api/1/generic/i/stream/json?sort=-integer`
+                url: `/api/1/generics/i/stream/json?sort=-integer`
             };
 
             server.inject(options, function(response) {
@@ -169,7 +169,7 @@ describe('Route [stream]', function() {
         it('should return all documents', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/csv'
+                url: '/api/1/generics/i/stream/csv'
             };
 
             server.inject(options, function(response) {
@@ -197,7 +197,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'Generic',
+                        'generics',
                         '',
                         '',
                         'true',
@@ -217,7 +217,7 @@ describe('Route [stream]', function() {
         it('should limit the number of documents', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/csv?limit=3'
+                url: '/api/1/generics/i/stream/csv?limit=3'
             };
 
             server.inject(options, function(response) {
@@ -237,7 +237,7 @@ describe('Route [stream]', function() {
         it('should allow custom delimiter', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/csv?delimiter=|'
+                url: '/api/1/generics/i/stream/csv?delimiter=|'
             };
 
             server.inject(options, function(response) {
@@ -265,7 +265,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'Generic',
+                        'generics',
                         '',
                         '',
                         'true',
@@ -286,7 +286,7 @@ describe('Route [stream]', function() {
         it('should filter documents', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/csv?filter[integer]=9'
+                url: '/api/1/generics/i/stream/csv?filter[integer]=9'
             };
 
             server.inject(options, function(response) {
@@ -298,7 +298,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(2); // header + content
                     expect(output[1]).to.deep.equal([
                         'generic9',
-                        'Generic',
+                        'generics',
                         '',
                         '',
                         'true',
@@ -318,7 +318,7 @@ describe('Route [stream]', function() {
         it('should only return specified fields', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/csv?fields=integer'
+                url: '/api/1/generics/i/stream/csv?fields=integer'
             };
 
             server.inject(options, function(response) {
@@ -336,7 +336,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'Generic',
+                        'generics',
                         '1'
                     ]);
                     done();
@@ -348,7 +348,7 @@ describe('Route [stream]', function() {
 
             let options = {
                 method: 'GET',
-                url: `/api/1/generic/i/stream/csv?sort=-integer&fields=integer`
+                url: `/api/1/generics/i/stream/csv?sort=-integer&fields=integer`
             };
 
             server.inject(options, function(response) {
@@ -372,7 +372,7 @@ describe('Route [stream]', function() {
         it('should return all documents', function(done){
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/i/stream/tsv'
+                url: '/api/1/generics/i/stream/tsv'
             };
 
             server.inject(options, function(response) {
@@ -400,7 +400,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'Generic',
+                        'generics',
                         '',
                         '',
                         'true',
@@ -421,7 +421,7 @@ describe('Route [stream]', function() {
     it('should throw a 400 error if the format is unknown', function(done){
         let options = {
             method: 'GET',
-            url: '/api/1/generic/i/stream/arf'
+            url: '/api/1/generics/i/stream/arf'
         };
 
         server.inject(options, function(response) {
@@ -440,7 +440,7 @@ describe('Route [stream]', function() {
     it('should throw a 400 error if the include option is passed', function(done){
         let options = {
             method: 'GET',
-            url: '/api/1/generic/i/stream/json?include=relation'
+            url: '/api/1/generics/i/stream/json?include=relation'
         };
 
         server.inject(options, function(response) {

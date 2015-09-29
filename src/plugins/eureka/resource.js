@@ -1,15 +1,22 @@
 
 import _ from 'lodash';
+import {pascalCase} from '../../utils';
 
 export default class Resource {
-    constructor(name, config, serverConfig) {
+    constructor(name, config, serverConfig, db) {
         this.name = name;
         this.config = config;
         this.serverConfig = serverConfig;
+        this.db = db;
     }
 
     get prefix() {
-        return this.config.prefix || `/${this.name}`;
+        let prefix = this.name;
+        let model = this.db[pascalCase(this.name)];
+        if (model) {
+            prefix = model.meta.names.plural;
+        }
+        return this.config.prefix || `/${prefix}`;
     }
 
     get apiRootPrefix() {

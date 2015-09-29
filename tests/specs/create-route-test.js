@@ -46,16 +46,27 @@ describe('Route [create]', function() {
 
         let options = {
             method: 'POST',
-            url: `/api/1/generic`,
+            url: '/api/1/generics',
             payload: {
                 data: {
-                    type: 'Generic',
+                    type: 'generics',
                     attributes: {
                         text: 'hello world',
                         boolean: true,
                         integer: 42,
                         float: 3.14,
                         date: new Date(1984, 7, 3)
+                    },
+                    relationships: {
+                        relation: {
+                            data: {id: 'relation0', type: 'generic-relations'}
+                        },
+                        relations: {
+                            data: [
+                                {id: 'relation0', type: 'generic-relations'},
+                                {id: 'relation1', type: 'generic-relations'}
+                            ]
+                        }
                     }
                 }
             }
@@ -67,7 +78,7 @@ describe('Route [create]', function() {
 
             let doc = response.result.data;
             expect(doc.id).to.not.be.null();
-            expect(doc.type).to.equal('Generic');
+            expect(doc.type).to.equal('generics');
             expect(doc.attributes.text).to.equal('hello world');
             expect(doc.attributes.boolean).to.be.true();
             expect(doc.attributes.integer).to.equal(42);
@@ -75,8 +86,18 @@ describe('Route [create]', function() {
 
             let fetchedDate = new Date(doc.attributes.date);
             expect(fetchedDate.getTime()).to.be.equal(date.getTime());
+
+            expect(doc.relationships.relation.data.id).to.equal('relation0');
+            expect(doc.relationships.relation.data.type).to.equal('generic-relations');
+
+            let relations = doc.relationships.relations.data;
+            expect(relations[0].id).to.equal('relation0');
+            expect(relations[0].type).to.equal('generic-relations');
+            expect(relations[1].id).to.equal('relation1');
+            expect(relations[1].type).to.equal('generic-relations');
+
             expect(doc.links).to.be.an.object();
-            expect(doc.links.self).to.contains(`/generic/${doc.id}`);
+            expect(doc.links.self).to.contains(`/generics/${doc.id}`);
             done();
         });
     });
@@ -86,7 +107,7 @@ describe('Route [create]', function() {
 
         let options = {
             method: 'POST',
-            url: `/api/1/generic`
+            url: '/api/1/generics'
         };
 
         server.inject(options, function(response) {
@@ -100,7 +121,7 @@ describe('Route [create]', function() {
 
             let options2 = {
                 method: 'POST',
-                url: `/api/1/generic`,
+                url: `/api/1/generics`,
                 payload: ''
             };
 
@@ -123,11 +144,11 @@ describe('Route [create]', function() {
 
         let options = {
             method: 'POST',
-            url: `/api/1/generic`,
+            url: '/api/1/generics',
             payload: {
                 data: {
                     id: 'foo',
-                    type: 'Generic',
+                    type: 'generics',
                     attributes: {
                         text: 'hello world',
                         boolean: true,
@@ -148,11 +169,11 @@ describe('Route [create]', function() {
 
             let options2 = {
                 method: 'POST',
-                url: `/api/1/generic`,
+                url: '/api/1/generics',
                 payload: {
                     data: {
                         id: 'foo',
-                        type: 'Generic',
+                        type: 'generics',
                         attributes: {
                             text: 'hello world'
                         }
@@ -178,10 +199,10 @@ describe('Route [create]', function() {
 
         let options = {
             method: 'POST',
-            url: `/api/1/generic`,
+            url: '/api/1/generics',
             payload: {
                 data: {
-                    type: 'Generic',
+                    type: 'generics',
                     attributes: {
                         unknownField: 'hello world',
                         boolean: true,
@@ -211,10 +232,10 @@ describe('Route [create]', function() {
 
         let options = {
             method: 'POST',
-            url: `/api/1/generic`,
+            url: '/api/1/generics',
             payload: {
                 data: {
-                    type: 'Generic',
+                    type: 'generics',
                     attributes: {
                         text: 'hello world',
                         boolean: 'arf',
@@ -244,7 +265,7 @@ describe('Route [create]', function() {
         var generics = [];
         for (var i = 1; i < 11; i++) {
             generics.push({
-                type: 'Generic',
+                type: 'generics',
                 attributes: {
                     text: `hello world ${i}`,
                     boolean: Boolean(i % 2),
@@ -257,7 +278,7 @@ describe('Route [create]', function() {
 
         let options = {
             method: 'POST',
-            url: `/api/1/generic`,
+            url: '/api/1/generics',
             payload: {
                 data: generics
             }

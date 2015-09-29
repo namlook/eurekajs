@@ -41,7 +41,7 @@ describe('Route [find]', function() {
     it('should return all documents', function(done){
         let options = {
             method: 'GET',
-            url: '/api/1/generic'
+            url: '/api/1/generics'
         };
 
         server.inject(options, function(response) {
@@ -51,6 +51,7 @@ describe('Route [find]', function() {
             var data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(10);
+            expect(data[0].type).to.equal('generics');
 
             done();
         });
@@ -59,7 +60,7 @@ describe('Route [find]', function() {
     it('should filter by id', function(done){
         let options = {
             method: 'GET',
-            url: '/api/1/generic?filter[id]=generic3'
+            url: '/api/1/generics?filter[id]=generic3'
         };
 
         server.inject(options, function(response) {
@@ -70,6 +71,7 @@ describe('Route [find]', function() {
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(1);
             expect(data[0].id).to.equal('generic3');
+            expect(data[0].type).to.equal('generics');
             expect(data[0].attributes).to.exist();
             done();
         });
@@ -78,7 +80,7 @@ describe('Route [find]', function() {
     it('should filter by ids', function(done){
         let options = {
             method: 'GET',
-            url: '/api/1/generic?filter[id][$in]=["generic3","generic2"]'
+            url: '/api/1/generics?filter[id][$in]=["generic3","generic2"]'
         };
 
         server.inject(options, function(response) {
@@ -100,7 +102,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?sort=-integer`
+            url: `/api/1/generics?sort=-integer`
         };
 
         server.inject(options, function(response) {
@@ -121,7 +123,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?limit=5`
+            url: `/api/1/generics?limit=5`
         };
 
         server.inject(options, function(response) {
@@ -138,7 +140,7 @@ describe('Route [find]', function() {
     it('should return only the specified fields', function(done){
         let options = {
             method: 'GET',
-            url: `/api/1/generic?fields=["integer","text"]`
+            url: `/api/1/generics?fields=["integer","text"]`
         };
 
         server.inject(options, function(response) {
@@ -159,7 +161,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?include=1`
+            url: `/api/1/generics?include=1`
         };
 
         server.inject(options, function(response) {
@@ -185,7 +187,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?include=relation`
+            url: `/api/1/generics?include=relation`
         };
 
         server.inject(options, function(response) {
@@ -205,7 +207,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic/generic1?include=1`
+            url: `/api/1/generics/generic1?include=1`
         };
 
         server.inject(options, function(response) {
@@ -225,7 +227,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?filter[integer][$in]=[2,4,6]`
+            url: `/api/1/generics?filter[integer][$in]=[2,4,6]`
         };
 
         server.inject(options, function(response) {
@@ -248,7 +250,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?filter[relation.text]=relation 1`
+            url: `/api/1/generics?filter[relation.text]=relation 1`
         };
 
         server.inject(options, function(response) {
@@ -271,7 +273,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?filter[unknwonField]=3`
+            url: `/api/1/generics?filter[unknwonField]=3`
         };
 
         server.inject(options, function(response) {
@@ -294,7 +296,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?filter[integer][$arf]=3`
+            url: `/api/1/generics?filter[integer][$arf]=3`
         };
 
         server.inject(options, function(response) {
@@ -315,7 +317,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?filter[integer]=bla&filter[boolean]=arf`
+            url: `/api/1/generics?filter[integer]=bla&filter[boolean]=arf`
         };
 
         server.inject(options, function(response) {
@@ -336,7 +338,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?filter[relation.related]=bla`
+            url: `/api/1/generics?filter[relation.related]=bla`
         };
 
         server.inject(options, function(response) {
@@ -358,7 +360,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?fields=["boolean","unknownProperty"]`
+            url: `/api/1/generics?fields=["boolean","unknownProperty"]`
         };
 
         server.inject(options, function(response) {
@@ -379,7 +381,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?fields=boolean,unknownProperty`
+            url: `/api/1/generics?fields=boolean,unknownProperty`
         };
 
         server.inject(options, function(response) {
@@ -401,7 +403,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?sort=["boolean","unknownProperty"]`
+            url: `/api/1/generics?sort=["boolean","unknownProperty"]`
         };
 
         server.inject(options, function(response) {
@@ -424,7 +426,7 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic?sort=boolean,unknownProperty`
+            url: `/api/1/generics?sort=boolean,unknownProperty`
         };
 
         server.inject(options, function(response) {

@@ -24,7 +24,7 @@ module.exports = {
     },
     inverseRelationships: {
         stuff: {
-            type: 'UserStuff',
+            type: 'UserStaff',
             property: '_owner',
             propagateDeletion: true
         }

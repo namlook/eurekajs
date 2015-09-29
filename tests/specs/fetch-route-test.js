@@ -45,7 +45,7 @@ describe('Route [fetch]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic/${documentId}`
+            url: `/api/1/generics/${documentId}`
         };
 
         server.inject(options, function(response) {
@@ -55,6 +55,9 @@ describe('Route [fetch]', function() {
             let result = response.result;
             expect(result.data).to.be.an.object();
             let doc = result.data;
+
+            expect(doc.id).to.equal(documentId);
+            expect(doc.type).to.equal('generics');
 
             expect(doc.attributes.text).to.equal('hello world 1');
             expect(doc.attributes.boolean).to.be.true();
@@ -69,7 +72,7 @@ describe('Route [fetch]', function() {
 
         let options = {
             method: 'GET',
-            url: '/api/1/generic/generic1/relationships/relation'
+            url: '/api/1/generics/generic1/relationships/relation'
         };
 
         server.inject(options, function(response) {
@@ -79,9 +82,9 @@ describe('Route [fetch]', function() {
             let result = response.result;
             expect(result.data).to.be.an.object();
             expect(result.data.id).to.equal('relation1');
-            expect(result.data.type).to.equal('GenericRelation');
-            expect(result.links.self).to.endWith('/api/1/generic/generic1/relationships/relation');
-            expect(result.links.related).to.endWith('/api/1/generic/generic1/relation');
+            expect(result.data.type).to.equal('generic-relations');
+            expect(result.links.self).to.endWith('/api/1/generics/generic1/relationships/relation');
+            expect(result.links.related).to.endWith('/api/1/generics/generic1/relation');
             done();
         });
     });
@@ -91,7 +94,7 @@ describe('Route [fetch]', function() {
 
         let options = {
             method: 'GET',
-            url: '/api/1/generic/generic1/relationships/relations'
+            url: '/api/1/generics/generic1/relationships/relations'
         };
 
         server.inject(options, function(response) {
@@ -103,20 +106,20 @@ describe('Route [fetch]', function() {
             expect(result.data).to.deep.equal([
                 {
                   'id': 'relation0',
-                  'type': 'GenericRelation'
+                  'type': 'generic-relations'
                 },
                 {
                   'id': 'relation1',
-                  'type': 'GenericRelation'
+                  'type': 'generic-relations'
                 },
                 {
                   'id': 'relation2',
-                  'type': 'GenericRelation'
+                  'type': 'generic-relations'
                 }
             ]);
 
-            expect(result.links.self).to.endWith('/api/1/generic/generic1/relationships/relations');
-            expect(result.links.related).to.endWith('/api/1/generic/generic1/relations');
+            expect(result.links.self).to.endWith('/api/1/generics/generic1/relationships/relations');
+            expect(result.links.related).to.endWith('/api/1/generics/generic1/relations');
             done();
         });
     });
@@ -126,12 +129,12 @@ describe('Route [fetch]', function() {
 
         let options = {
             method: 'GET',
-            url: '/api/1/generic/generic1/relation'
+            url: '/api/1/generics/generic1/relation'
         };
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(302);
-            expect(response.headers.location).to.equal('/api/1/generic-relation/relation1');
+            expect(response.headers.location).to.equal('/api/1/generic-relations/relation1');
             done();
         });
     });
@@ -140,12 +143,12 @@ describe('Route [fetch]', function() {
 
         let options = {
             method: 'GET',
-            url: '/api/1/generic/generic1/relations'
+            url: '/api/1/generics/generic1/relations'
         };
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(302);
-            expect(response.headers.location).to.equal('/api/1/generic-relation?filter%5BgenericsRelations._id%5D=generic1');
+            expect(response.headers.location).to.equal('/api/1/generic-relations?filter%5BgenericsRelations._id%5D=generic1');
             done();
         });
     });
@@ -154,7 +157,7 @@ describe('Route [fetch]', function() {
 
         let options = {
             method: 'GET',
-            url: '/api/1/generic/generic1/unknownRelation'
+            url: '/api/1/generics/generic1/unknownRelation'
         };
 
         server.inject(options, function(response) {
@@ -168,7 +171,7 @@ describe('Route [fetch]', function() {
     it('should return 404 if no document is found', function(done){
         let options = {
             method: 'GET',
-            url: `/api/1/generic/arf`
+            url: `/api/1/generics/arf`
         };
 
         server.inject(options, function(response) {
@@ -186,7 +189,7 @@ describe('Route [fetch]', function() {
 
         let options = {
             method: 'GET',
-            url: '/api/1/generic/generic1/relationships/unknownRelation'
+            url: '/api/1/generics/generic1/relationships/unknownRelation'
         };
 
         server.inject(options, function(response) {

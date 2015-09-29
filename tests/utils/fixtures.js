@@ -50,8 +50,8 @@ let fixtures = {
         var publicStuff = [];
         for (let i = 0; i < 10; i++) {
             publicStuff.push({
-                _id: `publicstuff${i}`,
-                _type: 'PublicStuff',
+                _id: `publicstaff${i}`,
+                _type: 'PublicStaff',
                 title: `public hello ${i}`
             });
         }
@@ -63,7 +63,7 @@ let fixtures = {
         return Promise.all([
             database.batchSync('GenericRelation', relations),
             database.batchSync('Generic', generics),
-            database.batchSync('PublicStuff', publicStuff)
+            database.batchSync('PublicStaff', publicStuff)
         ]);
 
         // let data = relations.concat(generics).concat(publicStuff);
@@ -129,8 +129,8 @@ let fixtures = {
 
         var userStuff = _.range(10).map((i) => {
             return {
-                _id: `userstuff${i}`,
-                _type: 'UserStuff',
+                _id: `userstaff${i}`,
+                _type: 'UserStaff',
                 _owner: {_id: `user${i % 5}`, _type: 'User'},
                 _scope: scopes[i % 5],
                 title: `the secret thing of user ${i % 5}`,
@@ -140,7 +140,7 @@ let fixtures = {
 
         return Promise.all([
             database.User.batchSync(users),
-            database.UserStuff.batchSync(userStuff)
+            database.UserStaff.batchSync(userStuff)
         ]);
     }
 };

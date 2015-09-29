@@ -11,7 +11,7 @@ export var pascalCase = function(string) {
 };
 
 export var resourceObjectLink = function(apiBaseUri, instance) {
-    return `${apiBaseUri}/${_.kebabCase(instance._type)}/${instance._id}`;
+    return `${apiBaseUri}/${instance.Model.meta.names.plural}/${instance._id}`;
 };
 
 let _stream = function(total, query, options, headerStream, footerStream, throughTransform) {
@@ -71,10 +71,9 @@ export var streamJsonApi = function(Model, total, query, options, apiBaseUri) {
     })();
 
 
-    let kebabModelName = _.kebabCase(Model.name);
     let footerStream = (function() {
         let rs = readableStream();
-        rs.push(`],"links":{"self": "${apiBaseUri}/${kebabModelName}"}}`);
+        rs.push(`],"links":{"self": "${apiBaseUri}/${Model.meta.names.plural}"}}`);
         rs.push(null);
         return rs;
     })();

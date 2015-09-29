@@ -67,7 +67,7 @@ describe('Authorization', function() {
 
                 let tokenOptions = {
                     method: 'GET',
-                    url: '/api/1/user/i/count',
+                    url: '/api/1/users/i/count',
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -109,7 +109,7 @@ describe('Authorization', function() {
             it('if the access token is malformed', (done) => {
                 let options = {
                     method: 'GET',
-                    url: '/api/1/user-stuff/userstuff1/only-auth',
+                    url: '/api/1/user-stuff/userstaff1/only-auth',
                     headers: {
                         Authorization: `Bearer badtoken`
                     }
@@ -131,7 +131,7 @@ describe('Authorization', function() {
             it('if the access token is invalid', (done) => {
                 let options = {
                     method: 'GET',
-                    url: '/api/1/user-stuff/userstuff1/only-auth',
+                    url: '/api/1/user-stuff/userstaff1/only-auth',
                     headers: {
                         Authorization: `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoibmljbyIsImlhdCI6MTQzNDk3NTU5N30.BDYlQTXhLgUzbgkT8PfWScsUekhYmW-Ex5HRQXiDNRJ`
                     }
@@ -160,7 +160,7 @@ describe('Authorization', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/only-for-me',
+                url: '/api/1/user-stuff/userstaff1/only-for-me',
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -182,7 +182,7 @@ describe('Authorization', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/only-for-secretkeeper',
+                url: '/api/1/user-stuff/userstaff1/only-for-secretkeeper',
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -204,7 +204,7 @@ describe('Authorization', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/only-for-my-roles',
+                url: '/api/1/user-stuff/userstaff1/only-for-my-roles',
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -228,7 +228,7 @@ describe('Authorization', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/only-for-me',
+                url: '/api/1/user-stuff/userstaff1/only-for-me',
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -256,7 +256,7 @@ describe('Authorization', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/only-for-secretkeeper',
+                url: '/api/1/user-stuff/userstaff1/only-for-secretkeeper',
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -284,7 +284,7 @@ describe('Authorization', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/only-for-my-roles',
+                url: '/api/1/user-stuff/userstaff1/only-for-my-roles',
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -312,7 +312,7 @@ describe('Authorization', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/user-stuff/userstuff1/bad-scope',
+                url: '/api/1/user-stuff/userstaff1/bad-scope',
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

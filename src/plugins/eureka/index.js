@@ -459,7 +459,8 @@ var eurekaPlugin = function(plugin, options, next) {
         });
     }
 
-    plugin.expose('database', plugin.plugins.archimedes.db);
+    let db = plugin.plugins.archimedes.db;
+    plugin.expose('database', db);
     // plugin.expose('userModel', 'User');
     // plugin.expose('usernameField', 'email');
     // plugin.expose('passwordField', 'password');
@@ -493,7 +494,7 @@ var eurekaPlugin = function(plugin, options, next) {
 
 
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
-        let resource = new Resource(resourceName, resourceConfig, options.serverConfig);
+        let resource = new Resource(resourceName, resourceConfig, options.serverConfig, db);
 
         /**
          * Mounts routes

@@ -46,7 +46,7 @@ describe('Route [count]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic/i/count`
+            url: `/api/1/generics/i/count`
         };
 
         server.inject(options, function(response) {
@@ -63,7 +63,7 @@ describe('Route [count]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic/i/count?filter[boolean]=true`
+            url: `/api/1/generics/i/count?filter[boolean]=true`
         };
 
         server.inject(options, function(response) {
@@ -80,7 +80,7 @@ describe('Route [count]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generic/i/count?filter[unknwonField]=3`
+            url: `/api/1/generics/i/count?filter[unknwonField]=3`
         };
 
         server.inject(options, function(response) {

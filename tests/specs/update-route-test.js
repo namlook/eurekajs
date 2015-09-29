@@ -44,11 +44,11 @@ describe('Route [update]', function() {
     it('should update a document', function(done){
         let patchOptions = {
             method: 'PATCH',
-            url: `/api/1/generic/generic3`,
+            url: `/api/1/generics/generic3`,
             payload: {
                 data: {
                     id: 'generic3',
-                    type: 'Generic',
+                    type: 'generics',
                     attributes: {
                         text: 'yes baby',
                         integer: 42
@@ -69,7 +69,7 @@ describe('Route [update]', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/generic3'
+                url: '/api/1/generics/generic3'
             };
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
@@ -90,22 +90,22 @@ describe('Route [update]', function() {
     it('should update relationships', function(done){
         let patchOptions = {
             method: 'PATCH',
-            url: `/api/1/generic/generic3`,
+            url: `/api/1/generics/generic3`,
             payload: {
                 data: {
                     id: 'generic3',
-                    type: 'Generic',
+                    type: 'generics',
                     attributes: {
                         text: 'modified'
                     },
                     relationships: {
                         relation: {
-                            data: {id: 'relation2', type: 'GenericRelation'}
+                            data: {id: 'relation2', type: 'generic-relations'}
                         },
                         relations: {
                             data: [
-                                {id: 'relation8', type: 'GenericRelation'},
-                                {id: 'relation9', type: 'GenericRelation'}
+                                {id: 'relation8', type: 'generic-relations'},
+                                {id: 'relation9', type: 'generic-relations'}
                             ]
                         }
                     }
@@ -119,6 +119,7 @@ describe('Route [update]', function() {
 
             let data = patchResponse.result.data;
             expect(data.id).to.equal('generic3');
+            expect(data.type).to.equal('generics');
             expect(data.attributes.text).to.equal('modified');
             expect(data.attributes.boolean).to.equal(true);
             expect(data.attributes.integer).to.equal(3);
@@ -126,7 +127,7 @@ describe('Route [update]', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/generic3'
+                url: '/api/1/generics/generic3'
             };
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
@@ -151,22 +152,23 @@ describe('Route [update]', function() {
     it('should update a targeted relation', function(done){
         let patchOptions = {
             method: 'PATCH',
-            url: `/api/1/generic/generic3/relationships/relation`,
+            url: `/api/1/generics/generic3/relationships/relation`,
             payload: {
                 data: {
                     id: 'relation2',
-                    type: 'GenericRelation'
+                    type: 'generic-relations'
                 }
             }
         };
 
         server.inject(patchOptions, function(patchResponse) {
+            console.log(patchResponse.result);
             expect(patchResponse.statusCode).to.equal(204);
             expect(patchResponse.headers['content-type']).to.not.exist();
 
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/generic3'
+                url: '/api/1/generics/generic3'
             };
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
@@ -185,11 +187,11 @@ describe('Route [update]', function() {
     it('should update a targeted relations', function(done){
         let patchOptions = {
             method: 'PATCH',
-            url: `/api/1/generic/generic3/relationships/relations`,
+            url: `/api/1/generics/generic3/relationships/relations`,
             payload: {
                 data: [
-                    {id: 'relation8', type: 'GenericRelation'},
-                    {id: 'relation9', type: 'GenericRelation'}
+                    {id: 'relation8', type: 'generic-relations'},
+                    {id: 'relation9', type: 'generic-relations'}
                 ]
             }
         };
@@ -200,7 +202,7 @@ describe('Route [update]', function() {
 
             let options = {
                 method: 'GET',
-                url: '/api/1/generic/generic3'
+                url: '/api/1/generics/generic3'
             };
             server.inject(options, function(response) {
                 expect(response.statusCode).to.equal(200);
@@ -222,7 +224,7 @@ describe('Route [update]', function() {
     it('should throw a 400 error when passing bad payload', function(done) {
             let options = {
                 method: 'PATCH',
-                url: `/api/1/generic/generic3`,
+                url: `/api/1/generics/generic3`,
                 payload: {
                     whatever: 'payload'
                 }
@@ -245,11 +247,11 @@ describe('Route [update]', function() {
     it('should throw a 400 error when updating an unknown property', function(done) {
             let options = {
                 method: 'PATCH',
-                url: `/api/1/generic/generic3`,
+                url: `/api/1/generics/generic3`,
                 payload: {
                     data: {
                         id: 'generic3',
-                        type: 'Generic',
+                        type: 'generics',
                         attributes: {
                             unknownProperty: 'arf'
                         }
@@ -273,7 +275,7 @@ describe('Route [update]', function() {
     it('should throw a 404 error if the document to update does not exist', function(done) {
             let options = {
                 method: 'POST',
-                url: `/api/1/generic/generic12`,
+                url: `/api/1/generics/generic12`,
                 payload: {
                     whatever: 'payload'
                 }

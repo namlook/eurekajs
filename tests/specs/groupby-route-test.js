@@ -43,7 +43,7 @@ describe('Route [group-by]', function() {
     it('should group by a property', function(done) {
         let options = {
             method: 'GET',
-            url: `/api/1/generic/i/group-by/boolean`
+            url: `/api/1/generics/i/group-by/boolean`
         };
 
         server.inject(options, function(response) {
@@ -73,7 +73,7 @@ describe('Route [group-by]', function() {
     it('should group by a relation property', function(done) {
         let options = {
             method: 'GET',
-            url: `/api/1/generic/i/group-by/relation.text`
+            url: `/api/1/generics/i/group-by/relation.text`
         };
 
         server.inject(options, function(response) {
@@ -101,7 +101,7 @@ describe('Route [group-by]', function() {
     it('should group by a property with a query', function(done) {
         let options = {
             method: 'GET',
-            url: `/api/1/generic/i/group-by/boolean?filter[integer][$gt]=3`
+            url: `/api/1/generics/i/group-by/boolean?filter[integer][$gt]=3`
         };
 
         server.inject(options, function(response) {
@@ -131,7 +131,7 @@ describe('Route [group-by]', function() {
     it('should throw an error if the property is not a model property', function(done) {
         let options = {
             method: 'GET',
-            url: `/api/1/generic/i/group-by/unknownField`
+            url: `/api/1/generics/i/group-by/unknownField`
         };
 
         server.inject(options, function(response) {
@@ -154,7 +154,7 @@ describe('Route [group-by]', function() {
     it('should throw an error if the filter contains unknown properties', function(done) {
         let options = {
             method: 'GET',
-            url: '/api/1/generic/i/group-by/boolean?filter[unknownField]=3'
+            url: '/api/1/generics/i/group-by/boolean?filter[unknownField]=3'
         };
 
         server.inject(options, function(response) {

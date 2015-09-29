@@ -45,7 +45,7 @@ describe('Route [delete]', function() {
 
        let getOptions = {
             method: 'GET',
-            url: `/api/1/generic/generic3`
+            url: `/api/1/generics/generic3`
         };
 
         server.inject(getOptions, function(getResponse) {
@@ -58,7 +58,7 @@ describe('Route [delete]', function() {
 
            let deleteOptions = {
                 method: 'DELETE',
-                url: `/api/1/generic/generic3`
+                url: `/api/1/generics/generic3`
             };
 
             server.inject(deleteOptions, function(deleteResponse) {
@@ -67,7 +67,7 @@ describe('Route [delete]', function() {
 
                let getOptions2 = {
                     method: 'GET',
-                    url: `/api/1/generic/generic3`
+                    url: `/api/1/generics/generic3`
                 };
 
                 server.inject(getOptions2, function(getResponse2) {
@@ -83,7 +83,7 @@ describe('Route [delete]', function() {
     it('should delete a relation', function(done) {
        let deleteOptions = {
             method: 'DELETE',
-            url: `/api/1/generic/generic3/relationships/relation`
+            url: `/api/1/generics/generic3/relationships/relation`
         };
 
         server.inject(deleteOptions, function(deleteResponse) {
@@ -92,7 +92,7 @@ describe('Route [delete]', function() {
 
            let getOptions = {
                 method: 'GET',
-                url: `/api/1/generic/generic3`
+                url: `/api/1/generics/generic3`
             };
 
             server.inject(getOptions, function(getResponse) {
@@ -112,7 +112,7 @@ describe('Route [delete]', function() {
     it('should delete relations', function(done) {
        let deleteOptions = {
             method: 'DELETE',
-            url: `/api/1/generic/generic3/relationships/relations`
+            url: `/api/1/generics/generic3/relationships/relations`
         };
 
         server.inject(deleteOptions, function(deleteResponse) {
@@ -121,7 +121,7 @@ describe('Route [delete]', function() {
 
            let getOptions = {
                 method: 'GET',
-                url: `/api/1/generic/generic3`
+                url: `/api/1/generics/generic3`
             };
 
             server.inject(getOptions, function(getResponse) {
@@ -142,7 +142,7 @@ describe('Route [delete]', function() {
 
        let deleteOptions = {
             method: 'DELETE',
-            url: `/api/1/generic/generic3`
+            url: `/api/1/generics/generic3`
         };
 
         server.inject(deleteOptions, function(deleteResponse) {
@@ -151,7 +151,7 @@ describe('Route [delete]', function() {
 
            let deleteOptions2 = {
                 method: 'DELETE',
-                url: `/api/1/generic/generic3`
+                url: `/api/1/generics/generic3`
             };
 
             server.inject(deleteOptions2, function(deleteResponse2) {
@@ -166,7 +166,7 @@ describe('Route [delete]', function() {
     it('should throw a 404 error if the relationships is unknown', function(done) {
        let deleteOptions = {
             method: 'DELETE',
-            url: `/api/1/generic/generic3/relationships/unknownProperty`
+            url: `/api/1/generics/generic3/relationships/unknownProperty`
         };
 
         server.inject(deleteOptions, function(deleteResponse) {
@@ -182,7 +182,7 @@ describe('Route [delete]', function() {
 
        let deleteOptions = {
             method: 'DELETE',
-            url: `/api/1/generic/generic3`
+            url: `/api/1/generics/generic3`
         };
 
         server.inject(deleteOptions, function(getResponse) {
@@ -191,7 +191,7 @@ describe('Route [delete]', function() {
 
            let getRel0Options = {
                 method: 'GET',
-                url: `/api/1/generic-relation/relation0`
+                url: `/api/1/generic-relations/relation0`
             };
 
             server.inject(getRel0Options, function(getRel0Response) {
@@ -203,7 +203,7 @@ describe('Route [delete]', function() {
 
                let getRel1Options = {
                     method: 'GET',
-                    url: `/api/1/generic-relation/relation1`
+                    url: `/api/1/generic-relations/relation1`
                 };
 
                 server.inject(getRel1Options, function(getRel1Response) {
