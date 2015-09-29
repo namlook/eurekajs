@@ -1,7 +1,9 @@
 
 import genericRoutes from '../../../lib/generic-routes';
 
-export default {
-    auth: false,
-    routes: genericRoutes
-};
+export default function() {
+    return {
+        auth: false,
+        routes: genericRoutes
+    };
+}

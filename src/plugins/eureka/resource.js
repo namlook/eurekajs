@@ -5,7 +5,13 @@ import {pascalCase} from '../../utils';
 export default class Resource {
     constructor(name, config, serverConfig, db) {
         this.name = name;
-        this.config = config;
+
+        if (typeof config === 'function') {
+            this.config = config(serverConfig);
+        } else {
+            this.config = config;
+        }
+
         this.serverConfig = serverConfig;
         this.db = db;
     }
@@ -46,9 +52,9 @@ export default class Resource {
     }
 
     get routes() {
-        var resourceConfig = this.config;
-        var serverConfig = this.serverConfig;
-        var routes = this.config.routes || [];
+        let resourceConfig = this.config;
+        let serverConfig = this.serverConfig;
+        let routes = this.config.routes || [];
 
         if (typeof routes === 'function') {
             routes = routes(this.serverConfig);

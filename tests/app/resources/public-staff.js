@@ -1,6 +1,8 @@
 
 import genericRoutes from '../../../lib/generic-routes';
 
-export default {
-    routes: genericRoutes
-};
+export default function() {
+    return {
+        routes: genericRoutes
+    };
+}

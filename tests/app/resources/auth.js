@@ -1,8 +1,10 @@
 
 import authRoutes from '../../../lib/auth-routes';
 
-export default {
-    auth: false,
-    prefix: '/auth',
-    routes: authRoutes
-};
+export default function() {
+    return {
+        auth: false,
+        prefix: '/auth',
+        routes: authRoutes
+    };
+}

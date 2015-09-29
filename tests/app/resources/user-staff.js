@@ -102,10 +102,12 @@ genericRoutes.collection4MyRoleInDoc = {
 };
 
 
-export default {
-    auth: {
-        strategy: 'token',
-        scope: ['user-stuff-access']
-    },
-    routes: genericRoutes
-};
+export default function() {
+    return {
+        auth: {
+            strategy: 'token',
+            scope: ['user-stuff-access']
+        },
+        routes: genericRoutes
+    };
+}

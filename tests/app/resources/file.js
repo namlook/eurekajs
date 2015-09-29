@@ -1,7 +1,11 @@
 
-import resource from '../../../lib/file-resource';
+import fileResource from '../../../lib/file-resource';
 
-/** everyone can upload an download a file **/
-resource.auth = false;
 
-export default resource;
+export default function(options) {
+    let resource = fileResource(options);
+    /** everyone can upload an download a file **/
+    resource.auth = false;
+
+    return resource;
+}
