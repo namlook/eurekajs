@@ -1,5 +1,5 @@
 
-import authRoutes from '../../../lib/auth-routes';
+import authRoutes from '../../../lib/contrib/auth-routes';
 
 export default function() {
     return {

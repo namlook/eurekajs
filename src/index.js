@@ -60,7 +60,6 @@ var eurekaConfigValidator = {
     mailer: joi.object()
 };
 
-
 export default function(eurekaConfig) {
     var {error, value: config} = joi.validate(eurekaConfig, eurekaConfigValidator);
 

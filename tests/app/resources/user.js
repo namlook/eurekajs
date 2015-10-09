@@ -1,5 +1,5 @@
 
-import genericRoutes from '../../../lib/generic-routes';
+import genericRoutes from '../../../lib/contrib/generic-routes';
 
 export default function() {
     return {

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import Bcrypt from 'bcrypt';
 import joi from 'joi';
 import _ from 'lodash';
-import {resourceObjectLink} from './utils';
+import {resourceObjectLink} from '../utils';
 
 
 var routes = {

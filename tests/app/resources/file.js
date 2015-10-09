@@ -1,5 +1,5 @@
 
-import fileResource from '../../../lib/file-resource';
+import fileResource from '../../../lib/contrib/file-resource';
 
 
 export default function(options) {

@@ -1,7 +1,7 @@
 
 import _ from 'lodash';
 import joi from 'joi';
-import {resourceObjectLink, streamJsonApi, streamCsv} from './utils';
+import {resourceObjectLink, streamJsonApi, streamCsv} from '../utils';
 
 let jsonApiSchema = {
     data: joi.object().keys({
@@ -512,4 +512,6 @@ var routes = {
     }
 };
 
-export default routes;
+export default function() {
+    return routes;
+}

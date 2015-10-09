@@ -1,17 +1,19 @@
 
-import genericRoutes from '../../../lib/generic-routes';
+import genericRoutes from '../../../lib/contrib/generic-routes';
 
-genericRoutes.document4Auth = {
+let routes = genericRoutes();
+
+routes.document4Auth = {
     method: 'GET',
     path: '/{id}/only-auth',
     config: {
         auth: 'token'
     },
-    handler: genericRoutes.fetch.handler
+    handler: routes.fetch.handler
 };
 
 
-genericRoutes.document4Me = {
+routes.document4Me = {
     method: 'GET',
     path: '/{id}/only-for-me',
     config: {
@@ -20,11 +22,11 @@ genericRoutes.document4Me = {
             scope: 'userId:doc._owner._id'
         }
     },
-    handler: genericRoutes.fetch.handler
+    handler: routes.fetch.handler
 };
 
 
-genericRoutes.document4Role = {
+routes.document4Role = {
     method: 'GET',
     path: '/{id}/only-for-secretkeeper',
     config: {
@@ -33,10 +35,10 @@ genericRoutes.document4Role = {
             scope: 'secret-keeper'
         }
     },
-    handler: genericRoutes.fetch.handler
+    handler: routes.fetch.handler
 };
 
-genericRoutes.document4RoleInDoc = {
+routes.document4RoleInDoc = {
     method: 'GET',
     path: '/{id}/only-for-my-roles',
     config: {
@@ -45,11 +47,11 @@ genericRoutes.document4RoleInDoc = {
             scope: 'userScope:doc._scope'
         }
     },
-    handler: genericRoutes.fetch.handler
+    handler: routes.fetch.handler
 };
 
 
-genericRoutes.documentWithBadScope = {
+routes.documentWithBadScope = {
     method: 'GET',
     path: '/{id}/bad-scope',
     config: {
@@ -58,12 +60,12 @@ genericRoutes.documentWithBadScope = {
             scope: 'arf:doc_scope'
         }
     },
-    handler: genericRoutes.fetch.handler
+    handler: routes.fetch.handler
 };
 
 
 
-genericRoutes.collection4Role = {
+routes.collection4Role = {
     method: 'GET',
     path: '/i/only-for-secretkeeper',
     config: {
@@ -72,10 +74,10 @@ genericRoutes.collection4Role = {
             scope: ['secret-keeper']
         }
     },
-    handler: genericRoutes.find.handler
+    handler: routes.find.handler
 };
 
-genericRoutes.collection4MeInDoc = {
+routes.collection4MeInDoc = {
     method: 'GET',
     path: '/i/only-my-stuff',
     config: {
@@ -84,12 +86,12 @@ genericRoutes.collection4MeInDoc = {
             scope: ['userId:doc._owner._id']
         }
     },
-    handler: genericRoutes.find.handler
+    handler: routes.find.handler
  };
 
 
 
-genericRoutes.collection4MyRoleInDoc = {
+routes.collection4MyRoleInDoc = {
     method: 'GET',
     path: '/i/only-secretkeeper-documents',
     config: {
@@ -98,7 +100,7 @@ genericRoutes.collection4MyRoleInDoc = {
             scope: ['userScope:doc._scope']
         }
     },
-    handler: genericRoutes.find.handler
+    handler: routes.find.handler
 };
 
 
@@ -108,6 +110,6 @@ export default function() {
             strategy: 'token',
             scope: ['user-stuff-access']
         },
-        routes: genericRoutes
+        routes: routes
     };
 }

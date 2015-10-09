@@ -2,7 +2,7 @@
   "name": "eurekajs",
   "version": "0.0.15",
   "description": "",
-  "main": "index.js",
+  "main": "lib",
   "repository": "https://github.com/namlook/eurekajs",
   "scripts": {
     "prepublish_old": "rm -rf lib libtests ; babel src --optional runtime --out-dir lib",
