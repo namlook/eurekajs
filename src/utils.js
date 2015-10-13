@@ -11,7 +11,8 @@ export var pascalCase = function(string) {
 };
 
 export var resourceObjectLink = function(apiBaseUri, instance) {
-    return `${apiBaseUri}/${instance.Model.meta.names.plural}/${instance._id}`;
+    let id = encodeURIComponent(instance._id);
+    return `${apiBaseUri}/${instance.Model.meta.names.plural}/${id}`;
 };
 
 let _stream = function(total, query, options, headerStream, footerStream, throughTransform) {

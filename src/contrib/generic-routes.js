@@ -138,19 +138,29 @@ var routes = {
             if (propertyName) {
                 let property = instance.Model.schema.getProperty(propertyName);
                 if (property) {
-                    let reversedProperty = property.reversedProperty();
-                    if (reversedProperty) {
-                        let relationType = db[property.type].meta.names.plural;//_.kebabCase(property.type);
-                        let url = `${apiBaseUri}/${relationType}`;//
-                        if (property.isArray()) {
-                            let filter = encodeURIComponent(`filter[${reversedProperty.name}._id]`);
-                            url += `?${filter}=${instance._id}`;
+                    let relationType = db[property.type].meta.names.plural;
+                    let url = `${apiBaseUri}/${relationType}`;
+
+                    if (property.isArray()) {
+                        let filter;
+                        let reversedProperty = property.getInverseRelationshipFromProperty();
+
+                        if (reversedProperty) {
+                            filter = `filter[${reversedProperty.name}._id]`;
                         } else {
-                            let relationId = instance.get(propertyName)._id;
-                            url += `/${relationId}`;
+                            let properties = property.getPropertiesFromInverseRelationship();
+                            filter = `filter[${properties[0].name}._id]`;
                         }
-                        return reply.redirect(url);
+
+                        url += `?${encodeURIComponent(filter)}=${encodeURIComponent(instance._id)}`;
+
+                    } else {
+
+                        let relationId = instance.get(propertyName)._id;
+                        url += `/${encodeURIComponent(relationId)}`;
                     }
+
+                    return reply.redirect(url);
                 }
                 return reply.notFound();
             }
