@@ -33,6 +33,7 @@ import eurekaPlugin from './plugins/eureka';
 // };
 
 var eurekaConfigValidator = {
+    name: joi.string(),
     port: joi.number().required(),
     log: [joi.string(), joi.array(joi.string())],
     auth: joi.boolean(),
