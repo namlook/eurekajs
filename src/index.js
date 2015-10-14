@@ -34,6 +34,7 @@ import eurekaPlugin from './plugins/eureka';
 
 var eurekaConfigValidator = {
     name: joi.string(),
+    host: joi.string().required(),
     port: joi.number().required(),
     log: [joi.string(), joi.array(joi.string())],
     auth: joi.boolean(),
