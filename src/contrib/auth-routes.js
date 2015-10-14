@@ -5,6 +5,7 @@ import joi from 'joi';
 import _ from 'lodash';
 import {resourceObjectLink} from '../utils';
 
+import Boom from 'boom';
 
 var routes = {
     /**
@@ -132,24 +133,43 @@ var routes = {
             let token = request.params.token;
             let secret = request.server.settings.app.secret;
 
-            jwt.verify(token, secret, function(err, decoded) {
-                if (err) {
-                    return reply.badRequest(err.message);
+            new Promise((resolve, reject) => {
+
+                jwt.verify(token, secret, function(err, decoded) {
+                    if (err) {
+                        return reject(Boom.badRequest(err.message));//reply.badRequest(err.message);
+                    }
+                    return resolve(decoded);
+                });
+
+            }).then((decoded) => {
+
+                return db.User.first({email: decoded.email});
+
+            }).then((user) => {
+
+                if (!user) {
+                    throw Boom.badRequest('email not found in database');
                 }
 
-                db.User.first({email: decoded.email}).then((user) => {
-                    if (!user) {
-                        return reply.badRequest('email not found in database');
-                    }
+                user.set('emailVerified', true);
 
-                    user.set('emailVerified', true);
+                return user.save();
 
-                    return user.save();
-                }).then(() => {
+            }).then((savedUser) => {
+
+                if (savedUser) {
                     return reply.ok('the email has been verified');
-                }).catch((error) => {
+                }
+
+            }).catch((error) => {
+
+                if (error.isBoom) {
+                    return reply(error);
+                } else {
                     return reply.badImplementation(error);
-                });
+                }
+
             });
         }
     },
