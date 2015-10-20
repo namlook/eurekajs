@@ -80,7 +80,8 @@ export default function(eurekaConfig) {
                      *  `filter[relation.text]=foo`
                      */
                     qs: {allowDots: false}
-                }
+                },
+                routes: {cors: true}
             }
         ],
         server: {
