@@ -25,15 +25,15 @@ var routes = {
         method: 'GET',
         path: '/',
         config: {
-            validate: {
-                query: {
-                    token: joi.number(),
-                    include: joi.alternatives().try(
-                        joi.number(),
-                        joi.string()
-                    ).default(false)
-                }
-            }
+            // validate: {
+            //     query: {
+            // //         token: joi.number(),
+            //         include: joi.alternatives().try(
+            //             joi.number(),
+            //             joi.string()
+            //         ).default(false)
+            //     }
+            // }
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
@@ -41,7 +41,11 @@ var routes = {
 
             let include;
             if (request.query.include) {
-                include = {properties: request.query.include, included: []};
+                include = parseFloat(request.query.include);
+                if (isNaN(include)) {
+                    include = request.query.include;
+                }
+                include = {properties: include, included: []};
             }
 
             let results = {
@@ -143,13 +147,17 @@ var routes = {
 
                     if (property.isArray()) {
                         let filter;
-                        let reversedProperty = property.getInverseRelationshipFromProperty();
+                        let inverseRelationships = property.getInverseRelationshipsFromProperty();
 
-                        if (reversedProperty) {
-                            filter = `filter[${reversedProperty.name}._id]`;
+                        inverseRelationships = inverseRelationships.filter((o) => {
+                            return o.config.abstract.fromReverse.property === property.name;
+                        });
+
+                        if (inverseRelationships.length) {
+                            filter = `filter[${inverseRelationships[0].name}._id]`;
                         } else {
-                            let properties = property.getPropertiesFromInverseRelationship();
-                            filter = `filter[${properties[0].name}._id]`;
+                            property = property.getPropertyFromInverseRelationship();
+                            filter = `filter[${property.name}._id]`;
                         }
 
                         url += `?${encodeURIComponent(filter)}=${encodeURIComponent(instance._id)}`;
