@@ -5,6 +5,7 @@ import requireDir from 'require-dir';
 export default {
     port: 5000,
     log: ['warn'],
+    host: '0.0.0.0',
     auth: true,
     app: {
         secret: 'ssh',
