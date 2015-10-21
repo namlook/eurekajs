@@ -203,6 +203,27 @@ describe('Route [find]', function() {
         });
     });
 
+
+    it('should include multiple specified relations of a collection', function(done){
+
+        let options = {
+            method: 'GET',
+            url: `/api/1/generics?limit=1&include=relation,relations`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+
+            var included = response.result.included;
+            expect(included).to.be.an.array();
+            expect(included.length).to.equal(3);
+            expect(included.map((item) => item.id)).to.only.include([
+                'relation0', 'relation1', 'relation2']);
+            done();
+        });
+    });
+
     it('should include all relations of a document', function(done){
 
         let options = {

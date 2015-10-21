@@ -25,27 +25,27 @@ var routes = {
         method: 'GET',
         path: '/',
         config: {
-            // validate: {
-            //     query: {
-            // //         token: joi.number(),
-            //         include: joi.alternatives().try(
-            //             joi.number(),
-            //             joi.string()
-            //         ).default(false)
-            //     }
-            // }
+            validate: {
+                query: {
+            //         token: joi.number(),
+                    include: joi.alternatives().try(
+                        joi.number(),
+                        joi.string()
+                    ).default(false)
+                }
+            }
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
             let {db, apiBaseUri, Model} = request;
 
             let include;
-            if (request.query.include) {
-                include = parseFloat(request.query.include);
-                if (isNaN(include)) {
-                    include = request.query.include;
+            let includeProperties = request.query.include;
+            if (includeProperties) {
+                if (_.isString(includeProperties)) {
+                    includeProperties = includeProperties.split(',');
                 }
-                include = {properties: include, included: []};
+                include = {properties: includeProperties, included: []};
             }
 
             let results = {
@@ -172,8 +172,12 @@ var routes = {
             }
 
             let include;
-            if (request.query.include) {
-                include = {properties: request.query.include, included: []};
+            let includeProperties = request.query.include;
+            if (includeProperties) {
+                if (_.isString(includeProperties)) {
+                    includeProperties = includeProperties.split(',');
+                }
+                include = {properties: includeProperties, included: []};
             }
 
             let resourceLink = resourceObjectLink(apiBaseUri, instance);

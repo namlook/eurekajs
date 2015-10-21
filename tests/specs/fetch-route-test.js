@@ -142,6 +142,41 @@ describe('Route [fetch]', function() {
         });
     });
 
+    it('should include specified relation of a document', function(done){
+
+        let options = {
+            method: 'GET',
+            url: `/api/1/generics/generic1?include=relation`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+            var included = response.result.included;
+            expect(included).to.be.an.array();
+            expect(included.map((item) => item.id)).to.only.include([
+                'relation1']);
+            done();
+        });
+    });
+
+    it('should include multiple specified relations of a document', function(done){
+
+        let options = {
+            method: 'GET',
+            url: `/api/1/generics/generic1?include=relation,relations`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+            var included = response.result.included;
+            expect(included).to.be.an.array();
+            expect(included.map((item) => item.id)).to.only.include([
+                'relation0', 'relation1', 'relation2']);
+            done();
+        });
+    });
 
     it('should redirect the on-to-one relationships', function(done){
 
