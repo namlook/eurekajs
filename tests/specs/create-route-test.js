@@ -49,7 +49,7 @@ describe('Route [create]', function() {
             url: '/api/1/generics',
             payload: {
                 data: {
-                    type: 'generics',
+                    type: 'Generic',
                     attributes: {
                         text: 'hello world',
                         boolean: true,
@@ -59,12 +59,12 @@ describe('Route [create]', function() {
                     },
                     relationships: {
                         relation: {
-                            data: {id: 'relation0', type: 'generic-relations'}
+                            data: {id: 'relation0', type: 'GenericRelation'}
                         },
                         relations: {
                             data: [
-                                {id: 'relation0', type: 'generic-relations'},
-                                {id: 'relation1', type: 'generic-relations'}
+                                {id: 'relation0', type: 'GenericRelation'},
+                                {id: 'relation1', type: 'GenericRelation'}
                             ]
                         }
                     }
@@ -78,7 +78,7 @@ describe('Route [create]', function() {
 
             let doc = response.result.data;
             expect(doc.id).to.not.be.null();
-            expect(doc.type).to.equal('generics');
+            expect(doc.type).to.equal('Generic');
             expect(doc.attributes.text).to.equal('hello world');
             expect(doc.attributes.boolean).to.be.true();
             expect(doc.attributes.integer).to.equal(42);
@@ -88,13 +88,13 @@ describe('Route [create]', function() {
             expect(fetchedDate.getTime()).to.be.equal(date.getTime());
 
             expect(doc.relationships.relation.data.id).to.equal('relation0');
-            expect(doc.relationships.relation.data.type).to.equal('generic-relations');
+            expect(doc.relationships.relation.data.type).to.equal('GenericRelation');
 
             let relations = doc.relationships.relations.data;
             expect(relations[0].id).to.equal('relation0');
-            expect(relations[0].type).to.equal('generic-relations');
+            expect(relations[0].type).to.equal('GenericRelation');
             expect(relations[1].id).to.equal('relation1');
-            expect(relations[1].type).to.equal('generic-relations');
+            expect(relations[1].type).to.equal('GenericRelation');
 
             expect(doc.links).to.be.an.object();
             expect(doc.links.self).to.contains(`/generics/${doc.id}`);
@@ -148,7 +148,7 @@ describe('Route [create]', function() {
             payload: {
                 data: {
                     id: 'foo',
-                    type: 'generics',
+                    type: 'Generic',
                     attributes: {
                         text: 'hello world',
                         boolean: true,
@@ -173,7 +173,7 @@ describe('Route [create]', function() {
                 payload: {
                     data: {
                         id: 'foo',
-                        type: 'generics',
+                        type: 'Generic',
                         attributes: {
                             text: 'hello world'
                         }
@@ -202,7 +202,7 @@ describe('Route [create]', function() {
             url: '/api/1/generics',
             payload: {
                 data: {
-                    type: 'generics',
+                    type: 'Generic',
                     attributes: {
                         unknownField: 'hello world',
                         boolean: true,
@@ -235,7 +235,7 @@ describe('Route [create]', function() {
             url: '/api/1/generics',
             payload: {
                 data: {
-                    type: 'generics',
+                    type: 'Generic',
                     attributes: {
                         text: 'hello world',
                         boolean: 'arf',
@@ -265,7 +265,7 @@ describe('Route [create]', function() {
         var generics = [];
         for (var i = 1; i < 11; i++) {
             generics.push({
-                type: 'generics',
+                type: 'Generic',
                 attributes: {
                     text: `hello world ${i}`,
                     boolean: Boolean(i % 2),

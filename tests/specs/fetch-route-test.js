@@ -57,7 +57,7 @@ describe('Route [fetch]', function() {
             let doc = result.data;
 
             expect(doc.id).to.equal(documentId);
-            expect(doc.type).to.equal('generics');
+            expect(doc.type).to.equal('Generic');
 
             expect(doc.attributes.text).to.equal('hello world 1');
             expect(doc.attributes.boolean).to.be.true();
@@ -82,7 +82,7 @@ describe('Route [fetch]', function() {
             let result = response.result;
             expect(result.data).to.be.an.object();
             expect(result.data.id).to.equal('relation1');
-            expect(result.data.type).to.equal('generic-relations');
+            expect(result.data.type).to.equal('GenericRelation');
             expect(result.links.self).to.endWith('/api/1/generics/generic1/relationships/relation');
             expect(result.links.related).to.endWith('/api/1/generics/generic1/relation');
             done();
@@ -106,20 +106,38 @@ describe('Route [fetch]', function() {
             expect(result.data).to.deep.equal([
                 {
                   'id': 'relation0',
-                  'type': 'generic-relations'
+                  'type': 'GenericRelation'
                 },
                 {
                   'id': 'relation1',
-                  'type': 'generic-relations'
+                  'type': 'GenericRelation'
                 },
                 {
                   'id': 'relation2',
-                  'type': 'generic-relations'
+                  'type': 'GenericRelation'
                 }
             ]);
 
             expect(result.links.self).to.endWith('/api/1/generics/generic1/relationships/relations');
             expect(result.links.related).to.endWith('/api/1/generics/generic1/relations');
+            done();
+        });
+    });
+
+    it('should include all relations of a document', function(done){
+
+        let options = {
+            method: 'GET',
+            url: `/api/1/generics/generic1?include=1`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+            var included = response.result.included;
+            expect(included).to.be.an.array();
+            expect(included.map((item) => item.id)).to.only.include([
+                'relation0', 'relation1', 'relation2']);
             done();
         });
     });

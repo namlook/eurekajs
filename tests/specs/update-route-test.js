@@ -48,7 +48,7 @@ describe('Route [update]', function() {
             payload: {
                 data: {
                     id: 'generic3',
-                    type: 'generics',
+                    type: 'Generic',
                     attributes: {
                         text: 'yes baby',
                         integer: 42
@@ -94,18 +94,18 @@ describe('Route [update]', function() {
             payload: {
                 data: {
                     id: 'generic3',
-                    type: 'generics',
+                    type: 'Generic',
                     attributes: {
                         text: 'modified'
                     },
                     relationships: {
                         relation: {
-                            data: {id: 'relation2', type: 'generic-relations'}
+                            data: {id: 'relation2', type: 'GenericRelation'}
                         },
                         relations: {
                             data: [
-                                {id: 'relation8', type: 'generic-relations'},
-                                {id: 'relation9', type: 'generic-relations'}
+                                {id: 'relation8', type: 'GenericRelation'},
+                                {id: 'relation9', type: 'GenericRelation'}
                             ]
                         }
                     }
@@ -119,7 +119,7 @@ describe('Route [update]', function() {
 
             let data = patchResponse.result.data;
             expect(data.id).to.equal('generic3');
-            expect(data.type).to.equal('generics');
+            expect(data.type).to.equal('Generic');
             expect(data.attributes.text).to.equal('modified');
             expect(data.attributes.boolean).to.equal(true);
             expect(data.attributes.integer).to.equal(3);
@@ -156,13 +156,12 @@ describe('Route [update]', function() {
             payload: {
                 data: {
                     id: 'relation2',
-                    type: 'generic-relations'
+                    type: 'GenericRelation'
                 }
             }
         };
 
         server.inject(patchOptions, function(patchResponse) {
-            console.log(patchResponse.result);
             expect(patchResponse.statusCode).to.equal(204);
             expect(patchResponse.headers['content-type']).to.not.exist();
 
@@ -190,8 +189,8 @@ describe('Route [update]', function() {
             url: `/api/1/generics/generic3/relationships/relations`,
             payload: {
                 data: [
-                    {id: 'relation8', type: 'generic-relations'},
-                    {id: 'relation9', type: 'generic-relations'}
+                    {id: 'relation8', type: 'GenericRelation'},
+                    {id: 'relation9', type: 'GenericRelation'}
                 ]
             }
         };
@@ -244,6 +243,77 @@ describe('Route [update]', function() {
     });
 
 
+    it('should throw a 400 error when updating bad relation _type', function(done){
+        let patchOptions = {
+            method: 'PATCH',
+            url: `/api/1/generics/generic3/relationships/relation`,
+            payload: {
+                data: {
+                    id: 'relation2',
+                    type: 'bad-type'
+                }
+            }
+        };
+
+        server.inject(patchOptions, function(patchResponse) {
+            console.log(patchResponse.result);
+            expect(patchResponse.statusCode).to.equal(204);
+            expect(patchResponse.headers['content-type']).to.not.exist();
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/generic3'
+            };
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                var generic3 = response.result.data;
+                expect(generic3.relationships.relation.data.id).to.equal('relation2');
+                expect(generic3.relationships.relation.links.self).to.match(/\/generic3\/relationships\/relation/);
+                expect(generic3.relationships.relation.links.related).to.match(/\/generic3\/relation/);
+
+                done();
+            });
+        });
+    });
+
+    it('should throw a 400 error when updating bad relations _type', function(done){
+        let patchOptions = {
+            method: 'PATCH',
+            url: `/api/1/generics/generic3/relationships/relations`,
+            payload: {
+                data: [
+                    {id: 'relation8', type: 'bad-type'},
+                    {id: 'relation9', type: 'bad-type'}
+                ]
+            }
+        };
+
+        server.inject(patchOptions, function(patchResponse) {
+            expect(patchResponse.statusCode).to.equal(204);
+            expect(patchResponse.headers['content-type']).to.not.exist();
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/generic3'
+            };
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                var generic3 = response.result.data;
+                expect(generic3.relationships.relations.data[0].id).to.equal('relation8');
+                expect(generic3.relationships.relations.data[1].id).to.equal('relation9');
+                expect(generic3.relationships.relations.links.self).to.match(/\/generic3\/relationships\/relations/);
+                expect(generic3.relationships.relations.links.related).to.match(/\/generic3\/relations/);
+
+                done();
+            });
+        });
+    });
+
+
     it('should throw a 400 error when updating an unknown property', function(done) {
             let options = {
                 method: 'PATCH',
@@ -251,7 +321,7 @@ describe('Route [update]', function() {
                 payload: {
                     data: {
                         id: 'generic3',
-                        type: 'generics',
+                        type: 'Generic',
                         attributes: {
                             unknownProperty: 'arf'
                         }

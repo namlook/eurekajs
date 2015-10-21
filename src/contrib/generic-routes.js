@@ -12,7 +12,7 @@ let jsonApiSchema = {
     }).required()
 };
 
-
+import Promise from 'bluebird';
 
 /**
  * to disable eureka's magic on a route,
@@ -66,21 +66,19 @@ var routes = {
                 /**
                  * fetch included if needed
                  */
-                let includedPromises = [];
-                if (include && include.included.length) {
-                    includedPromises = include.included.map((doc) => {
-                        return db.getModelFromPlural(doc.type).fetch(doc.id);
-                    });
-                }
+                let included = include && include.included || [];
 
-                return Promise.all(includedPromises);
+                const CONCURRENCY_LIMIT = 10;
+                return Promise.map(included, (doc) => {
+                    return db[doc.type].fetch(doc.id);
+                }, {concurrency: CONCURRENCY_LIMIT});
+
             }).then((docs) => {
                 if (docs.length) {
-                    results.included = docs.map((o) => {
+                    results.included = _.compact(docs).map((o) => {
                         return o.toJsonApi(resourceObjectLink(apiBaseUri, o)).data;
                     });
                 }
-
                 return reply.jsonApi(results);
             }).catch((error) => {
                 if (error.name === 'ValidationError') {
@@ -178,21 +176,19 @@ var routes = {
                 include = {properties: request.query.include, included: []};
             }
 
-
-            let results = instance.toJsonApi(resourceObjectLink(apiBaseUri, instance), include);
+            let resourceLink = resourceObjectLink(apiBaseUri, instance);
+            let results = instance.toJsonApi(resourceLink, include);
 
             /**
              * fetch included if needed
              */
+            let included = include && include.included || [];
 
-            let includedPromises = [];
-            if (include && include.included.length) {
-                includedPromises = include.included.map((doc) => {
-                    return db.getModelFromPlural(doc.type).fetch(doc.id);
-                });
-            }
+            const CONCURRENCY_LIMIT = 50;
 
-            Promise.all(includedPromises).then((docs) => {
+            Promise.map(included, (doc) => {
+                return db[doc.type].fetch(doc.id);
+            }, {concurrency: CONCURRENCY_LIMIT}).then((docs) => {
                 if (docs.length) {
                     results.included = docs.map((o) => {
                         return o.toJsonApi(resourceObjectLink(apiBaseUri, o)).data;
@@ -228,7 +224,7 @@ var routes = {
         method: 'POST',
         path: '/',
         handler: function(request, reply) {
-            let {payload, Model, apiBaseUri, db} = request;
+            let {payload, Model, apiBaseUri} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -268,13 +264,13 @@ var routes = {
                         relationData = relationData.data.map((o) => {
                             return {
                                 _id: o.id,
-                                _type: db.getModelFromPlural(o.type).name
+                                _type: o.type
                             };
                         });
                     } else {
                         relationData = {
                             _id: relationData.data.id,
-                            _type: db.getModelFromPlural(relationData.data.type).name
+                            _type: relationData.data.type
                         };
                     }
                     doc[relationName] = relationData;
@@ -321,7 +317,7 @@ var routes = {
         method: ['PATCH'],
         path: `/{id}`,
         handler: function(request, reply) {
-            let {payload, apiBaseUri, db} = request;
+            let {payload, apiBaseUri} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -351,13 +347,13 @@ var routes = {
                         value = value.data.map((item) => {
                             return {
                                 _id: item.id,
-                                _type: db.getModelFromPlural(item.type).name
+                                _type: item.type
                             };
                         });
                     } else {
                         value = {
                             _id: value.data.id,
-                            _type: db.getModelFromPlural(value.data.type).name
+                            _type: value.data.type
                         };
                     }
                     instance.set(propertyName, value);
@@ -387,7 +383,7 @@ var routes = {
             let instance = request.pre.document;
             let propertyName = request.params.propertyName;
 
-            let {payload, db} = request;
+            let {payload} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -400,10 +396,10 @@ var routes = {
             let value;
             if (_.isArray(payload.data)) {
                 value = payload.data.map((item) => {
-                    return {_id: item.id, _type: db.getModelFromPlural(item.type).name};
+                    return {_id: item.id, _type: item.type};
                 });
             } else {
-                value = {_id: payload.data.id, _type: db.getModelFromPlural(payload.data.type).name};
+                value = {_id: payload.data.id, _type: payload.data.type};
             }
             instance.set(propertyName, value);
 

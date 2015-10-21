@@ -64,7 +64,7 @@ describe('Route [stream]', function() {
                 expect(data).to.be.an.array();
                 expect(data.length).to.be.equal(10);
                 expect(data[0].id).to.equal('generic1');
-                expect(data[0].type).to.equal('generics');
+                expect(data[0].type).to.equal('Generic');
                 expect(data[0].attributes).to.be.an.object();
                 expect(data[0].relationships).to.be.an.object();
 
@@ -197,7 +197,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'generics',
+                        'Generic',
                         '',
                         '',
                         'true',
@@ -265,7 +265,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'generics',
+                        'Generic',
                         '',
                         '',
                         'true',
@@ -298,7 +298,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(2); // header + content
                     expect(output[1]).to.deep.equal([
                         'generic9',
-                        'generics',
+                        'Generic',
                         '',
                         '',
                         'true',
@@ -336,7 +336,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'generics',
+                        'Generic',
                         '1'
                     ]);
                     done();
@@ -400,7 +400,7 @@ describe('Route [stream]', function() {
                     expect(output.length).to.equal(10);
                     expect(output[0]).to.deep.equal([
                         'generic1',
-                        'generics',
+                        'Generic',
                         '',
                         '',
                         'true',

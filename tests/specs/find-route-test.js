@@ -51,7 +51,7 @@ describe('Route [find]', function() {
             var data = response.result.data;
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(10);
-            expect(data[0].type).to.equal('generics');
+            expect(data[0].type).to.equal('Generic');
 
             done();
         });
@@ -71,7 +71,7 @@ describe('Route [find]', function() {
             expect(data).to.be.an.array();
             expect(data.length).to.be.equal(1);
             expect(data[0].id).to.equal('generic3');
-            expect(data[0].type).to.equal('generics');
+            expect(data[0].type).to.equal('Generic');
             expect(data[0].attributes).to.exist();
             done();
         });
@@ -207,13 +207,12 @@ describe('Route [find]', function() {
 
         let options = {
             method: 'GET',
-            url: `/api/1/generics/generic1?include=1`
+            url: `/api/1/generics?filter[id]=generic1&include=1`
         };
 
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(200);
             expect(response.headers['content-type']).to.include(jsonApiMime);
-
             var included = response.result.included;
             expect(included).to.be.an.array();
             expect(included.map((item) => item.id)).to.only.include([
