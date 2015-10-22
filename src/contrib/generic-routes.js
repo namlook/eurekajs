@@ -3,14 +3,31 @@ import _ from 'lodash';
 import joi from 'joi';
 import {resourceObjectLink, streamJsonApi, streamCsv} from '../utils';
 
-let jsonApiSchema = {
+let jsonApiRelationshipsSchema = joi.object().keys({
+    id: joi.string().required(),
+    type: joi.string().required()
+});
+
+let jsonApiLinkSchema = joi.object().keys({
+    self: joi.string(),
+    related: joi.string()
+});
+
+let jsonApiSchema = joi.object().keys({
     data: joi.object().keys({
         id: joi.string(),
         type: joi.string().required(),
         attributes: joi.object(),
-        relationships: joi.object()
-    }).required()
-};
+        relationships: joi.object().pattern(/.+/, joi.object().keys({
+            data: joi.alternatives().try(
+                jsonApiRelationshipsSchema,
+                joi.array().items(jsonApiRelationshipsSchema)
+            ),
+            links: jsonApiLinkSchema
+        }))
+    }).required(),
+    links: jsonApiLinkSchema
+});
 
 import Promise from 'bluebird';
 

@@ -260,6 +260,75 @@ describe('Route [create]', function() {
         });
     });
 
+    it('should throw a 400 error when passing bad relationship', function(done){
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/generics',
+            payload: {
+                data: {
+                    type: 'Generic',
+                    attributes: {
+                        text: 'hello world'
+                    },
+                    relationships: {
+                        relation: {
+                            data: {bla: 'relation0', foo: 'GenericRelation'}
+                        }
+                    }
+                }
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+
+            let error = response.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('ValidationError');
+            done();
+        });
+    });
+
+
+    it('should throw a 400 error when passing bad relationships', function(done){
+
+        let options = {
+            method: 'POST',
+            url: '/api/1/generics',
+            payload: {
+                data: {
+                    type: 'Generic',
+                    attributes: {
+                        text: 'hello world'
+                    },
+                    relationships: {
+                        relations: {
+                            data: [
+                                {bla: 'relation0', foo: 'GenericRelation'}
+                            ]
+                        }
+                    }
+                }
+            }
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(400);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+
+            let error = response.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('ValidationError');
+            done();
+        });
+    });
+
+
+
     it.skip('accept a list of document (batch)', function(done){
 
         var generics = [];
