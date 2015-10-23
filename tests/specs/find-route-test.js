@@ -391,7 +391,7 @@ describe('Route [find]', function() {
             expect(error.status).to.equal(400);
             expect(error.title).to.equal('Bad Request');
             expect(error.detail).to.equal('ValidationError: malformed options');
-            expect(error.meta.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
+            expect(error.meta.infos).to.equal('fields: unknown property "unknownProperty" on model "Generic"');
 
             done();
         });
@@ -412,7 +412,7 @@ describe('Route [find]', function() {
             expect(error.status).to.equal(400);
             expect(error.title).to.equal('Bad Request');
             expect(error.detail).to.equal('ValidationError: malformed options');
-            expect(error.meta.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
+            expect(error.meta.infos).to.equal('fields: unknown property "unknownProperty" on model "Generic"');
 
             done();
         });
@@ -434,7 +434,7 @@ describe('Route [find]', function() {
             expect(error.status).to.equal(400);
             expect(error.title).to.equal('Bad Request');
             expect(error.detail).to.equal('ValidationError: malformed options');
-            expect(error.meta.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
+            expect(error.meta.infos).to.equal('sort: unknown property "unknownProperty" on model "Generic"');
 
             done();
         });
@@ -457,7 +457,7 @@ describe('Route [find]', function() {
             expect(error.status).to.equal(400);
             expect(error.title).to.equal('Bad Request');
             expect(error.detail).to.equal('ValidationError: malformed options');
-            expect(error.meta.infos).to.equal('unknown property "unknownProperty" on model "Generic"');
+            expect(error.meta.infos).to.equal('sort: unknown property "unknownProperty" on model "Generic"');
 
             done();
         });
