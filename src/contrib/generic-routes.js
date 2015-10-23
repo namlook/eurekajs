@@ -1,7 +1,12 @@
 
 import _ from 'lodash';
 import joi from 'joi';
-import {resourceObjectLink, streamJsonApi, streamCsv} from '../utils';
+
+import es from 'event-stream';
+import {Readable} from 'stream';
+import streamStream from 'stream-stream';
+
+import {resourceObjectLink/*, streamJsonApi, streamCsv*/} from '../utils';
 
 let jsonApiRelationshipsSchema = joi.object().keys({
     id: joi.string().required(),
@@ -512,37 +517,101 @@ var routes = {
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
-            let {Model, apiBaseUri} = request;
+            let {Model, /*apiBaseUri,*/ db} = request;
             let {delimiter} = request.query;
+            let {format} = request.params;
 
-            // const TOO_MANY_RESULTS = 100000;
+            let contentType;
+            if (format === 'tsv') {
+                format = 'csv';
+                delimiter = '\t';
+                contentType = 'text/tab-separated-values';
+            }
 
-            Model.count(queryFilter).then((total) => {
+            let stream;
+            try {
+                stream = db.stream(Model.name, queryFilter, queryOptions);
+            } catch(err) {
+                if (err.name === 'ValidationError') {
+                    return reply.badRequest(err);
+                }
+                return reply.badImplementation(err);
+            }
 
-                // if (total >= TOO_MANY_RESULTS) {
-                //     return reply.entityTooLarge(`The response has to many results (>${TOO_MANY_RESULTS}). Try to narrow down your query`);
-                // }
+            let resultStream;
 
-                let {format} = request.params;
+            if (format === 'json') {
+                // contentType = 'application/vnd.api+json';
+                contentType = 'application/json';
 
-                let contentStream;
-                let contentType = 'text/plain';
-                if (format === 'json') {
-                    contentType = 'application/vnd.api+json';
-                    contentStream = streamJsonApi(Model, total, queryFilter, queryOptions, apiBaseUri);
-                } else if (format === 'csv') {
+                let beginStream = new Readable();
+                beginStream.push('{"data":[');
+                beginStream.push(null);
+
+                // TODO
+                let jsonApiTransform = es.map((doc, callback) => {
+                    try {
+                        doc = JSON.stringify(doc);
+                        callback(null, doc);
+                    } catch(err) {
+                        callback(err);
+                    }
+                });
+
+                let contentStream = stream.pipe(jsonApiTransform).pipe(es.join(','));
+
+                let endStream = new Readable();
+                endStream.push(']}');
+                endStream.push(null);
+
+                resultStream = streamStream();
+                resultStream.write(beginStream);
+                resultStream.write(contentStream);
+                resultStream.write(endStream);
+                resultStream.end();
+            }
+            else if (format === 'csv') {
+                if (!contentType) {
                     contentType = 'text/csv';
-                    contentStream = streamCsv(Model, total, queryFilter, queryOptions, delimiter);
-                } else if (format === 'tsv') {
-                    contentType = 'text/tab-separated-values';
-                    contentStream = streamCsv(Model, total, queryFilter, queryOptions, '\t');
                 }
 
-                return reply.ok(contentStream)
-                   .type(contentType)
-                   .header('Content-Disposition', `attachment; filename="${Model.name}.${format}"`);
+                let csvOptions = {fields: queryOptions.fields, delimiter: delimiter};
 
-            });
+                let csvHeader;
+                try {
+                    csvHeader = Model.csvHeader(csvOptions);
+                } catch(err) {
+                    return reply.badImplementation(err);
+                }
+
+                csvHeader = `${csvHeader}\n`;
+
+                let beginStream = new Readable();
+                beginStream.push(csvHeader);
+                beginStream.push(null);
+
+                let csvTransform = es.map((doc, callback) => {
+                    Model.wrap(doc).toCsv(csvOptions).then((csvLine) => {
+                        callback(null, csvLine);
+                    }).catch((err) => {
+                        callback(err);
+                    });
+                });
+
+                let contentStream = stream.pipe(csvTransform).pipe(es.join('\n'));
+
+                resultStream = streamStream();
+                resultStream.write(beginStream);
+                resultStream.write(contentStream);
+                resultStream.end();
+            }
+
+            return reply.ok(resultStream)
+                        .type(contentType)
+                        .header(
+                            'Content-Disposition',
+                            `attachment; filename="${Model.name}.${format}"`
+                        );
         }
     }
 };
