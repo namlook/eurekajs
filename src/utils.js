@@ -1,9 +1,11 @@
 import _ from 'lodash';
 
-import {Readable as readableStream} from 'stream';
+import {Readable} from 'stream';
 import es from 'event-stream';
-import through2 from 'through2';
+// import through2 from 'through2';
 import streamStream from 'stream-stream';
+
+import csv from 'csv';
 
 
 export var pascalCase = function(string) {
@@ -15,130 +17,275 @@ export var resourceObjectLink = function(apiBaseUri, instance) {
     return `${apiBaseUri}/${instance.Model.meta.names.plural}/${id}`;
 };
 
-let _stream = function(total, query, options, headerStream, footerStream, throughTransform) {
-    let pagination = 2;
 
-    if (options.limit) {
-        if (total > options.limit) {
-            total = options.limit;
+export var csvStreamTransform = function(modelClass, options) {
+    let properties;
+    if (options.fields) {
+        properties = [];
+        for (let propertyName of options.fields) {
+            let property = modelClass.schema.getProperty(propertyName);
+            if (!property) {
+                throw new Error(`fields: unknown property "${propertyName}"`);
+            }
+            properties.push(property);
         }
+    } else {
+        properties = modelClass.schema.properties;
     }
-    let nbTrip = Math.ceil(total / pagination);
 
-    let offset = 0;
-    let args = _.range(0, nbTrip).map(() => {
+    properties = _.sortBy(properties, 'name');
 
-        let _options = _.clone(options);
-        _options.offset = offset;
+    return es.map((doc, callback) => {
 
-        if (offset + pagination > options.limit) {
-            _options.limit = (offset + pagination) - options.limit;
+        let values = properties.map((property) => {
+            let value = doc[property.name];
+
+            if (!_.isArray(value)) {
+                if (value != null) {
+                    value = [value];
+                } else {
+                    value = [];
+                }
+            }
+
+            if (property.isRelation()) {
+                value = value.map((v) => v._id);
+            }
+
+            if (property.type === 'date') {
+                value = value.map((d) => d.toUTCString());
+            }
+
+            return value.join('|');
+        });
+
+        values.unshift(doc._type);
+        values.unshift(doc._id);
+
+        let csvOptions = {delimiter: options.delimiter, eof: true};
+
+        csv.stringify([values], csvOptions, (err, output) => {
+            if (err) {
+                return callback(err);
+            }
+
+            return callback(null, output);
+        });
+    });
+};
+
+export let streamCSV = function(modelClass, stream, options) {
+
+    let csvHeader = modelClass.csvHeader(options);
+
+    csvHeader = `${csvHeader}\n`;
+
+    let beginStream = new Readable();
+    beginStream.push(csvHeader);
+    beginStream.push(null);
+
+    let csvTransform = csvStreamTransform(modelClass, options);
+
+    let contentStream = stream.pipe(csvTransform);//.pipe(es.join('\n'));
+
+    let resultStream = streamStream();
+    resultStream.write(beginStream);
+    resultStream.write(contentStream);
+    resultStream.end();
+
+    return resultStream;
+};
+
+
+let doc2jsonApi = function(modelClass, doc, baseUri, include) {
+    let attributes = {};
+    let relationships = {};
+
+    if (_.isArray(include)) {
+        include = {properties: true, included: include};
+    }
+
+    let {properties: includedProperties, included} = include || {};
+
+    if (includedProperties === 1) {
+        includedProperties = true;
+    }
+
+    if (includedProperties && !_.isArray(includedProperties) && !_.isBoolean(includedProperties)) {
+        includedProperties = [includedProperties];
+    }
+
+    if (included && !_.isArray(included)) {
+        throw new Error('toJsonApi(): included should be an array');
+    }
+
+    for (let property of modelClass.schema.properties) {
+        let value = doc[property.name];
+
+        let shouldBeIncluded = (
+            _.isBoolean(includedProperties) &&
+            includedProperties) || _.includes(includedProperties, property.name
+        );
+
+        if (property.isRelation()) {
+            if (property.isArray()) {
+                if (value && !_.isEmpty(value)) {
+                    let _values = [];
+                    for (let val of value) {
+                        let rel = {id: val._id, type: val._type};
+                        if (shouldBeIncluded) {
+                            let ref = `${rel.type}:::${rel.id}`;
+                            if (included.indexOf(ref) === -1) {
+                                included.push(ref);
+                            }
+                        }
+                        _values.push(rel);
+                    }
+                    value = _values;
+                } else {
+                    value = null;
+                }
+            } else if (value) {
+                value = {id: value._id, type: value._type};
+                if (shouldBeIncluded) {
+                    let ref = `${value.type}:::${value.id}`;
+                    if (included.indexOf(ref) === -1) {
+                        included.push(ref);
+                    }
+                }
+            }
+
+            if (value != null) {
+                let relationshipsData = {
+                    data: value
+                };
+
+                if (baseUri) {
+                    relationshipsData.links = {
+                        self: `${baseUri}/relationships/${property.name}`,
+                        related: `${baseUri}/${property.name}`
+                    };
+                }
+
+                relationships[property.name] = relationshipsData;
+            }
         } else {
-            _options.limit = pagination;
+            if (value != null) {
+                attributes[property.name] = value;
+            }
         }
 
-        let arg = JSON.stringify({query: query, options: _options});
-        offset += pagination;
-        return arg;
+    }
+
+    let jsonApiData = {
+        id: doc._id,
+        type: doc._type
+    };
+
+    if (!_.isEmpty(attributes)) {
+        jsonApiData.attributes = attributes;
+    }
+
+    if (!_.isEmpty(relationships)) {
+        jsonApiData.relationships = relationships;
+    }
+
+    return jsonApiData;
+};
+
+
+export let jsonApiStreamTransform = function(modelClass, include/*, baseUri*/) {
+
+    return es.map((doc, callback) => {
+        let jsonApiData = doc2jsonApi(modelClass, doc, null, include);
+        callback(null, JSON.stringify(jsonApiData));
+    });
+};
+
+
+export let streamJsonApi = function(modelClass, stream, options) {
+
+    let {include/*, baseUri*/} = options;
+
+
+    let beginStream = new Readable();
+    beginStream.push('{"data": [');
+    beginStream.push(null);
+
+    let endStream = new Readable();
+    endStream.push(']}');
+    endStream.push(null);
+
+    let includeBeginStream = new Readable();
+    includeBeginStream.push('],"included": [');
+    includeBeginStream.push(null);
+
+    let jsonApiTransform = jsonApiStreamTransform(modelClass, include);
+
+    let contentStream = stream
+        .pipe(jsonApiTransform)
+        .pipe(es.join(','));
+
+    let resultStream = streamStream();
+
+
+    contentStream.on('end', function() {
+
+        /*
+         * fetch the include relationships
+         */
+        if (include) {
+            let includeStream = es.readable(function(count, next) {
+                if (count >= include.included.length) {
+                    return this.emit('end');
+                }
+                let ref = `${include.included[count]}:::${count}`;
+                this.emit('data', ref);
+                next();
+
+            }).pipe(es.map((ref, callback) => {
+                let [type, id, index] = ref.split(':::');
+                let db = modelClass.db;
+                db.fetch(type, id).then((doc) => {
+                    if (!doc) {
+                        console.error(`${type}: "${id}" not found`);
+                        return callback(null, null);
+                    }
+                    let jsonApiDoc = doc2jsonApi(db[type], doc);
+                    let result = JSON.stringify(jsonApiDoc);
+                    if (index > 0) {
+                        result = `,${result}`;
+                    }
+                    callback(null, result);
+                }).catch((err) => {
+                    callback(err);
+                });
+            }));
+
+
+            includeStream.on('error', function(error) {
+                console.log('xxx', error);
+            });
+
+            resultStream.write(includeBeginStream);
+            resultStream.write(includeStream);
+        }
+
+        resultStream.write(endStream);
+        resultStream.end();
+
     });
 
-    let nbProceed = 0;
-    let contentStream = es.readArray(args)
-      .pipe(through2(throughTransform(total, nbProceed)));
 
-    let combinedStream = streamStream();
 
-    if (headerStream) {
-        combinedStream.write(headerStream);
-    }
+    resultStream.write(beginStream);
+    resultStream.write(contentStream);
 
-    combinedStream.write(contentStream);
+    resultStream.on('error', function(error) {
+        console.log('xxx!!!!', error);
+        console.log('xxx!!!!', error.stack);
+    });
 
-    if (footerStream) {
-        combinedStream.write(footerStream);
-    }
+    return resultStream;
 
-    combinedStream.end();
-
-    return combinedStream;
 };
-
-export var streamJsonApi = function(Model, total, query, options, apiBaseUri) {
-    let headerStream = (function() {
-        let rs = readableStream();
-        rs.push(`{"data":[`);
-        rs.push(null);
-        return rs;
-    })();
-
-
-    let footerStream = (function() {
-        let rs = readableStream();
-        rs.push(`],"links":{"self": "${apiBaseUri}/${Model.meta.names.plural}"}}`);
-        rs.push(null);
-        return rs;
-    })();
-
-    let throughTransform = function(_total, _nbProceed) {
-        return function(chunk, enc, callback) {
-            let arg = JSON.parse(chunk);
-            Model.find(arg.query, arg.options).then((array) => {
-                array.forEach((instance) => {
-                    let resourceLink = resourceObjectLink(apiBaseUri, instance);
-                    let jsonApiData = instance.toJsonApi(resourceLink).data;
-                    this.push(JSON.stringify(jsonApiData));
-                    _nbProceed++;
-
-                    if (_nbProceed < _total) {
-                        this.push(',\n');
-                    }
-                });
-                callback();
-            });
-        };
-    };
-
-    return _stream(total, query, options, headerStream, footerStream, throughTransform);
-};
-
-
-export var streamCsv = function(Model, total, query, options, delimiter) {
-    // header of the CSV
-    let startStream = (function() {
-        let rs = readableStream();
-        let csvOptions = {fields: options.fields, delimiter: delimiter};
-        rs.push(Model.csvHeader(csvOptions) + '\n');
-        rs.push(null);
-        return rs;
-    })();
-
-
-    // no need for footer
-    let footerStream = null;
-
-    let throughTransform = function(_total, _nbProceed) {
-        return function(chunk, enc, callback) {
-            let arg = JSON.parse(chunk);
-            Model.find(arg.query, arg.options).then((array) => {
-                let promises = array.map((instance) => {
-                    return instance.toCsv({fields: options.fields, delimiter: delimiter});
-                });
-
-                Promise.all(promises).then((rows) => {
-                    this.push(rows.join('\n'));
-
-                    _nbProceed = _nbProceed + rows.length;
-
-                    if (_nbProceed < _total) {
-                        this.push('\n');
-                    }
-
-                    callback();
-                });
-            });
-        };
-    };
-
-    return _stream(total, query, options, startStream, footerStream, throughTransform);
-};
-

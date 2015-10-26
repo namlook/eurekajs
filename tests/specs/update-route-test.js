@@ -149,6 +149,161 @@ describe('Route [update]', function() {
         });
     });
 
+    it('should update relation with null value', function(done){
+        let patchOptions = {
+            method: 'PATCH',
+            url: `/api/1/generics/generic3`,
+            payload: {
+                data: {
+                    id: 'generic3',
+                    type: 'Generic',
+                    attributes: {
+                        text: 'modified'
+                    },
+                    relationships: {
+                        relation: {
+                            data: null
+                        }
+                    }
+                }
+            }
+        };
+
+        server.inject(patchOptions, function(patchResponse) {
+            expect(patchResponse.statusCode).to.equal(200);
+            expect(patchResponse.headers['content-type']).to.include(jsonApiMime);
+            let data = patchResponse.result.data;
+            expect(data.id).to.equal('generic3');
+            expect(data.type).to.equal('Generic');
+            expect(data.attributes.text).to.equal('modified');
+            expect(data.attributes.boolean).to.equal(true);
+            expect(data.attributes.integer).to.equal(3);
+            expect(data.relationships.relation).to.not.exist();
+            expect(data.relationships.relations).to.exist();
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/generic3'
+            };
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                var generic3 = response.result.data;
+
+                expect(generic3.attributes.text).to.equal('modified');
+                expect(generic3.relationships.relation).to.not.exist();
+                expect(generic3.relationships.relations).to.exist();
+
+                done();
+            });
+        });
+    });
+
+    it('should update relations with empty array', function(done){
+        let patchOptions = {
+            method: 'PATCH',
+            url: `/api/1/generics/generic3`,
+            payload: {
+                data: {
+                    id: 'generic3',
+                    type: 'Generic',
+                    attributes: {
+                        text: 'modified'
+                    },
+                    relationships: {
+                        relations: {
+                            data: []
+                        }
+                    }
+                }
+            }
+        };
+
+        server.inject(patchOptions, function(patchResponse) {
+            expect(patchResponse.statusCode).to.equal(200);
+            expect(patchResponse.headers['content-type']).to.include(jsonApiMime);
+            let data = patchResponse.result.data;
+            expect(data.id).to.equal('generic3');
+            expect(data.type).to.equal('Generic');
+            expect(data.attributes.text).to.equal('modified');
+            expect(data.attributes.boolean).to.equal(true);
+            expect(data.attributes.integer).to.equal(3);
+            expect(data.relationships.relation).to.exist();
+            expect(data.relationships.relations).to.not.exist();
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/generic3'
+            };
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                var generic3 = response.result.data;
+
+                expect(generic3.attributes.text).to.equal('modified');
+                expect(generic3.relationships.relation).to.exist();
+                expect(generic3.relationships.relations).to.not.exist();
+
+                done();
+            });
+        });
+    });
+
+
+    it('should update a document with null values', function(done){
+        let patchOptions = {
+            method: 'PATCH',
+            url: `/api/1/generics/generic3`,
+            payload: {
+                data: {
+                    id: 'generic3',
+                    type: 'Generic',
+                    attributes: {
+                        text: null
+                    },
+                    relationships: {
+                        relation: {
+                            data: null
+                        },
+                        relations: {
+                            data: []
+                        }
+                    }
+                }
+            }
+        };
+
+        server.inject(patchOptions, function(patchResponse) {
+            expect(patchResponse.statusCode).to.equal(200);
+            expect(patchResponse.headers['content-type']).to.include(jsonApiMime);
+            let data = patchResponse.result.data;
+            expect(data.id).to.equal('generic3');
+            expect(data.type).to.equal('Generic');
+            expect(data.attributes.text).to.not.exist();
+            expect(data.attributes.boolean).to.equal(true);
+            expect(data.attributes.integer).to.equal(3);
+            expect(data.relationships).to.not.exist();
+
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/generic3'
+            };
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                var generic3 = response.result.data;
+
+                expect(generic3.attributes.text).to.not.exist();
+                expect(generic3.relationships).to.not.exist();
+
+                done();
+            });
+        });
+    });
+
     it('should update a targeted relation', function(done){
         let patchOptions = {
             method: 'PATCH',
@@ -256,7 +411,6 @@ describe('Route [update]', function() {
         };
 
         server.inject(patchOptions, function(patchResponse) {
-            console.log(patchResponse.result);
             expect(patchResponse.statusCode).to.equal(204);
             expect(patchResponse.headers['content-type']).to.not.exist();
 

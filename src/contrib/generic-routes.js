@@ -6,7 +6,7 @@ import es from 'event-stream';
 import {Readable} from 'stream';
 import streamStream from 'stream-stream';
 
-import {resourceObjectLink/*, streamJsonApi, streamCsv*/} from '../utils';
+import {resourceObjectLink, streamJsonApi, streamCSV} from '../utils';
 
 let jsonApiRelationshipsSchema = joi.object().keys({
     id: joi.string().required(),
@@ -26,7 +26,9 @@ let jsonApiSchema = joi.object().keys({
         relationships: joi.object().pattern(/.+/, joi.object().keys({
             data: joi.alternatives().try(
                 jsonApiRelationshipsSchema,
-                joi.array().items(jsonApiRelationshipsSchema)
+                joi.array().items(jsonApiRelationshipsSchema),
+                joi.string().empty(),
+                null
             ),
             links: jsonApiLinkSchema
         }))
@@ -153,6 +155,7 @@ var routes = {
         },
         handler: function(request, reply) {
             let instance = request.pre.document;
+            // TODO support fields
             let propertyName = request.params.relation;
             let {db, apiBaseUri} = request;
 
@@ -363,26 +366,35 @@ var routes = {
 
             if (jsonApiData.attributes) {
                 _.forEach(jsonApiData.attributes, (value, propertyName) => {
-                    instance.set(propertyName, value);
+                    if (value == null && value === '') {
+                        instance.unset(propertyName);
+                    } else {
+                        instance.set(propertyName, value);
+                    }
                 });
             }
 
             if (jsonApiData.relationships) {
                 _.forEach(jsonApiData.relationships, (value, propertyName) => {
-                    if (_.isArray(value.data)) {
-                        value = value.data.map((item) => {
-                            return {
-                                _id: item.id,
-                                _type: item.type
-                            };
-                        });
-                    } else {
-                        value = {
-                            _id: value.data.id,
-                            _type: value.data.type
-                        };
+                    if( !value.data) {
+                        instance.unset(propertyName);
                     }
-                    instance.set(propertyName, value);
+                    else {
+                        if (_.isArray(value.data)) {
+                            value = value.data.map((item) => {
+                                return {
+                                    _id: item.id,
+                                    _type: item.type
+                                };
+                            });
+                        } else {
+                            value = {
+                                _id: value.data.id,
+                                _type: value.data.type
+                            };
+                        }
+                        instance.set(propertyName, value);
+                    }
                 });
             }
 
@@ -391,9 +403,15 @@ var routes = {
                 let results = savedDoc.toJsonApi(resourceLink);
                 return reply.jsonApi(results);
             }).catch((error) => {
+                console.log('>>xxx', error);
+                console.log(error.stack);
                 if (error.name === 'ValidationError') {
+                    let errorMessage = error.name;
+                    if (error.extra) {
+                        errorMessage = `${error.name}: ${error.extra}`;
+                    }
                     return reply.badRequest(
-                        `${error.name}: ${error.extra}`, {failedDocument: payload});
+                        errorMessage, {failedDocument: payload});
                 } else {
                     return reply.badImplementation(error);
                 }
@@ -419,15 +437,19 @@ var routes = {
                 }
             }
 
-            let value;
-            if (_.isArray(payload.data)) {
-                value = payload.data.map((item) => {
-                    return {_id: item.id, _type: item.type};
-                });
+            if (payload.data == null) {
+                instance.unset(propertyName);
             } else {
-                value = {_id: payload.data.id, _type: payload.data.type};
+                let value;
+                if (_.isArray(payload.data)) {
+                    value = payload.data.map((item) => {
+                        return {_id: item.id, _type: item.type};
+                    });
+                } else {
+                    value = {_id: payload.data.id, _type: payload.data.type};
+                }
+                instance.set(propertyName, value);
             }
-            instance.set(propertyName, value);
 
             instance.save().then(() => {
                 return reply.noContent();
@@ -507,17 +529,21 @@ var routes = {
         config: {
             validate: {
                 params: {
-                    format: joi.string().only('json', 'csv', 'tsv').label('format')
+                    format: joi.string().only('json', 'jsonapi', 'csv', 'tsv').label('format')
                 },
                 query: {
                     // asJsonArray: joi.boolean()
-                    delimiter: joi.string().default(',')
+                    delimiter: joi.string().default(','),
+                    include: joi.alternatives().try(
+                        joi.number(),
+                        joi.string()
+                    ).default(false)
                 }
             }
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
-            let {Model, /*apiBaseUri,*/ db} = request;
+            let {Model, apiBaseUri, db} = request;
             let {delimiter} = request.query;
             let {format} = request.params;
 
@@ -541,7 +567,6 @@ var routes = {
             let resultStream;
 
             if (format === 'json') {
-                // contentType = 'application/vnd.api+json';
                 contentType = 'application/json';
 
                 let beginStream = new Readable();
@@ -577,33 +602,35 @@ var routes = {
 
                 let csvOptions = {fields: queryOptions.fields, delimiter: delimiter};
 
-                let csvHeader;
                 try {
-                    csvHeader = Model.csvHeader(csvOptions);
+                    resultStream = streamCSV(Model, stream, csvOptions);
+                } catch(err) {
+                    return reply.badImplementation(err);
+                }
+            } else if (format === 'jsonapi') {
+                format = 'json';
+                contentType = 'application/vnd.api+json';
+
+                let jsonApiOptions = {};
+                let includeProperties = request.query.include;
+                if (includeProperties) {
+                    if (_.isString(includeProperties)) {
+                        includeProperties = includeProperties.split(',');
+                    }
+                    jsonApiOptions.include = {properties: includeProperties, included: []};
+                    jsonApiOptions.baseUri = apiBaseUri;
+
+                }
+
+                try {
+                    resultStream = streamJsonApi(Model, stream, jsonApiOptions);
                 } catch(err) {
                     return reply.badImplementation(err);
                 }
 
-                csvHeader = `${csvHeader}\n`;
-
-                let beginStream = new Readable();
-                beginStream.push(csvHeader);
-                beginStream.push(null);
-
-                let csvTransform = es.map((doc, callback) => {
-                    Model.wrap(doc).toCsv(csvOptions).then((csvLine) => {
-                        callback(null, csvLine);
-                    }).catch((err) => {
-                        callback(err);
-                    });
+                resultStream.on('error', function(error) {
+                    console.log('ERRRROR', error);
                 });
-
-                let contentStream = stream.pipe(csvTransform).pipe(es.join('\n'));
-
-                resultStream = streamStream();
-                resultStream.write(beginStream);
-                resultStream.write(contentStream);
-                resultStream.end();
             }
 
             return reply.ok(resultStream)
