@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import Bcrypt from 'bcrypt';
 import joi from 'joi';
 import _ from 'lodash';
-import {resourceObjectLink} from '../utils';
+import {doc2jsonApi} from '../utils';
 
 import Boom from 'boom';
 
@@ -101,7 +101,9 @@ var routes = {
                         return reply.badImplementation(mailError);
                     }
 
-                    let jsonApiData = savedUser.toJsonApi(resourceObjectLink(apiBaseUri, savedUser));
+                    let jsonApiData = {
+                        data: doc2jsonApi(db.User, savedUser.attrs(), apiBaseUri)
+                    };
 
                     delete jsonApiData.data.attributes.password;
 

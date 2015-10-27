@@ -6,7 +6,7 @@ import es from 'event-stream';
 import {Readable} from 'stream';
 import streamStream from 'stream-stream';
 
-import {resourceObjectLink, streamJsonApi, streamCSV} from '../utils';
+import {doc2jsonApi, streamJsonApi, streamCSV} from '../utils';
 
 let jsonApiRelationshipsSchema = joi.object().keys({
     id: joi.string().required(),
@@ -78,11 +78,9 @@ var routes = {
                 }
             };
 
-            Model.find(queryFilter, queryOptions).then((collection) => {
-                let jsonApiData = collection.map((instance) => {
-                    let resourceLink = resourceObjectLink(apiBaseUri, instance);
-                    let res = instance.toJsonApi(resourceLink, include);
-                    return res.data;
+            db.find(Model.name, queryFilter, queryOptions).then((collection) => {
+                let jsonApiData = collection.map((doc) => {
+                    return doc2jsonApi(Model, doc, apiBaseUri, include);
                 });
 
                 results.data = jsonApiData;
@@ -93,14 +91,15 @@ var routes = {
                 let included = include && include.included || [];
 
                 const CONCURRENCY_LIMIT = 10;
-                return Promise.map(included, (doc) => {
-                    return db[doc.type].fetch(doc.id);
+                return Promise.map(included, (ref) => {
+                    let [type, id] = ref.split(':::');
+                    return db.fetch(type, id);
                 }, {concurrency: CONCURRENCY_LIMIT});
 
             }).then((docs) => {
                 if (docs.length) {
                     results.included = _.compact(docs).map((o) => {
-                        return o.toJsonApi(resourceObjectLink(apiBaseUri, o)).data;
+                        return doc2jsonApi(db[o._type], o, apiBaseUri);
                     });
                 }
                 return reply.jsonApi(results);
@@ -122,13 +121,12 @@ var routes = {
             let apiBaseUri = request.apiBaseUri;
 
 
-            let resourceLink = resourceObjectLink(apiBaseUri, instance);
-            let jsonApiData = instance.toJsonApi(resourceLink);
+            let jsonApiData = doc2jsonApi(instance.Model, instance.attrs(), apiBaseUri);
 
             let results;
 
-            if (jsonApiData.data.relationships) {
-                results = jsonApiData.data.relationships[propertyName];
+            if (jsonApiData.relationships) {
+                results = jsonApiData.relationships[propertyName];
             }
 
             if (!results) {
@@ -205,8 +203,12 @@ var routes = {
                 include = {properties: includeProperties, included: []};
             }
 
-            let resourceLink = resourceObjectLink(apiBaseUri, instance);
-            let results = instance.toJsonApi(resourceLink, include);
+            let results = {
+                data: doc2jsonApi(instance.Model, instance.attrs(), apiBaseUri, include),
+                links: {
+                    self: `${apiBaseUri}/${instance.Model.meta.names.plural}/${instance._id}`
+                }
+            };
 
             /**
              * fetch included if needed
@@ -215,12 +217,13 @@ var routes = {
 
             const CONCURRENCY_LIMIT = 50;
 
-            Promise.map(included, (doc) => {
-                return db[doc.type].fetch(doc.id);
+            Promise.map(included, (ref) => {
+                let [type, id] = ref.split(':::');
+                return db.fetch(type, id);
             }, {concurrency: CONCURRENCY_LIMIT}).then((docs) => {
                 if (docs.length) {
                     results.included = docs.map((o) => {
-                        return o.toJsonApi(resourceObjectLink(apiBaseUri, o)).data;
+                        return doc2jsonApi(db[o._type], o, apiBaseUri);
                     });
                 }
 
@@ -253,7 +256,7 @@ var routes = {
         method: 'POST',
         path: '/',
         handler: function(request, reply) {
-            let {payload, Model, apiBaseUri} = request;
+            let {payload, Model, apiBaseUri, db} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -311,7 +314,7 @@ var routes = {
              */
             let checkExistancePromise = new Promise((resolve) => {
                 if (doc._id) {
-                    Model.fetch(doc._id).then((docExists) => {
+                    db.fetch(Model.name, doc._id).then((docExists) => {
                         if (docExists) {
                             return reply.conflict(`${doc._id} already exists`);
                         }
@@ -326,9 +329,13 @@ var routes = {
              */
             checkExistancePromise.then(() => {
                 return Model.create(doc).save();
-            }).then((data) => {
-                let resourceLink = resourceObjectLink(apiBaseUri, data);
-                let results = data.toJsonApi(resourceLink);
+            }).then((savedData) => {
+                let results = {
+                    data: doc2jsonApi(Model, savedData.attrs(), apiBaseUri),
+                    links: {
+                        self: `${apiBaseUri}/${Model.meta.names.plural}/${savedData._id}`
+                    }
+                };
                 return reply.created(results).type('application/vnd.api+json');
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
@@ -346,7 +353,7 @@ var routes = {
         method: ['PATCH'],
         path: `/{id}`,
         handler: function(request, reply) {
-            let {payload, apiBaseUri} = request;
+            let {payload, apiBaseUri, db} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -375,19 +382,31 @@ var routes = {
             }
 
             if (jsonApiData.relationships) {
-                _.forEach(jsonApiData.relationships, (value, propertyName) => {
+                for (let propertyName of Object.keys(jsonApiData.relationships)) {
+                    let value = jsonApiData.relationships[propertyName];
+
                     if( !value.data) {
                         instance.unset(propertyName);
                     }
                     else {
                         if (_.isArray(value.data)) {
-                            value = value.data.map((item) => {
-                                return {
+                            let _values = [];
+                            for (let item of value.data) {
+                                if (!db[item.type]) {
+                                   return reply.badRequest(`bad payload: unknown type "${item.type}" for the relation "${propertyName}"`);
+                                }
+
+                                _values.push({
                                     _id: item.id,
                                     _type: item.type
-                                };
-                            });
+                                });
+                            }
+                            value = _values;
                         } else {
+                            if (!db[value.data.type]) {
+                               return reply.badRequest(`bad payload: unknown type "${value.data.type}" for the relation "${propertyName}"`);
+                            }
+
                             value = {
                                 _id: value.data.id,
                                 _type: value.data.type
@@ -395,16 +414,15 @@ var routes = {
                         }
                         instance.set(propertyName, value);
                     }
-                });
+                }
             }
 
             instance.save().then((savedDoc) => {
-                let resourceLink = resourceObjectLink(apiBaseUri, savedDoc);
-                let results = savedDoc.toJsonApi(resourceLink);
+                let results = {
+                    data: doc2jsonApi(instance.Model, savedDoc.attrs(), apiBaseUri)
+                };
                 return reply.jsonApi(results);
             }).catch((error) => {
-                console.log('>>xxx', error);
-                console.log(error.stack);
                 if (error.name === 'ValidationError') {
                     let errorMessage = error.name;
                     if (error.extra) {
@@ -427,7 +445,7 @@ var routes = {
             let instance = request.pre.document;
             let propertyName = request.params.propertyName;
 
-            let {payload} = request;
+            let {payload, db} = request;
 
             if (typeof payload === 'string') {
                 try {
@@ -442,10 +460,17 @@ var routes = {
             } else {
                 let value;
                 if (_.isArray(payload.data)) {
-                    value = payload.data.map((item) => {
-                        return {_id: item.id, _type: item.type};
-                    });
+                    value = [];
+                    for (let item of payload.data) {
+                        if (!db[item.type]) {
+                           return reply.badRequest(`bad payload: unknown type "${item.type}" for the relation "${propertyName}"`);
+                        }
+                        value.push({_id: item.id, _type: item.type});
+                    }
                 } else {
+                    if (!db[payload.data.type]) {
+                       return reply.badRequest(`bad payload: unknown type "${payload.data.type}" for the relation "${propertyName}"`);
+                    }
                     value = {_id: payload.data.id, _type: payload.data.type};
                 }
                 instance.set(propertyName, value);
@@ -634,11 +659,11 @@ var routes = {
             }
 
             return reply.ok(resultStream)
-                        .type(contentType)
-                        .header(
-                            'Content-Disposition',
-                            `attachment; filename="${Model.name}.${format}"`
-                        );
+                .type(contentType)
+                .header(
+                    'Content-Disposition',
+                    `attachment; filename="${Model.name}.${format}"`
+                );
         }
     }
 };

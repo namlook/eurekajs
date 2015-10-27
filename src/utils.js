@@ -2,7 +2,6 @@ import _ from 'lodash';
 
 import {Readable} from 'stream';
 import es from 'event-stream';
-// import through2 from 'through2';
 import streamStream from 'stream-stream';
 
 import csv from 'csv';
@@ -12,9 +11,9 @@ export var pascalCase = function(string) {
     return _.capitalize(_.camelCase(string));
 };
 
-export var resourceObjectLink = function(apiBaseUri, instance) {
+export var resourceObjectLink = function(modelClass, apiBaseUri, instance) {
     let id = encodeURIComponent(instance._id);
-    return `${apiBaseUri}/${instance.Model.meta.names.plural}/${id}`;
+    return `${apiBaseUri}/${modelClass.meta.names.plural}/${id}`;
 };
 
 
@@ -97,9 +96,14 @@ export let streamCSV = function(modelClass, stream, options) {
 };
 
 
-let doc2jsonApi = function(modelClass, doc, baseUri, include) {
+export let doc2jsonApi = function(modelClass, doc, apiBaseUri, include) {
     let attributes = {};
     let relationships = {};
+
+    let baseUri;
+    if (apiBaseUri) {
+        baseUri = resourceObjectLink(modelClass, apiBaseUri, doc);
+    }
 
     if (_.isArray(include)) {
         include = {properties: true, included: include};
@@ -131,8 +135,9 @@ let doc2jsonApi = function(modelClass, doc, baseUri, include) {
             if (property.isArray()) {
                 if (value && !_.isEmpty(value)) {
                     let _values = [];
-                    for (let val of value) {
-                        let rel = {id: val._id, type: val._type};
+                    for (let item of value) {
+                        let rel = {id: item._id, type: item._type};
+
                         if (shouldBeIncluded) {
                             let ref = `${rel.type}:::${rel.id}`;
                             if (included.indexOf(ref) === -1) {
@@ -147,6 +152,7 @@ let doc2jsonApi = function(modelClass, doc, baseUri, include) {
                 }
             } else if (value) {
                 value = {id: value._id, type: value._type};
+
                 if (shouldBeIncluded) {
                     let ref = `${value.type}:::${value.id}`;
                     if (included.indexOf(ref) === -1) {

@@ -75,7 +75,6 @@ describe('Route [create]', function() {
         server.inject(options, function(response) {
             expect(response.statusCode).to.equal(201);
             expect(response.headers['content-type']).to.include(jsonApiMime);
-
             let doc = response.result.data;
             expect(doc.id).to.not.be.null();
             expect(doc.type).to.equal('Generic');
@@ -96,8 +95,8 @@ describe('Route [create]', function() {
             expect(relations[1].id).to.equal('relation1');
             expect(relations[1].type).to.equal('GenericRelation');
 
-            expect(doc.links).to.be.an.object();
-            expect(doc.links.self).to.contains(`/generics/${doc.id}`);
+            expect(response.result.links).to.be.an.object();
+            expect(response.result.links.self).to.contains(`/generics/${doc.id}`);
             done();
         });
     });

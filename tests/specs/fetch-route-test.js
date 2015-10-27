@@ -64,6 +64,9 @@ describe('Route [fetch]', function() {
             expect(doc.attributes.integer).to.equal(1);
             expect(doc.attributes.float).to.equal(1.14);
             expect(new Date(doc.attributes.date).getTime()).to.equal(date.getTime());
+
+            expect(result.links).to.be.an.object();
+            expect(result.links.self).to.endWith(`/api/1/generics/${doc.id}`);
             done();
         });
     });

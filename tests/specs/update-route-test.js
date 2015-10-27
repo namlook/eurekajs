@@ -411,24 +411,14 @@ describe('Route [update]', function() {
         };
 
         server.inject(patchOptions, function(patchResponse) {
-            expect(patchResponse.statusCode).to.equal(204);
-            expect(patchResponse.headers['content-type']).to.not.exist();
+            expect(patchResponse.statusCode).to.equal(400);
 
-            let options = {
-                method: 'GET',
-                url: '/api/1/generics/generic3'
-            };
-            server.inject(options, function(response) {
-                expect(response.statusCode).to.equal(200);
-                expect(response.headers['content-type']).to.include(jsonApiMime);
+            let error = patchResponse.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('bad payload: unknown type "bad-type" for the relation "relation"');
 
-                var generic3 = response.result.data;
-                expect(generic3.relationships.relation.data.id).to.equal('relation2');
-                expect(generic3.relationships.relation.links.self).to.match(/\/generic3\/relationships\/relation/);
-                expect(generic3.relationships.relation.links.related).to.match(/\/generic3\/relation/);
-
-                done();
-            });
+            done();
         });
     });
 
@@ -445,25 +435,14 @@ describe('Route [update]', function() {
         };
 
         server.inject(patchOptions, function(patchResponse) {
-            expect(patchResponse.statusCode).to.equal(204);
-            expect(patchResponse.headers['content-type']).to.not.exist();
+            expect(patchResponse.statusCode).to.equal(400);
 
-            let options = {
-                method: 'GET',
-                url: '/api/1/generics/generic3'
-            };
-            server.inject(options, function(response) {
-                expect(response.statusCode).to.equal(200);
-                expect(response.headers['content-type']).to.include(jsonApiMime);
+            let error = patchResponse.result.errors[0];
+            expect(error.status).to.equal(400);
+            expect(error.title).to.equal('Bad Request');
+            expect(error.detail).to.equal('bad payload: unknown type "bad-type" for the relation "relations"');
 
-                var generic3 = response.result.data;
-                expect(generic3.relationships.relations.data[0].id).to.equal('relation8');
-                expect(generic3.relationships.relations.data[1].id).to.equal('relation9');
-                expect(generic3.relationships.relations.links.self).to.match(/\/generic3\/relationships\/relations/);
-                expect(generic3.relationships.relations.links.related).to.match(/\/generic3\/relations/);
-
-                done();
-            });
+            done();
         });
     });
 
