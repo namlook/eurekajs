@@ -75,20 +75,24 @@ export var csvStreamTransform = function(modelClass, options) {
 
 export let streamCSV = function(modelClass, stream, options) {
 
-    let csvHeader = modelClass.csvHeader(options);
+    let beginStream;
+    if (options.header) {
+        let csvHeader = modelClass.csvHeader(options);
+        csvHeader = `${csvHeader}\n`;
 
-    csvHeader = `${csvHeader}\n`;
-
-    let beginStream = new Readable();
-    beginStream.push(csvHeader);
-    beginStream.push(null);
+        beginStream = new Readable();
+        beginStream.push(csvHeader);
+        beginStream.push(null);
+    }
 
     let csvTransform = csvStreamTransform(modelClass, options);
 
     let contentStream = stream.pipe(csvTransform);//.pipe(es.join('\n'));
 
     let resultStream = streamStream();
-    resultStream.write(beginStream);
+    if (beginStream) {
+        resultStream.write(beginStream);
+    }
     resultStream.write(contentStream);
     resultStream.end();
 

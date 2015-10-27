@@ -558,18 +558,42 @@ var routes = {
                 },
                 query: {
                     // asJsonArray: joi.boolean()
-                    delimiter: joi.string().default(','),
-                    include: joi.alternatives().try(
-                        joi.number(),
-                        joi.string()
-                    ).default(false)
+                    delimiter: joi.when(
+                        '$params.format', {
+                            is: joi.valid('csv'),
+                            then: joi.string().default(','),
+                            otherwise: joi.forbidden()
+                        }
+                    ),
+                    header: joi.when(
+                        '$params.format', {
+                            is: joi.valid('csv', 'tsv'),
+                            then: joi.boolean().default(true),
+                            otherwise: joi.forbidden()
+                        }
+                    ),
+                    include: joi.when(
+                        '$params.format', {
+                            is: joi.valid('jsonapi'),
+                            then: joi.alternatives().try(
+                                joi.number(),
+                                joi.string()
+                            ),
+                            otherwise: joi.forbidden()
+                        }
+                    )
+                },
+                failAction: function (request, reply, source, error) {
+                    let message = error.data.details.map((o) => o.message);
+                    error.output.payload.message = message[0];
+                    return reply(error);
                 }
             }
         },
         handler: function(request, reply) {
             let {queryFilter, queryOptions} = request.pre;
             let {Model, apiBaseUri, db} = request;
-            let {delimiter} = request.query;
+            let {delimiter, header} = request.query;
             let {format} = request.params;
 
             let contentType;
@@ -625,7 +649,11 @@ var routes = {
                     contentType = 'text/csv';
                 }
 
-                let csvOptions = {fields: queryOptions.fields, delimiter: delimiter};
+                let csvOptions = {
+                    fields: queryOptions.fields,
+                    delimiter: delimiter,
+                    header: header
+                };
 
                 try {
                     resultStream = streamCSV(Model, stream, csvOptions);

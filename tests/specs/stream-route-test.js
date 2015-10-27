@@ -161,6 +161,44 @@ describe('Route [stream]', function() {
                 done();
             });
         });
+
+        it('should throw a 400 error when passing delimiter', function(done){
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/i/stream/jsonapi?delimiter=f'
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(400);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('"delimiter" is not allowed');
+
+                done();
+            });
+        });
+
+        it('should throw a 400 error when passing header', function(done){
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/i/stream/jsonapi?header=true'
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(400);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('"header" is not allowed');
+
+                done();
+            });
+        });
     });
 
 
@@ -365,6 +403,42 @@ describe('Route [stream]', function() {
                 });
             });
         });
+
+        it('should skip the header when the "header" is false', function(done){
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/i/stream/csv?header=false'
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(csvMime);
+
+                let firstLine = response.result.split('\n')[0];
+                expect(firstLine.split(',')).to.not.include(['_id', '_type']);
+
+                done();
+            });
+        });
+
+        it('should throw a 400 error when passing include', function(done){
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/i/stream/csv?include=1'
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(400);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('"include" is not allowed');
+
+                done();
+            });
+        });
     });
 
     describe('TSV export', function() {
@@ -416,6 +490,42 @@ describe('Route [stream]', function() {
                 });
             });
         });
+
+        it('should skip the header when the "header" is false', function(done){
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/i/stream/tsv?header=false'
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(200);
+                expect(response.headers['content-type']).to.include(tsvMime);
+
+                let firstLine = response.result.split('\n')[0];
+                expect(firstLine.split('\t')).to.not.include(['_id', '_type']);
+
+                done();
+            });
+        });
+
+        it('should throw a 400 error when passing include', function(done){
+            let options = {
+                method: 'GET',
+                url: '/api/1/generics/i/stream/tsv?include=1'
+            };
+
+            server.inject(options, function(response) {
+                expect(response.statusCode).to.equal(400);
+                expect(response.headers['content-type']).to.include(jsonApiMime);
+
+                let error = response.result.errors[0];
+                expect(error.status).to.equal(400);
+                expect(error.title).to.equal('Bad Request');
+                expect(error.detail).to.equal('"include" is not allowed');
+
+                done();
+            });
+        });
     });
 
     it('should throw a 400 error if the format is unknown', function(done){
@@ -431,7 +541,7 @@ describe('Route [stream]', function() {
             let error = response.result.errors[0];
             expect(error.status).to.equal(400);
             expect(error.title).to.equal('Bad Request');
-            expect(error.detail).to.equal('child "format" fails because ["format" must be one of [json, jsonapi, csv, tsv]]');
+            expect(error.detail).to.equal('"format" must be one of [json, jsonapi, csv, tsv]');
 
             done();
         });
