@@ -71,6 +71,40 @@ describe('Route [fetch]', function() {
         });
     });
 
+    it('should return only the specified fields in array', function(done){
+        let options = {
+            method: 'GET',
+            url: `/api/1/generics/generic3?fields=["integer","text"]`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+
+            let doc = response.result.data;
+            expect(doc.attributes).to.only.include(['integer', 'text']);
+            expect(doc.relationships).to.not.exist();
+            done();
+        });
+    });
+
+    it('should return only the specified comma separated fields', function(done){
+        let options = {
+            method: 'GET',
+            url: `/api/1/generics/generic3?fields=integer,text`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+
+            let doc = response.result.data;
+            expect(doc.attributes).to.only.include(['integer', 'text']);
+            expect(doc.relationships).to.not.exist();
+            done();
+        });
+    });
+
     it('should return the on-to-one relationships references', function(done){
 
         let options = {

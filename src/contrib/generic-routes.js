@@ -153,7 +153,6 @@ var routes = {
         },
         handler: function(request, reply) {
             let instance = request.pre.document;
-            // TODO support fields
             let propertyName = request.params.relation;
             let {db, apiBaseUri} = request;
 
@@ -194,6 +193,14 @@ var routes = {
                 return reply.notFound();
             }
 
+            let pojo = instance.attrs();
+
+            let {fields} = request.pre.queryOptions;
+            if (fields) {
+                pojo = _.pick(pojo, fields);
+            }
+
+
             let include;
             let includeProperties = request.query.include;
             if (includeProperties) {
@@ -203,8 +210,11 @@ var routes = {
                 include = {properties: includeProperties, included: []};
             }
 
+            let included = include && include.included || [];
+
+
             let results = {
-                data: doc2jsonApi(instance.Model, instance.attrs(), apiBaseUri, include),
+                data: doc2jsonApi(instance.Model, pojo, apiBaseUri, include),
                 links: {
                     self: `${apiBaseUri}/${instance.Model.meta.names.plural}/${instance._id}`
                 }
@@ -213,8 +223,6 @@ var routes = {
             /**
              * fetch included if needed
              */
-            let included = include && include.included || [];
-
             const CONCURRENCY_LIMIT = 50;
 
             Promise.map(included, (ref) => {

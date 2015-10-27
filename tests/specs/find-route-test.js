@@ -137,10 +137,30 @@ describe('Route [find]', function() {
         });
     });
 
-    it('should return only the specified fields', function(done){
+    it('should return only the specified fields in array', function(done){
         let options = {
             method: 'GET',
             url: `/api/1/generics?fields=["integer","text"]`
+        };
+
+        server.inject(options, function(response) {
+            expect(response.statusCode).to.equal(200);
+            expect(response.headers['content-type']).to.include(jsonApiMime);
+
+            let data = response.result.data;
+            expect(data).to.be.an.array();
+            data.forEach(function(item) {
+                expect(item.attributes).to.only.include(['integer', 'text']);
+                expect(item.relationships).to.not.exist();
+            });
+            done();
+        });
+    });
+
+    it('should return only the specified comma separated fields', function(done){
+        let options = {
+            method: 'GET',
+            url: `/api/1/generics?fields=integer,text`
         };
 
         server.inject(options, function(response) {
