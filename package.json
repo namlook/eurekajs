@@ -13,10 +13,9 @@
     "watch-babel-src_old": "babel src --watch --optional runtime --out-dir lib --source-maps",
     "watch-babel-tests_old": "babel tests --watch --optional runtime --out-dir libtests --source-maps",
     "coverage": "lab -T tests/transform.js -r html -o coverage.html tests",
-    "_prepublish": "npm run build",
-    "postinstall": "babel src --optional runtime --out-dir lib",
+    "prepublish": "npm run build",
     "lint": "eslint src tests",
-    "build": "eslint src tests ;  babel src --optional runtime --out-dir lib --source-maps",
+    "build": "eslint src tests ; rm -r lib ; babel src --optional runtime --out-dir lib",
     "watch": "babel src --watch --optional runtime --out-dir lib --source-maps",
     "test": "eslint src tests && lab -T tests/transform.js tests/**/*-test.js -vSl",
     "test-server": "eslint src tests ; babel-node tests/app/server.js"
@@ -26,7 +25,7 @@
   },
   "files": [
     "bin",
-    "src"
+    "lib"
   ],
   "config": {
     "blanket": {
@@ -42,10 +41,7 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
-    "archimedes": "git://github.com/namlook/archimedes.git#v0.0.10",
-    "babel": "^5.8.23",
-    "babel-core": "^5.8.23",
-    "babel-runtime": "^5.8.20",
+    "archimedes": "namlook/archimedes#v0.0.11",
     "bcrypt": "^0.8.5",
     "bluebird": "^2.10.2",
     "boom": "^2.8.0",
@@ -68,6 +64,9 @@
     "through2": "^2.0.0"
   },
   "devDependencies": {
+    "babel": "^5.8.23",
+    "babel-core": "^5.8.23",
+    "babel-runtime": "^5.8.20",
     "code": "^1.5.0",
     "csv": "^0.4.6",
     "eslint": "^0.24.1",
