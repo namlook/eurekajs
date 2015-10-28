@@ -27,17 +27,6 @@
     "bin",
     "lib"
   ],
-  "config": {
-    "blanket": {
-      "pattern": [
-        "lib/server",
-        "lib/route",
-        "lib/resource",
-        "lib/utils"
-      ],
-      "data-cover-never": "node_modules"
-    }
-  },
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
