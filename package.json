@@ -50,6 +50,7 @@
     "hapi-auth-basic": "^2.0.0",
     "hapi-auth-jwt": "^2.1.2",
     "hapi-mailer": "^4.0.0",
+    "inert": "^3.2.0",
     "joi": "^6.6.1",
     "jsonwebtoken": "^5.0.5",
     "lodash": "^3.10.1",

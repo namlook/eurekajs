@@ -2,6 +2,7 @@
 import joi from 'joi';
 import Glue from 'glue';
 
+import Inert from 'inert';
 import HapiMailer from 'hapi-mailer';
 import HapiAuthBasic from 'hapi-auth-basic';
 import HapiAuthJwt from 'hapi-auth-jwt';
@@ -142,6 +143,7 @@ export default function(eurekaConfig) {
                      */
                     server.register([
 
+                        Inert,
                         {register: HapiMailer, options: config.mailer},
                         HapiAuthBasic,
                         HapiAuthJwt,

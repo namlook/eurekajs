@@ -10,6 +10,25 @@ export default function(options) {
     const UPLOAD_DIR = options.fileUploads.uploadDirectory;
 
     let routes = {
+
+        /*** hack for dropzone while waiting that the folling issue is fixed
+         *
+         * https://github.com/enyo/dropzone/pull/685
+         *
+         */
+        options: {
+            method: 'OPTIONS',
+            path: '/',
+            config: {
+                cors: {
+                    headers: ['Authorization', 'Content-Type', 'If-None-Match', 'Cache-Control', 'X-Requested-With']
+                }
+            },
+            handler: function(request, reply) {
+                return reply.noContent();
+            }
+        },
+
         upload: {
             method: 'POST',
             path: '/',
@@ -23,9 +42,11 @@ export default function(options) {
             },
             handler: function(request, reply) {
                 let file = request.payload.file;
-                let ext = path.extname(file.filename);
+                let {name, ext} = path.parse(file.filename);
+                let slug = _.words(_.deburr(name.toLowerCase())).join('-');
+                let {dir, name: id} = path.parse(file.path);
 
-                let fullpath = `${file.path}${ext}`;
+                let fullpath = `${dir}/${id}_${slug}${ext}`;
 
                 fs.rename(file.path, fullpath, (err) => {
                     if (err) {
@@ -40,26 +61,27 @@ export default function(options) {
 
         download: {
             method: 'GET',
-            path: '/{filename}',
+            path: '/{filename*}',
             handler: function(request, reply) {
                 let filename = request.params.filename;
                 let filepath = path.join(UPLOAD_DIR, filename);
 
-                fs.access(filepath, fs.R_OK, function(accessError) {
-                    if (accessError) {
-                        return reply.notFound();
-                    }
+                return reply.file(filepath);
+                // fs.access(filepath, fs.R_OK, function(accessError) {
+                //     if (accessError) {
+                //         return reply.notFound();
+                //     }
 
-                    return reply(fs.createReadStream(filepath));
-                        // .header('Content-Disposition', `attachment; filename="${filename}"`);
+                //     return reply(fs.createReadStream(filepath));
+                //         // .header('Content-Disposition', `attachment; filename="${filename}"`);
 
-                });
+                // });
             }
         },
 
         thumbnail: {
             method: 'GET',
-            path: '/{filename}/thumb/{width}x{height}',
+            path: '/i/thumb/{width}x{height}/{filename*}',
             validate: {
                 params: {
                     width: joi.number().integer().default(200),
@@ -96,6 +118,25 @@ export default function(options) {
                         let buffer = new Buffer(binaryString, 'binary');
                         return reply(buffer).type(mimeType);
                     });
+                });
+            }
+        },
+
+        delete: {
+            method: 'DELETE',
+            path: '/{filename*}',
+            handler: function(request, reply) {
+                let filename = request.params.filename;
+                let filepath = path.join(UPLOAD_DIR, filename);
+
+                fs.unlink(filepath, (err) => {
+                    if (err) {
+                        if (err.code === 'ENOENT') {
+                            return reply.notFound();
+                        }
+                        return reply.badImplementation(err);
+                    }
+                    return reply.noContent();
                 });
             }
         }
