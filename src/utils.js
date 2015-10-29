@@ -274,7 +274,7 @@ export let streamJsonApi = function(modelClass, stream, options) {
 
 
             includeStream.on('error', function(error) {
-                console.log('xxx', error);
+                console.error('xxx', error);
             });
 
             resultStream.write(includeBeginStream);
@@ -292,8 +292,8 @@ export let streamJsonApi = function(modelClass, stream, options) {
     resultStream.write(contentStream);
 
     resultStream.on('error', function(error) {
-        console.log('xxx!!!!', error);
-        console.log('xxx!!!!', error.stack);
+        console.error('xxx!!!!', error);
+        console.error('xxx!!!!', error.stack);
     });
 
     return resultStream;

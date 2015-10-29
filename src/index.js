@@ -67,8 +67,9 @@ export default function(eurekaConfig) {
     var {error, value: config} = joi.validate(eurekaConfig, eurekaConfigValidator);
 
     if (error) {
-        console.log(error);
-        throw error.details;
+        console.error(error);
+        console.error(error.details);
+        throw error;
     }
 
     var manifest = {

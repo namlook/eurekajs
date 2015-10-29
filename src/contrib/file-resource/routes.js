@@ -9,6 +9,16 @@ export default function(options) {
     const MAX_FILE_SIZE = options.fileUploads.maxBytes;
     const UPLOAD_DIR = options.fileUploads.uploadDirectory;
 
+    /** create the upload directory if needed **/
+    try {
+        fs.mkdirSync(UPLOAD_DIR);
+        console.log('creating upload direcotry', UPLOAD_DIR);
+    } catch(error) {
+        if (error.code !== 'EEXIST') {
+            throw error
+        }
+    }
+
     let routes = {
 
         /*** hack for dropzone while waiting that the folling issue is fixed
