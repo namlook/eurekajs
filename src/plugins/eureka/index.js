@@ -2,6 +2,7 @@
 import _ from 'lodash';
 import {pascalCase} from '../../utils';
 import Boom from 'boom';
+import mimes from 'mime-types';
 
 import Resource from './resource';
 
@@ -38,6 +39,10 @@ var decoratePlugin = function(plugin) {
 
     plugin.decorate('reply', 'created', function (results) {
         return this.response(results).code(201);
+    });
+
+    plugin.decorate('reply', 'accepted', function (results) {
+        return this.response(results).code(202);
     });
 
     plugin.decorate('reply', 'noContent', function() {
@@ -518,11 +523,26 @@ var eurekaPlugin = function(plugin, options, next) {
                 throw `error while loading ${resourceName}'s methods. Reason: ${e}`;
             }
         }
-
-
     });
 
 
+    plugin.route({
+        path: '/{param*}',
+        method: 'GET',
+        handler: function(request, reply) {
+            var routePath = request.url.path;
+
+            if (routePath === '/') {
+                routePath = 'index.html';
+            }
+
+            if (mimes.lookup(routePath)) {
+                return reply.file(`./${options.serverConfig.publicDirectory}/${routePath}`);
+            } else {
+                return reply.redirect('/#' + routePath);
+            }
+        }
+    });
 
     next();
 };

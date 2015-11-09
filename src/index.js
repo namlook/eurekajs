@@ -45,6 +45,7 @@ var eurekaConfigValidator = {
         email: joi.string().email().required(),
         clientRootUrl: joi.string().uri().required()
     }),
+    publicDirectory: joi.string().default('dist'),
     database: joi.object().keys({
         config: joi.object().keys({
             // type: joi.string().required(),
@@ -143,7 +144,6 @@ export default function(eurekaConfig) {
                      * register plugins
                      */
                     server.register([
-
                         Inert,
                         {register: HapiMailer, options: config.mailer},
                         HapiAuthBasic,
