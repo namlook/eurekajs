@@ -15,7 +15,7 @@ export default function(options) {
         console.log('creating upload direcotry', UPLOAD_DIR);
     } catch(error) {
         if (error.code !== 'EEXIST') {
-            throw error
+            throw error;
         }
     }
 
