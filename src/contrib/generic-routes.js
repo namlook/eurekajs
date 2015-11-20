@@ -537,14 +537,38 @@ var routes = {
     groupBy: {
         method: 'GET',
         path: '/i/group-by/{property}',
+        config: {
+            validate: {
+                query: {
+                    operator: joi.string().default('count'),
+                    target: joi.string()
+                }
+            }
+        },
         handler: function(request, reply) {
             let {Model} = request;
 
-            let property = request.params.property;
+            let property = request.params.property.split(',');
 
-            let {queryFilter} = request.pre;
+            let {queryFilter, queryOptions} = request.pre;
 
-            Model.groupBy(property, queryFilter).then((data) => {
+            let {operator, target} = request.query;
+
+            let aggregator = {
+                property: property
+            };
+
+            if (operator) {
+                aggregator.aggregation = aggregator.aggregation || {};
+                aggregator.aggregation.operator = operator;
+            }
+
+            if (target) {
+                aggregator.aggregation = aggregator.aggregation || {};
+                aggregator.aggregation.target = target;
+            }
+
+            Model.groupBy(aggregator, queryFilter, queryOptions).then((data) => {
                 return reply.jsonApi({data: data});
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
