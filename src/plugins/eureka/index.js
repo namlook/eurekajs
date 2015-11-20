@@ -14,7 +14,8 @@ var queryOptionValidator = {
     limit: joi.number().min(1),
     offset: joi.number().min(0),
     sort: joi.array().items(joi.string()),
-    fields: joi.array().items(joi.string())
+    fields: joi.array().items(joi.string()),
+    distinct: joi.boolean()
 };
 
 
@@ -538,9 +539,10 @@ var eurekaPlugin = function(plugin, options, next) {
 
             if (mimes.lookup(routePath)) {
                 return reply.file(`./${options.serverConfig.publicDirectory}/${routePath}`);
-            } else {
+            } else if (!_.startsWith(routePath, request.apiBaseUri)) {
                 return reply.redirect('/#' + routePath);
             }
+            return reply.notFound();
         }
     });
 
