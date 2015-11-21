@@ -579,6 +579,44 @@ var routes = {
         }
     },
 
+    aggregate: {
+        method: 'GET',
+        path: '/i/aggregate',
+        config: {
+            validate: {
+                query: {
+                    label: joi.object().pattern(/.+/,
+                        joi.alternatives().try(
+                            joi.string(),
+                            joi.object().pattern(/^\$.+/,
+                                joi.alternatives().try(
+                                    joi.boolean(),
+                                    joi.string()
+                                )
+                            )
+                        )
+                    )
+                }
+            }
+        },
+        handler: function(request, reply) {
+            let {Model, db} = request;
+
+            let {queryFilter, queryOptions} = request.pre;
+
+            let {label, sort, limit} = request.query;
+
+            db.aggregate(Model.name, label, queryFilter, queryOptions).then((data) => {
+                return reply.jsonApi({data: data});
+            }).catch((err) => {
+                if (err.name === 'ValidationError') {
+                    return reply.badRequest(err.message, err.extra);
+                }
+                return reply.badImplementation(err);
+            });
+        }
+    },
+
 
     stream: {
         method: 'GET',
