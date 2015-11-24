@@ -604,7 +604,7 @@ var routes = {
 
             let {queryFilter, queryOptions} = request.pre;
 
-            let {label, sort, limit} = request.query;
+            let {label} = request.query;
 
             db.aggregate(Model.name, label, queryFilter, queryOptions).then((data) => {
                 return reply.jsonApi({data: data});
