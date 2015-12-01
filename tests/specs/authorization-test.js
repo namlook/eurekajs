@@ -15,6 +15,8 @@ import fixtures from '../utils/fixtures';
 import _ from 'lodash';
 import jwt from 'jsonwebtoken';
 
+import Promise from 'bluebird';
+
 var server;
 
 var getToken = function(credentials) {
@@ -39,9 +41,10 @@ describe('Authorization', function() {
      /** load the fixtures **/
     beforeEach(function(done){
         fixtures.clear(server).then(() => {
-            return fixtures.genericDocuments(server);
-        }).then(() => {
-            return fixtures.userDocuments(server);
+            return Promise.all([
+                fixtures.genericDocuments(server),
+                fixtures.userDocuments(server)
+            ]);
         }).then(() => {
             done();
         }).catch((error) => {
