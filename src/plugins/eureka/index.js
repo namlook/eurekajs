@@ -8,15 +8,15 @@ import Resource from './resource';
 
 import Bcrypt from 'bcrypt';
 
-import joi from 'joi';
+// import joi from 'joi';
 
-var queryOptionValidator = {
-    limit: joi.number().min(1),
-    offset: joi.number().min(0),
-    sort: joi.array().items(joi.string()),
-    fields: joi.array().items(joi.string()),
-    distinct: joi.boolean()
-};
+// var queryOptionValidator = {
+//     limit: joi.number().min(1),
+//     offset: joi.number().min(0),
+//     sort: joi.array().items(joi.string()),
+//     fields: joi.array().items(joi.string()),
+//     distinct: joi.boolean()
+// };
 
 
 /**
@@ -137,11 +137,9 @@ var fillRequest = function(plugin) {
         }
     });
 
-
-
     /**
-     * extract filter from `request.query`, validate it against
-     * the model properties and add it as `request.pre.queryFilter`
+     * allow to filter by id
+     *
      */
     plugin.ext('onPostAuth', function(request, reply) {
         let {query, Model} = request;
@@ -152,92 +150,112 @@ var fillRequest = function(plugin) {
 
         let queryFilter = query.filter || {};
         if (queryFilter.id) {
-            queryFilter._id = queryFilter.id;
-            delete queryFilter.id;
+            query.filter._id = query.filter.id;
+            delete query.filter.id;
         }
-        request.pre.queryFilter = queryFilter;
-        // let {value, errors} = queryFilterValidator(db, Model.schema, queryFilter);
-
-        // if (errors.length) {
-        //     return reply.badRequest(errors[0]);
-        // }
-
-        // request.pre.queryFilter = value;
-
-        // remove filter from query
-        request.query = _.omit(request.query, 'filter');
-
         reply.continue();
     });
 
 
-    /**
-     * extract options from `request.query`, validate them as jsonApi
-     * and add them to `request.pre.queryOptions`
-     */
-    plugin.ext('onPostAuth', function(request, reply) {
-        let {query, Model} = request;
-        if (!Model) {
-            return reply.continue();
-        }
+    // /**
+    //  * extract filter from `request.query`, validate it against
+    //  * the model properties and add it as `request.pre.queryFilter`
+    //  */
+    // plugin.ext('onPostAuth', function(request, reply) {
+    //     let {query, Model} = request;
 
-        let queryOptions = _.omit(query, 'filter');
+    //     if (!Model) {
+    //         return reply.continue();
+    //     }
 
-        let {value: validatedOptions, error} = joi.validate(
-            queryOptions, queryOptionValidator, {stripUnknown: true});
+    //     let queryFilter = query.filter || {};
+    //     if (queryFilter.id) {
+    //         queryFilter._id = queryFilter.id;
+    //         delete queryFilter.id;
+    //     }
+    //     request.pre.queryFilter = queryFilter;
+    //     // let {value, errors} = queryFilterValidator(db, Model.schema, queryFilter);
 
-        if (error) {
-            let paths = error.details.map((i) => i.path);
-            if (_.intersection(paths, ['fields', 'sort']).length) {
-                if (queryOptions.fields && !_.isArray(queryOptions.fields)) {
-                    queryOptions.fields = queryOptions.fields.split(',');
-                }
+    //     // if (errors.length) {
+    //     //     return reply.badRequest(errors[0]);
+    //     // }
 
-                if (queryOptions.sort && !_.isArray(queryOptions.sort)) {
-                    queryOptions.sort = queryOptions.sort.split(',');
-                }
+    //     // request.pre.queryFilter = value;
 
-                let {value: validatedOptions2, error: error2} = joi.validate(
-                    queryOptions, queryOptionValidator, {stripUnknown: true});
+    //     // remove filter from query
+    //     // request.query = _.omit(request.query, 'filter');
 
-                if (error2) {
-                    return reply.badRequest(error2);
-                } else {
-                    validatedOptions = validatedOptions2;
-                }
-            }
-        }
-
-        // /** check if all sortBy properties are specified in model **/
-        // if (validatedOptions.sortBy) {
-        //     var sortByProperties = validatedOptions.sortBy.split(',');
-        //     for (let index in sortByProperties) {
-        //         let propName = sortByProperties[index];
-        //         propName = _.trimLeft(propName, '-');
-        //         if (!Model.schema.getProperty(propName)) {
-        //             return reply.badRequest(`sort: unknown property ${propName} for model ${Model.schema.name}`);
-        //         }
-        //     }
-        // }
+    //     reply.continue();
+    // });
 
 
-        // /** check if all fields properties are specified in model **/
-        // if (validatedOptions.fields) {
-        //     for (let index in validatedOptions.fields) {
-        //         let propName = validatedOptions.fields[index];
-        //         if (!Model.schema.getProperty(propName)) {
-        //             return reply.badRequest(`fields: unknown property ${propName} for model ${Model.schema.name}`);
-        //         }
-        //     }
-        // }
+    // /**
+    //  * extract options from `request.query`, validate them as jsonApi
+    //  * and add them to `request.pre.queryOptions`
+    //  */
+    // plugin.ext('onPostAuth', function(request, reply) {
+    //     let {query, Model} = request;
+    //     if (!Model) {
+    //         return reply.continue();
+    //     }
+    //     console.log('>>>', request);
+    //     let queryOptions = _.omit(query, 'filter');
 
-        request.pre.queryOptions = validatedOptions;
+    //     // let {value: validatedOptions, error} = joi.validate(
+    //     //     queryOptions, queryOptionValidator, {stripUnknown: true});
 
-        // remove model specific options from query
-        request.query = _.omit(request.query, _.keys(validatedOptions));
+    //     // if (error) {
+    //     //     let paths = error.details.map((i) => i.path);
+    //     //     if (_.intersection(paths, ['fields', 'sort']).length) {
+    //     //         if (queryOptions.fields && !_.isArray(queryOptions.fields)) {
+    //     //             queryOptions.fields = queryOptions.fields.split(',');
+    //     //         }
 
-        reply.continue();
-    });
+    //     //         if (queryOptions.sort && !_.isArray(queryOptions.sort)) {
+    //     //             queryOptions.sort = queryOptions.sort.split(',');
+    //     //         }
+
+    //     //         let {value: validatedOptions2, error: error2} = joi.validate(
+    //     //             queryOptions, queryOptionValidator, {stripUnknown: true});
+
+    //     //         if (error2) {
+    //     //             return reply.badRequest(error2);
+    //     //         } else {
+    //     //             validatedOptions = validatedOptions2;
+    //     //         }
+    //     //     }
+    //     // }
+
+    //     // /** check if all sortBy properties are specified in model **/
+    //     // if (validatedOptions.sortBy) {
+    //     //     var sortByProperties = validatedOptions.sortBy.split(',');
+    //     //     for (let index in sortByProperties) {
+    //     //         let propName = sortByProperties[index];
+    //     //         propName = _.trimLeft(propName, '-');
+    //     //         if (!Model.schema.getProperty(propName)) {
+    //     //             return reply.badRequest(`sort: unknown property ${propName} for model ${Model.schema.name}`);
+    //     //         }
+    //     //     }
+    //     // }
+
+
+    //     // /** check if all fields properties are specified in model **/
+    //     // if (validatedOptions.fields) {
+    //     //     for (let index in validatedOptions.fields) {
+    //     //         let propName = validatedOptions.fields[index];
+    //     //         if (!Model.schema.getProperty(propName)) {
+    //     //             return reply.badRequest(`fields: unknown property ${propName} for model ${Model.schema.name}`);
+    //     //         }
+    //     //     }
+    //     // }
+
+    //     // request.pre.queryOptions = validatedOptions;
+
+    //     // remove model specific options from query
+    //     // request.query = _.omit(request.query, _.keys(validatedOptions));
+
+    //     reply.continue();
+    // });
 };
 
 

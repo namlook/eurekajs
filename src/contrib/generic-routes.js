@@ -51,16 +51,38 @@ var routes = {
         config: {
             validate: {
                 query: {
-            //         token: joi.number(),
                     include: joi.alternatives().try(
                         joi.number(),
                         joi.string()
-                    ).default(false)
+                    ).default(false),
+                    filter: joi.object().pattern(/.+/,
+                        joi.alternatives().try(
+                            joi.string(),
+                            joi.object()
+                        )
+                    ),
+                    limit: joi.number().default(20),
+                    distinct: joi.boolean().default(false),
+                    sort: joi.alternatives().try(
+                        joi.array().items(joi.string()),
+                        joi.string()
+                    ),
+                    fields: joi.alternatives().try(
+                        joi.array().items(joi.string()),
+                        joi.string()
+                    )
                 }
             }
         },
         handler: function(request, reply) {
-            let {queryFilter, queryOptions} = request.pre;
+            let {filter: queryFilter, limit, distinct, sort, fields} = request.query;
+            let queryOptions = {
+                limit,
+                distinct,
+                sort,
+                fields
+            };
+
             let {db, apiBaseUri, Model} = request;
 
             let include;
@@ -147,7 +169,11 @@ var routes = {
                     include: joi.alternatives().try(
                         joi.number(),
                         joi.string()
-                    ).default(false)
+                    ).default(false),
+                    fields: joi.alternatives().try(
+                        joi.array().items(joi.string()),
+                        joi.string()
+                    )
                 }
             }
         },
@@ -195,8 +221,11 @@ var routes = {
 
             let pojo = instance.attrs();
 
-            let {fields} = request.pre.queryOptions;
-            if (fields) {
+            let {fields} = request.query;
+            if (typeof fields === 'string') {
+                fields = fields.split(',');
+            }
+            if (fields.length) {
                 pojo = _.pick(pojo, fields);
             }
 
@@ -246,8 +275,25 @@ var routes = {
     count: {
         method: 'GET',
         path: `/i/count`,
+        config: {
+            validate: {
+                query: {
+                    filter: joi.object().pattern(/.+/,
+                        joi.alternatives().try(
+                            joi.string(),
+                            joi.object()
+                        )
+                    ),
+                    distinct: joi.boolean().default(false)
+                }
+            }
+        },
         handler: function(request, reply) {
-            let {queryFilter, queryOptions} = request.pre;
+            let {filter: queryFilter, distinct} = request.query;
+            let queryOptions = {
+                distinct
+            };
+
             request.Model.count(queryFilter, queryOptions).then((total) => {
                 return reply.jsonApi({data: total});
             }).catch((err) => {
@@ -541,7 +587,13 @@ var routes = {
             validate: {
                 query: {
                     operator: joi.string().default('count'),
-                    target: joi.string()
+                    target: joi.string(),
+                    filter: joi.object().pattern(/.+/,
+                        joi.alternatives().try(
+                            joi.string(),
+                            joi.object()
+                        )
+                    )
                 }
             }
         },
@@ -550,7 +602,9 @@ var routes = {
 
             let property = request.params.property.split(',');
 
-            let {queryFilter, queryOptions} = request.pre;
+            let {filter: queryFilter} = request.query;
+            let queryOptions = {};
+
 
             let {operator, target} = request.query;
 
@@ -585,6 +639,18 @@ var routes = {
         config: {
             validate: {
                 query: {
+                    field: joi.object().pattern(/.+/,
+                        joi.alternatives().try(
+                            joi.string(),
+                            joi.object().pattern(/^\$.+/,
+                                joi.alternatives().try(
+                                    joi.boolean(),
+                                    joi.string()
+                                )
+                            )
+                        )
+                    ),
+                    // TODO remove
                     label: joi.object().pattern(/.+/,
                         joi.alternatives().try(
                             joi.string(),
@@ -595,6 +661,18 @@ var routes = {
                                 )
                             )
                         )
+                    ),
+                    filter: joi.object().pattern(/.+/,
+                        joi.alternatives().try(
+                            joi.string(),
+                            joi.object()
+                        )
+                    ),
+                    limit: joi.number().default(100),
+                    distinct: joi.boolean().default(false),
+                    sort: joi.alternatives().try(
+                        joi.array().items(joi.string()),
+                        joi.string()
                     )
                 }
             }
@@ -602,11 +680,21 @@ var routes = {
         handler: function(request, reply) {
             let {Model, db} = request;
 
-            let {queryFilter, queryOptions} = request.pre;
+            let {field, label, limit, distinct, sort, filter} = request.query;
 
-            let {label} = request.query;
+            if (label) {
+                field = label;
+                console.warn('[DEPRECATED] the use of label in aggregate is deprecated. Please use field instead');
+            }
 
-            db.aggregate(Model.name, label, queryFilter, queryOptions).then((data) => {
+            let queryOptions = {
+                limit,
+                distinct,
+                sort
+            };
+
+
+            db.aggregate(Model.name, field, filter, queryOptions).then((data) => {
                 return reply.jsonApi({data: data});
             }).catch((err) => {
                 if (err.name === 'ValidationError') {
@@ -651,6 +739,22 @@ var routes = {
                             ),
                             otherwise: joi.forbidden()
                         }
+                    ),
+                    filter: joi.object().pattern(/.+/,
+                        joi.alternatives().try(
+                            joi.string(),
+                            joi.object()
+                        )
+                    ),
+                    limit: joi.number().default(20),
+                    distinct: joi.boolean().default(false),
+                    sort: joi.alternatives().try(
+                        joi.array().items(joi.string()),
+                        joi.string()
+                    ),
+                    fields: joi.alternatives().try(
+                        joi.array().items(joi.string()),
+                        joi.string()
                     )
                 },
                 failAction: function (request, reply, source, error) {
@@ -661,7 +765,16 @@ var routes = {
             }
         },
         handler: function(request, reply) {
-            let {queryFilter, queryOptions} = request.pre;
+
+            let {filter: queryFilter, limit, distinct, sort, fields} = request.query;
+            let queryOptions = {
+                limit,
+                distinct,
+                sort,
+                fields
+            };
+
+
             let {Model, apiBaseUri, db} = request;
             let {delimiter, header} = request.query;
             let {format} = request.params;
