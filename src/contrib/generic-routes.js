@@ -62,6 +62,7 @@ var routes = {
                         )
                     ),
                     limit: joi.number().default(20),
+                    offset: joi.number().min(0),
                     distinct: joi.boolean().default(false),
                     sort: joi.alternatives().try(
                         joi.array().items(joi.string()),
@@ -75,9 +76,10 @@ var routes = {
             }
         },
         handler: function(request, reply) {
-            let {filter: queryFilter, limit, distinct, sort, fields} = request.query;
+            let {filter: queryFilter, limit, offset, distinct, sort, fields} = request.query;
             let queryOptions = {
                 limit,
+                offset,
                 distinct,
                 sort,
                 fields
@@ -222,9 +224,11 @@ var routes = {
             let pojo = instance.attrs();
 
             let {fields} = request.query;
+            fields = fields || [];
             if (typeof fields === 'string') {
                 fields = fields.split(',');
             }
+
             if (fields.length) {
                 pojo = _.pick(pojo, fields);
             }
