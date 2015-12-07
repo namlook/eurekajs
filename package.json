@@ -21,7 +21,8 @@
     "test-server": "eslint src tests ; babel-node tests/app/server.js"
   },
   "bin": {
-    "eureka": "bin/eureka.sh"
+    "eureka": "bin/eureka.sh",
+    "eureka-import": "bin/eureka-import.js"
   },
   "files": [
     "bin",
@@ -30,7 +31,7 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
-    "archimedes": "namlook/archimedes#v0.0.20",
+    "archimedes": "namlook/archimedes#v0.0.23",
     "babel-runtime": "5.8.20",
     "bcrypt": "0.8.5",
     "bluebird": "2.10.2",
@@ -49,7 +50,10 @@
     "lodash": "3.10.1",
     "mime-types": "^2.1.7",
     "nodemailer-stub-transport": "1.0.0",
-    "stream-stream": "1.2.6"
+    "progress": "^1.1.8",
+    "shelljs": "^0.5.3",
+    "stream-stream": "1.2.6",
+    "yargs": "^3.30.0"
   },
   "devDependencies": {
     "babel": "^5.8.23",
