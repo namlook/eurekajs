@@ -1,5 +1,6 @@
 {
   "parser": "babel-eslint",
+  "ecmaFeatures": { modules: true },
   "env": {
     // I write for browser
     "browser": true,
