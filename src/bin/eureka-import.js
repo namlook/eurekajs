@@ -11,7 +11,7 @@ let argv = require('yargs');
 
 let args = argv
     .usage('Usage: $0 <resource> <filename> [options]')
-    .example('$0 BlogPost blogposts.csv -d "\\t"', 'impot the tsv file as blog post')
+    .example('$0 BlogPost blogposts.csv -d "\\t"', 'import the tsv file as blog post')
     .demand(['f', 'r', 'c'])
     .alias('r', 'resource')
     .nargs('r', 1)
@@ -196,4 +196,3 @@ importCsv(args.config, args.resource, args.file, _options).then(() => {
     console.log('nb written>', NB_WRITTEN);
     process.exit(); //eslint-disable-line no-process-exit
 });
-
