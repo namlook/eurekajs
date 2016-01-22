@@ -61,7 +61,8 @@ var eurekaConfigValidator = {
         uploadDirectory: joi.string().default()
     }),
     resources: joi.object(),
-    mailer: joi.object()
+    mailer: joi.object(),
+    misc: joi.object() // place to put custom config here
 };
 
 export default function(eurekaConfig) {
