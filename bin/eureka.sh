@@ -62,7 +62,7 @@ case "$1" in
             read -p "Do you want do build the app for production? [y/N] " RESP
             if [ "$RESP" = "y" ]; then
                 echo "building ember app for production"
-                ember build --env=production
+                ./node_modules/.bin/ember build --env=production
             fi
 
             DOCKER_IMAGE="$AUTHOR/$NAME:$VERSION"
@@ -132,4 +132,3 @@ case "$1" in
             exit 1
 
 esac
-
