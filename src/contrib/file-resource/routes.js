@@ -30,9 +30,9 @@ export default function(options) {
             method: 'OPTIONS',
             path: '/',
             config: {
-                cors: {
-                    headers: ['Authorization', 'Content-Type', 'If-None-Match', 'Cache-Control', 'X-Requested-With']
-                }
+                // cors: {
+                    // headers: ['Authorization', 'Content-Type', 'If-None-Match', 'Cache-Control', 'X-Requested-With']
+                // }
             },
             handler: function(request, reply) {
                 return reply.noContent();

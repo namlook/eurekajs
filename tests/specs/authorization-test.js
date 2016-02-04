@@ -23,7 +23,7 @@ var getToken = function(credentials) {
     return jwt.sign(
         credentials,
         server.settings.app.secret,
-        {expiresInMinutes: 180}
+        {expiresIn: 60 * 180}
     );
 };
 

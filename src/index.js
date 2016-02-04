@@ -6,6 +6,7 @@ import Inert from 'inert';
 import HapiMailer from 'hapi-mailer';
 import HapiAuthBasic from 'hapi-auth-basic';
 import HapiAuthJwt from 'hapi-auth-jwt';
+import HapiQs from 'hapi-qs';
 import archimedesPlugin from './plugins/archimedes';
 import eurekaPlugin from './plugins/eureka';
 
@@ -78,13 +79,6 @@ export default function(eurekaConfig) {
         connections: [
             {
                 port: config.port,
-                query: {
-                    /** the following line is necessary to allow
-                     * deep relation query (via dot notation) ex:
-                     *  `filter[relation.text]=foo`
-                     */
-                    qs: {allowDots: false}
-                },
                 routes: {cors: true}
             }
         ],
@@ -145,6 +139,7 @@ export default function(eurekaConfig) {
                      * register plugins
                      */
                     server.register([
+                        HapiQs,
                         Inert,
                         {register: HapiMailer, options: config.mailer},
                         HapiAuthBasic,

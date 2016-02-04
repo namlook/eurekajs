@@ -74,7 +74,7 @@ var routes = {
                 let token = jwt.sign(
                     {email: payload.email, userId: userPojo._id},
                     secret,
-                    {expiresInMinutes: 180}
+                    {expiresIn: 60 * 180}
                 );
 
                 let base64Token = new Buffer(token).toString('base64');
@@ -202,7 +202,9 @@ var routes = {
         config: {
             auth: {
                 strategy: 'token',
-                scope: 'admin'
+                access: {
+                    scope: 'admin'
+                }
             },
             validate: {
                 params: {
@@ -254,7 +256,9 @@ var routes = {
         config: {
             auth: {
                 strategy: 'token',
-                scope: 'admin'
+                access: {
+                    scope: 'admin'
+                }
             },
             validate: {
                 params: {
@@ -305,7 +309,9 @@ var routes = {
         config: {
             auth: {
                 strategy: 'token',
-                scope: ['sudo']
+                access: {
+                    scope: ['sudo']
+                }
             }
         },
         handler: function(request, reply) {
@@ -319,7 +325,7 @@ var routes = {
             let token = jwt.sign(
                 credentials,
                 secret,
-                {expiresInMinutes: 60}
+                {expiresIn: 60 * 60}
             );
             reply.ok({token: token});
         }
@@ -336,7 +342,9 @@ var routes = {
         config: {
             auth: {
                 strategy: 'token',
-                scope: ['sudo', 'admin']
+                access: {
+                    scope: ['sudo', 'admin']
+                }
             },
             pre: [
                 {assign: 'scopeCheck', method: function(request, reply) {
@@ -415,7 +423,7 @@ var routes = {
                 let token = jwt.sign(
                     {email: email, token: resetToken},
                     secret,
-                    {expiresInMinutes: 180}
+                    {expiresIn: 60 * 180}
                 );
 
                 let base64Token = new Buffer(token).toString('base64');
@@ -515,4 +523,3 @@ var routes = {
 };
 
 export default routes;
-

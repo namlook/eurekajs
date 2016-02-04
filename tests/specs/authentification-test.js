@@ -116,7 +116,7 @@ describe('Authentification', function() {
                 let token = jwt.sign(
                     {email: email, token: user.get('passwordResetToken')},
                     server.settings.app.secret,
-                    {expiresInMinutes: 180}
+                    {expiresIn: 60 * 180}
                 );
 
                 let resetOptions = {
@@ -195,7 +195,7 @@ describe('Authentification', function() {
             let token = jwt.sign(
                 {email: 'user1@test.com', token: 'thepasswordtoken'},
                 server.settings.app.secret,
-                {expiresInSeconds: 1}
+                {expiresIn: 1}
             );
 
             setTimeout(() => {
@@ -270,7 +270,7 @@ describe('Authentification', function() {
                     let token = jwt.sign(
                         {email: email, token: user.get('passwordResetToken')},
                         server.settings.app.secret,
-                        {expiresInMinutes: 180}
+                        {expiresIn: 60 * 180}
                     );
 
                     let resetOptions = {

@@ -19,7 +19,9 @@ routes.document4Me = {
     config: {
         auth: {
             strategy: 'token',
-            scope: 'userId:doc._owner._id'
+            access: {
+                scope: 'userId:doc._owner._id'
+            }
         }
     },
     handler: routes.fetch.handler
@@ -32,7 +34,9 @@ routes.document4Role = {
     config: {
         auth: {
             strategy: 'token',
-            scope: 'secret-keeper'
+            access: {
+                scope: 'secret-keeper'
+            }
         }
     },
     handler: routes.fetch.handler
@@ -44,7 +48,9 @@ routes.document4RoleInDoc = {
     config: {
         auth: {
             strategy: 'token',
-            scope: 'userScope:doc._scope'
+            access: {
+                scope: 'userScope:doc._scope'
+            }
         }
     },
     handler: routes.fetch.handler
@@ -57,7 +63,9 @@ routes.documentWithBadScope = {
     config: {
         auth: {
             strategy: 'token',
-            scope: 'arf:doc_scope'
+            access: {
+                scope: 'arf:doc_scope'
+            }
         }
     },
     handler: routes.fetch.handler
@@ -71,7 +79,9 @@ routes.collection4Role = {
     config: {
         auth: {
             strategy: 'token',
-            scope: ['secret-keeper']
+            access: {
+                scope: ['secret-keeper']
+            }
         }
     },
     handler: routes.find.handler
@@ -83,7 +93,9 @@ routes.collection4MeInDoc = {
     config: {
         auth: {
             strategy: 'token',
-            scope: ['userId:doc._owner._id']
+            access: {
+                scope: ['userId:doc._owner._id']
+            }
         }
     },
     handler: routes.find.handler
@@ -97,7 +109,9 @@ routes.collection4MyRoleInDoc = {
     config: {
         auth: {
             strategy: 'token',
-            scope: ['userScope:doc._scope']
+            access: {
+                scope: ['userScope:doc._scope']
+            }
         }
     },
     handler: routes.find.handler
@@ -108,7 +122,9 @@ export default function() {
     return {
         auth: {
             strategy: 'token',
-            scope: ['user-stuff-access']
+            access: {
+                scope: ['user-stuff-access']
+            }
         },
         routes: routes
     };

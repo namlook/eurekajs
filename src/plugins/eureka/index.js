@@ -264,7 +264,7 @@ var fillRequest = function(plugin) {
  */
 var setAuthentification = function(plugin) {
 
-    let basicValidation = function(username, password, callback) {
+    let basicValidation = function(request, username, password, callback) {
         let db = plugin.plugins.eureka.database;
         // let UserModel = plugin.plugins.eureka.userModel;
         // let usernameField = plugin.plugins.eureka.usernameField;
@@ -295,13 +295,13 @@ var setAuthentification = function(plugin) {
 
     plugin.auth.strategy('token', 'jwt', {
         key: plugin.settings.app.secret,
-        validateFunc: function(credentials, callback) {
-
+        validateFunc: function(request, credentials, callback) {
 
             /**
              * process the scope
              */
             let scope = credentials.scope;
+
 
             scope = scope || [];
 
@@ -331,7 +331,12 @@ var setAuthentification = function(plugin) {
 var initPolicies = function(plugin) {
 
     plugin.ext('onPreAuth', function(request, reply) {
-        var _scopes = _.get(request, 'route.settings.auth.scope');
+        const access = _.get(request, 'route.settings.auth.access', []);
+        if (!access.length) {
+            return reply.continue();
+        }
+
+        var _scopes = access[0].scope.selection;
 
         if (!_scopes) {
             return reply.continue();
@@ -341,11 +346,11 @@ var initPolicies = function(plugin) {
             _scopes = [_scopes];
         }
 
-        var policies = [];
-        var scopes = [];
+        let policies = [];
+        let scopes = [];
 
-        for (let index in _scopes) {
-            let scope = _scopes[index];
+        for (let scope of _scopes) {
+            // let scope = _scopes[index];
             if (_.contains(scope, ':')) {
                 policies.push(scope);
             } else {
@@ -359,10 +364,14 @@ var initPolicies = function(plugin) {
             if (scopes.indexOf('admin') === -1) {
                 scopes.push('admin'); // admin can always access to routes
             }
-            request.route.settings.auth.scope = scopes;
+            // request.route.settings.auth.access.scope = scopes;
+            request.route.settings.auth.access = [{scope: {selection: scopes}}];
         } else {
-            delete request.route.settings.auth.scope;
+            // delete request.route.settings.auth.access.scope;
+            delete request.route.settings.auth.access;
+            // request.route.settings.auth.access = [];
         }
+
         reply.continue();
     });
 
@@ -373,6 +382,7 @@ var initPolicies = function(plugin) {
         if (!_policies.length) {
             return reply.continue();
         }
+
 
         var credentials = request.auth.credentials;
         credentials.scope = credentials.scope || [];
@@ -508,11 +518,13 @@ var eurekaPlugin = function(plugin, options, next) {
         if (options.serverConfig.auth === true) {
             options.serverConfig.auth = {
                 strategy: 'token',
-                scope: ['admin']
+                access: {
+                    scope: ['admin']
+                }
             };
         }
         plugin.log(['info', 'eureka'],
-            `config.auth: locking all routes {strategy: "${options.serverConfig.auth.strategy}", scope: "${options.serverConfig.auth.scope.toString()}}"`);
+            `config.auth: locking all routes {strategy: "${options.serverConfig.auth.strategy}", scope: "${options.serverConfig.auth.access.scope.toString()}}"`);
         plugin.auth.default(options.serverConfig.auth);
     }
 

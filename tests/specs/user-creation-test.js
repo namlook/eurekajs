@@ -264,7 +264,7 @@ describe('User creation', function() {
                 let token = jwt.sign(
                     {email: 'newuser@test.com'},
                     server.settings.app.secret,
-                    {expiresInMinutes: 180}
+                    {expiresIn: 60 * 180}
                 );
 
                 let verifyOptions = {
@@ -292,7 +292,7 @@ describe('User creation', function() {
             let token = jwt.sign(
                 {email: 'user1@test.com'},
                 server.settings.app.secret,
-                {expiresInSeconds: 1}
+                {expiresIn: 1}
             );
 
             setTimeout(() => {
@@ -339,7 +339,7 @@ describe('User creation', function() {
             let token = jwt.sign(
                 {email: 'bademail@test.com'},
                 server.settings.app.secret,
-                {expiresInSeconds: 180}
+                {expiresIn: 180}
             );
 
             let verifyOptions = {

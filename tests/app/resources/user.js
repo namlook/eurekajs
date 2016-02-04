@@ -5,7 +5,9 @@ export default function() {
     return {
         auth: {
             strategy: 'token',
-            scope: 'user' // overwrite admin scope
+            access: {
+                scope: 'user' // overwrite admin scope
+            }
         },
         routes: genericRoutes
     };
