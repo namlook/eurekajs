@@ -3,10 +3,16 @@ import _ from 'lodash';
 import {pascalCase} from '../../utils';
 import Boom from 'boom';
 import mimes from 'mime-types';
+import requireDir from 'require-dir';
+import path from 'path';
 
 import Resource from './resource';
 
 import Bcrypt from 'bcrypt';
+
+import kue from 'kue';
+
+import io from 'socket.io';
 
 // import joi from 'joi';
 
@@ -478,6 +484,115 @@ var initPolicies = function(plugin) {
 
 };
 
+// var registerTasksBull = function(plugin, options) {
+//     let redisInfos = options.serverConfig.redis;
+//
+//     plugin.log(['info', 'tasks'], `task runner need redis on ${redisInfos.host}:${redisInfos.port}`);
+//
+//     let tasks = {};
+//     _.forOwn(options.serverConfig.tasks, (taskHandler, taskName) => {
+//         plugin.log(['info', 'tasks'], `register task "${taskName}"`);
+//
+//         tasks[taskName] = function(data) {
+//             let queue = Queue(taskName, redisInfos.port, redisInfos.host);
+//             queue.clean(5000);
+//
+//             queue.on('cleaned', function (job, type) {
+//                 plugin.log(['debug', 'tasks'], 'Cleaned ' + job.length + ' ' + type + ' jobs');
+//             });
+//
+//             queue.on('ready', function() {
+//                 plugin.log(['info', 'tasks'], 'the queue "'+taskName+'" is ready');
+//             });
+//
+//             queue.on('complete', function(job) {
+//                 plugin.log(['info', 'tasks'], '"'+taskName+'">', job.jobId, 'is complete');
+//             });
+//
+//             queue.on('error', function(err) {
+//                 plugin.log(['error', 'tasks'], '"'+taskName+'">', err);
+//             });
+//
+//             queue.on('failed', function(job, err){
+//                 plugin.log(['error', 'tasks'], taskName+'> the job ' + job.jobId + ' failed. Reason:' + err.message);
+//                 console.error(err);
+//                 console.error(err.stack);
+//             });
+//
+//             let task = taskHandler(plugin, options);
+//             queue.process(task);
+//             queue.add(data);
+//             return queue;
+//         };
+//     });
+//     return tasks;
+// };
+
+var registerTasks = function(plugin, options) {
+    let redisInfos = options.serverConfig.redis;
+
+    let queue = kue.createQueue({
+        redis: {
+            port: redisInfos.port,
+            host: redisInfos.host
+        }
+    });
+
+    queue.on( 'error', function( err ) {
+        plugin.log(['error', 'tasks'], err);
+    });
+
+    queue.on( 'enqueue', function() {
+        plugin.log(['error', 'tasks'], 'enqueue');
+    });
+
+
+    plugin.log(['info', 'tasks'], `task runner need redis on ${redisInfos.host}:${redisInfos.port}`);
+
+    let tasks = {};
+    _.forOwn(options.serverConfig.tasks, (taskFn, taskName) => {
+        let taskHandler = taskFn(plugin, options);
+        let concurrency = 1;
+        if (typeof taskHandler === 'object') {
+            concurrency = taskHandler.concurrency;
+            taskHandler = taskHandler.handler;
+        }
+
+        queue.process(taskName, concurrency, taskHandler);
+        tasks[taskName] = function(data) {
+            let job = queue.create(taskName, data)
+            job.removeOnComplete(true);
+            job.save();
+            return job;
+        };
+        plugin.log(['info', 'tasks'], `register task "${taskName}"`);
+    });
+
+    return tasks;
+};
+
+
+var loadRoutes = function(plugin, options) {
+    let routesDirectory = path.join(process.cwd(), 'backend/routes')
+    let routes = requireDir(routesDirectory);
+    for (let routeName in routes) {
+        plugin.log(['info', 'eureka'], `mounting route "${routeName}"`);
+        routes[routeName](plugin);
+    }
+};
+
+var registerWebSocket = function(plugin, options) {
+
+    var ws = io(plugin.listener);
+
+    ws.on('connection', function (socket) {
+        plugin.log(['debug', 'socket'], 'new connection from '+socket.handshake.address);
+    });
+
+    plugin.expose('websocket', ws);
+
+};
+
 
 var eurekaPlugin = function(plugin, options, next) {
 
@@ -493,11 +608,24 @@ var eurekaPlugin = function(plugin, options, next) {
         });
     }
 
+    // register websocket first as there is no dependencies
+    registerWebSocket(plugin);
+
+
     let db = plugin.plugins.archimedes.db;
     plugin.expose('database', db);
     // plugin.expose('userModel', 'User');
     // plugin.expose('usernameField', 'email');
     // plugin.expose('passwordField', 'password');
+
+
+    let tasks = {};
+    if (!_.isEmpty(options.serverConfig.tasks)) {
+        tasks = registerTasks(plugin, options);
+    }
+    plugin.expose('tasks', tasks);
+
+    loadRoutes(plugin);
 
     setAuthentification(plugin);
     decoratePlugin(plugin);
@@ -529,6 +657,9 @@ var eurekaPlugin = function(plugin, options, next) {
     }
 
 
+    /**
+     * register resources
+     */
     _.forOwn(options.resources, (resourceConfig, resourceName) => {
         let resource = new Resource(resourceName, resourceConfig, options.serverConfig, db);
 
@@ -538,7 +669,7 @@ var eurekaPlugin = function(plugin, options, next) {
         let routes = resource.routes;
         try {
             plugin.route(routes);
-            plugin.log(['info', 'eureka'], `mounting ${resourceName} (${routes.length} routes)`);
+            plugin.log(['info', 'eureka'], `mounting resource "${resourceName}" (${routes.length} routes)`);
         } catch (e) {
             throw `error while mounting ${resourceName}. Reason: ${e}`;
         }

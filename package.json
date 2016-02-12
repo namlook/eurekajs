@@ -48,11 +48,13 @@
     "inert": "^3.2.0",
     "joi": "^7.2.3",
     "jsonwebtoken": "^5.5.4",
+    "kue": "^0.10.5",
     "lodash": "3.10.1",
     "mime-types": "^2.1.9",
     "nodemailer-stub-transport": "1.0.0",
     "progress": "^1.1.8",
     "shelljs": "^0.5.3",
+    "socket.io": "^1.4.5",
     "stream-stream": "1.2.6",
     "yargs": "^3.30.0"
   },

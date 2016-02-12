@@ -25,9 +25,13 @@ var archimedesPlugin = function(plugin, options, next) {
     // var Database = archimedes[adapter].Database;
     // var Model = archimedes[adapter].Model;
 
+    let db;
     let models = {};
-    // var db = new Database(databaseConfig);
-    let db = triplestore(options.database.config);
+    if (options.database.adapter === 'rdf') {
+        db = triplestore(options.database.config);
+    } else {
+        throw new Error('unknown adapter', options.database.adapter);
+    }
 
     _.forOwn(schemas, (modelInfos, modelName) => {
         var modelNamePascalCase = pascalCase(modelName);

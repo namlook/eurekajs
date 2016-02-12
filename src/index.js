@@ -23,13 +23,14 @@ import eurekaPlugin from './plugins/eureka';
 //         // hapi-mailer config
 //     },
 //     database: {
-//         adapter: {
-//             type: 'rdf',
-//             dialect: 'virtuoso',
-//             graphURI: 'http://test.org'
-//         },
-//         host: '192.168.99.100',
+//         adapter: 'rdf',
 //         schemas: requireDir('./schemas'),
+//         config: {
+//             engine: 'virtuoso',
+//             graphUri: 'http://test.org',
+//             host: 'localhost',
+//             port: 8890
+//         }
 //     },
 //     resources: requireDir('./resources')
 // };
@@ -48,20 +49,33 @@ var eurekaConfigValidator = {
     }),
     publicDirectory: joi.string().default('dist'),
     database: joi.object().keys({
+        adapter: joi.string().required().only(['rdf']),
+        schemas: joi.object(),
         config: joi.object().keys({
+            engine: joi.string().required().only(['virtuoso', 'blazegraph']),
             // type: joi.string().required(),
             // dialect: joi.string(),
             // host: joi.string().ip().default('localhost'),
             graphUri: joi.string().uri().required(),
-            endpoint: joi.string().uri().required()
-        }).required(),
-        schemas: joi.object()
+            // endpoint: joi.string().uri(),
+            host: joi.string().required(),
+            port: joi.number(),
+            auth: joi.object().keys({
+                user: joi.string().required(),
+                password: joi.string().required()
+            }).with('user', 'password')
+        }).required()
+    }),
+    redis: joi.object().keys({
+        port: joi.number().required(),
+        host: joi.string().required()
     }),
     fileUploads: joi.object().keys({
         maxBytes: joi.number().integer().default(50 * Math.pow(1024, 2)),
         uploadDirectory: joi.string().default()
     }),
     resources: joi.object(),
+    tasks: joi.object(),
     mailer: joi.object(),
     misc: joi.object() // place to put custom config here
 };
@@ -122,6 +136,7 @@ export default function(eurekaConfig) {
                     var archimedesPluginConfig = {
                         log: config.log,
                         database: {
+                            adapter: config.database.adapter,
                             config: config.database.config
                         },
                         schemas: config.database.schemas
@@ -131,6 +146,7 @@ export default function(eurekaConfig) {
                     var eurekaPluginConfig = {
                         log: config.log,
                         resources: config.resources,
+                        tasks: config.tasks,
                         apiRootPrefix: config.app.apiRootPrefix,
                         serverConfig: config
                     };
