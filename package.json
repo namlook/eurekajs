@@ -31,7 +31,7 @@
   "author": "Namlook",
   "license": "MIT",
   "dependencies": {
-    "archimedes": "namlook/archimedes#v0.0.23",
+    "archimedes": "namlook/archimedes#v0.0.25",
     "babel-runtime": "5.8.20",
     "bcrypt": "0.8.5",
     "bluebird": "^3.2.1",
