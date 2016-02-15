@@ -29,6 +29,9 @@ case "$1" in
         mkdir -p config/eureka/resources
         touch config/eureka/resources/.gitkeep
 
+        mkdir -p backend/routes
+        touch backend/routes/.gitkeep
+
         mkdir -p backend/resources
         touch backend/resources/.gitkeep
 
@@ -195,6 +198,7 @@ case "$1" in
 
     resource)
         ember generate eureka-resource $2
+        ember generate eureka-resource-schema $2
         ;;
 
     # drop-data)
