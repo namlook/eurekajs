@@ -550,25 +550,46 @@ var registerTasks = function(plugin, options) {
     plugin.log(['info', 'tasks'], `task runner need redis on ${redisInfos.host}:${redisInfos.port}`);
 
     let tasks = {};
-    _.forOwn(options.serverConfig.tasks, (taskFn, taskName) => {
-        let taskHandler = taskFn(plugin, options);
-        let concurrency = 1;
-        if (typeof taskHandler === 'object') {
-            concurrency = taskHandler.concurrency;
-            taskHandler = taskHandler.handler;
+    _.forOwn(options.serverConfig.tasks, (taskConfig, taskName) => {
+
+        let taskHandler;
+
+        if (typeof taskConfig === 'object') {
+            taskHandler = taskConfig.run;
+        } else {
+            taskHandler = taskConfig;
+            taskConfig = {concurrency: 1};
         }
 
-        queue.process(taskName, concurrency, taskHandler);
-        tasks[taskName] = function(data) {
-            let job = queue.create(taskName, data)
-            job.removeOnComplete(true);
-            job.save();
-            return job;
+        let taskFn = function(job, done) {
+            return taskHandler(plugin, options, job, done);
         };
+
+        queue.process(taskName, taskConfig.concurrency, taskFn);
+        tasks[taskName] = taskConfig;
         plugin.log(['info', 'tasks'], `register task "${taskName}"`);
     });
 
-    return tasks;
+    return {
+        enqueue: function(taskName, data, done) {
+            if (typeof data === 'function') {
+                done = data;
+                data = null;
+            }
+
+            let job = queue.create(taskName, data);
+
+            // taskConfig (from tasks[taskName]) here
+
+            job.removeOnComplete(true);
+            job.save(function(err) {
+                if (err) {
+                    return done(err);
+                }
+                done(null, job);
+            });
+        }
+    };
 };
 
 
